@@ -1,18 +1,78 @@
 ## How to add new messages to the SparkFun u-blox GNSS Arduino Library - v3
 
-Here is a quick summary of how to add suport for a new UBX message. It is more of a checklist really - sorry about that!
+Here is a quick summary of how to add suport for a new UBX message. It is more of a checklist really. Sorry about that!
 
 ### Step 1: Add the new message struct to u-blox_structs.h
 
 Add the new message struct to [u-blox_structs.h](u-blox_structs.h) using one of the existing messages as a template.
 
+Important: use the exact field names as defined in the u-blox interface definition.
+
+```
+// UBX-NAV-PVAT (0x01 0x17): Navigation position velocity attitude time solution
+const uint16_t UBX_NAV_PVAT_LEN = 116;
+
+typedef struct
+{
+  uint32_t iTOW;   // GPS time of week of the navigation epoch: ms
+  uint8_t version; // Message version (0x00 for this version)
+
+...
+
+  uint8_t reserved2[4];
+  uint8_t reserved3[4];
+} UBX_NAV_PVAT_data_t;
+
+typedef struct
+{
+  union
+  {
+    uint32_t all;
+    struct
+    {
+      uint32_t all : 1;
+
+      uint32_t iTOW : 1;
+      uint32_t version : 1;
+
+...
+
+      uint32_t errEllipseMajor : 1;
+      uint32_t errEllipseMinor : 1;
+    } bits;
+  } moduleQueried2;
+} UBX_NAV_PVAT_moduleQueried_t;
+
+typedef struct
+{
+  ubxAutomaticFlags automaticFlags;
+  UBX_NAV_PVAT_data_t data;
+  UBX_NAV_PVAT_moduleQueried_t moduleQueried;
+  void (*callbackPointerPtr)(UBX_NAV_PVAT_data_t *);
+  UBX_NAV_PVAT_data_t *callbackData;
+} UBX_NAV_PVAT_t;
+
+```
+
 ### Step 2: Update u-blox_Class_and_ID.h
 
 If required, add the new message ID to [u-blox_Class_and_ID.h](u-blox_Class_and_ID.h).
 
+```
+const uint8_t UBX_NAV_PVAT = 0x17; // Navigation position velocity attitude time solution (ZED-F9R only)
+```
+
 ### Step 3: Update u-blox_config_keys.h
 
 Add any new configuration interface keys for the new message to [u-blox_config_keys.h](u-blox_config_keys.h).
+
+```
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_PVAT_I2C = 0x2091062a;     // Output rate of the UBX-NAV-PVAT message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_PVAT_UART1 = 0x2091062b;   // Output rate of the UBX-NAV-PVAT message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_PVAT_UART2 = 0x2091062c;   // Output rate of the UBX-NAV-PVAT message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_PVAT_USB = 0x2091062d;     // Output rate of the UBX-NAV-PVAT message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_PVAT_SPI = 0x2091062e;     // Output rate of the UBX-NAV-PVAT message on port SPI
+```
 
 ### Step 4: Update u-blox_GNSS.h
 
