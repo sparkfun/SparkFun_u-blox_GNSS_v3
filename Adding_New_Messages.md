@@ -151,7 +151,9 @@ Take time to double-check that you have used the correct data width, signed/unsi
         packetUBXNAVPVAT->data.iTOW = extractLong(msg, 0);
         packetUBXNAVPVAT->data.version = extractByte(msg, 4);
         packetUBXNAVPVAT->data.valid.all = extractByte(msg, 5);
-        // ...
+
+...
+
         packetUBXNAVPVAT->data.errEllipseOrient = extractInt(msg, 98);
         packetUBXNAVPVAT->data.errEllipseMajor = extractLong(msg, 100);
         packetUBXNAVPVAT->data.errEllipseMinor = extractLong(msg, 104);
@@ -258,7 +260,7 @@ int32_t DevUBLOXGNSS::getMotionHeading(uint16_t maxWait)
 
 ### Step 7: Add an example
 
-Add a new example to demonstrate the use of teh message. This also helps to test your new code.
+Add a new example to demonstrate the use of the message. This also helps to test your new code.
 
 ### Step 8: Update keywords.txt
 
