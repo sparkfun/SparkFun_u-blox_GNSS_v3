@@ -99,7 +99,7 @@ jobs:
           libraries: |
             - source-path: ./
           sketch-paths: |
-            - examples/Example20_SendCustomCommand
+            - examples/Example1_PositionVelocityTime
           enable-warnings-report: true
           enable-deltas-report: true
           # verbose: true
