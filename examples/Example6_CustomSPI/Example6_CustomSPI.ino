@@ -33,6 +33,10 @@ SFE_UBLOX_GNSS_SPI myGNSS; // SFE_UBLOX_GNSS_SPI uses SPI. For I2C or Serial, se
 
 #define myCS 4 // Define the GPIO pin number for the SPI Chip Select. Change this if required
 
+#define mySPI SPI // Define which SPI port to use. Change this if required
+
+#define myClockSpeed 4000000 // Define what SPI clock speed to use. Change this if required
+
 void setup()
 {
   Serial.begin(115200);
@@ -43,7 +47,7 @@ void setup()
 
   //myGNSS.enableDebugging(); // Uncomment this line to enable helpful debug messages on Serial
 
-  while (myGNSS.begin(myCS) == false) //Connect to the u-blox module using SPI and myCS (defined above)
+  while (myGNSS.begin(mySPI, myCS, myClockSpeed) == false) //Connect to the u-blox module using the port, chip select pin and speed defined above
   {
     Serial.println(F("u-blox GNSS not detected. Retrying..."));
     delay (1000);
