@@ -310,6 +310,12 @@ public:
   bool setUSBOutput(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure USB port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
   bool setSPIOutput(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure SPI port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
 
+  bool setI2CInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure I2C port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+  bool setUART1Input(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Configure UART1 port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+  bool setUART2Input(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Configure UART2 port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+  bool setUSBInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure USB port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+  bool setSPIInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure SPI port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+
   void setNMEAOutputPort(Stream &nmeaOutputPort);                                                                       // Sets the internal variable for the port to direct NMEA characters to
   void setOutputPort(Stream &outputPort);                                                                               // Sets the internal variable for the port to direct ALL characters to
 

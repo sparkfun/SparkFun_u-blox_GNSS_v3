@@ -6541,6 +6541,58 @@ bool DevUBLOXGNSS::setSPIOutput(uint8_t comSettings, uint8_t layer, uint16_t max
   return result;
 }
 
+// Configure a port to input UBX, NMEA, RTCM3, SPARTN or a combination thereof
+bool DevUBLOXGNSS::setI2CInput(uint8_t comSettings, uint8_t layer, uint16_t maxWait)
+{
+  bool result = newCfgValset(layer);
+  result &= addCfgValset8(UBLOX_CFG_I2CINPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
+  result &= addCfgValset8(UBLOX_CFG_I2CINPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
+  result &= addCfgValset8(UBLOX_CFG_I2CINPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1);
+  result &= addCfgValset8(UBLOX_CFG_I2CINPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1);
+  result &= sendCfgValset(maxWait);
+  return result;
+}
+bool DevUBLOXGNSS::setUART1Input(uint8_t comSettings, uint8_t layer, uint16_t maxWait)
+{
+  bool result = newCfgValset(layer);
+  result &= addCfgValset8(UBLOX_CFG_UART1INPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
+  result &= addCfgValset8(UBLOX_CFG_UART1INPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
+  result &= addCfgValset8(UBLOX_CFG_UART1INPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1);
+  result &= addCfgValset8(UBLOX_CFG_UART1INPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1);
+  result &= sendCfgValset(maxWait);
+  return result;
+}
+bool DevUBLOXGNSS::setUART2Input(uint8_t comSettings, uint8_t layer, uint16_t maxWait)
+{
+  bool result = newCfgValset(layer);
+  result &= addCfgValset8(UBLOX_CFG_UART2INPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
+  result &= addCfgValset8(UBLOX_CFG_UART2INPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
+  result &= addCfgValset8(UBLOX_CFG_UART2INPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1);
+  result &= addCfgValset8(UBLOX_CFG_UART2INPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1);
+  result &= sendCfgValset(maxWait);
+  return result;
+}
+bool DevUBLOXGNSS::setUSBInput(uint8_t comSettings, uint8_t layer, uint16_t maxWait)
+{
+  bool result = newCfgValset(layer);
+  result &= addCfgValset8(UBLOX_CFG_USBINPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
+  result &= addCfgValset8(UBLOX_CFG_USBINPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
+  result &= addCfgValset8(UBLOX_CFG_USBINPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1);
+  result &= addCfgValset8(UBLOX_CFG_USBINPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1);
+  result &= sendCfgValset(maxWait);
+  return result;
+}
+bool DevUBLOXGNSS::setSPIInput(uint8_t comSettings, uint8_t layer, uint16_t maxWait)
+{
+  bool result = newCfgValset(layer);
+  result &= addCfgValset8(UBLOX_CFG_SPIINPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
+  result &= addCfgValset8(UBLOX_CFG_SPIINPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
+  result &= addCfgValset8(UBLOX_CFG_SPIINPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1);
+  result &= addCfgValset8(UBLOX_CFG_SPIINPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1);
+  result &= sendCfgValset(maxWait);
+  return result;
+}
+
 // Want to see the NMEA messages on the Serial port? Here's how
 void DevUBLOXGNSS::setNMEAOutputPort(Stream &nmeaOutputPort)
 {
