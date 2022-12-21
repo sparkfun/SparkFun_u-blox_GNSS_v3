@@ -95,6 +95,8 @@ public:
   ~DevUBLOXGNSS(void);
 
   // New in v3.0: hardware interface is abstracted
+  bool isConnected(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+protected:
   enum commTypes
   {
     COMM_TYPE_I2C = 0,
@@ -102,7 +104,6 @@ public:
     COMM_TYPE_SPI
   } _commType = COMM_TYPE_I2C; // Controls which port we look to for incoming bytes
   bool init(uint16_t maxWait, bool assumeSuccess);
-  bool isConnected(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
   void setCommunicationBus(SparkFun_UBLOX_GNSS::GNSSDeviceBus &theBus);
   // For I2C, ping the _address
   // Not Applicable for SPI and Serial
@@ -127,7 +128,6 @@ public:
   uint8_t readBytes(uint8_t *data, uint8_t length);
   // Flag to indicate if we are connected to UART1 or UART2
   // Needed to select the correct config items when enabling a periodic message
-private:
   bool _UART2 = false; // Default to UART1
 public:
   void connectedToUART2(bool connected = true) { _UART2 = connected; }
@@ -309,6 +309,7 @@ public:
   bool setUART2Output(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Configure UART2 port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
   bool setUSBOutput(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure USB port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
   bool setSPIOutput(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure SPI port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+
   void setNMEAOutputPort(Stream &nmeaOutputPort);                                                                       // Sets the internal variable for the port to direct NMEA characters to
   void setOutputPort(Stream &outputPort);                                                                               // Sets the internal variable for the port to direct ALL characters to
 

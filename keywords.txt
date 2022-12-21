@@ -81,18 +81,21 @@ NMEA_ZDA_data_t	KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 
+begin	KEYWORD2
+
+connectedToUART2	KEYWORD2
+
 setPacketCfgPayloadSize	KEYWORD2
 getPacketCfgSpaceRemaining	KEYWORD2
-begin	KEYWORD2
 end	KEYWORD2
 setI2CpollingWait	KEYWORD2
 setSPIpollingWait	KEYWORD2
 setI2CTransactionSize	KEYWORD2
 getI2CTransactionSize	KEYWORD2
-setI2cStopRestart	KEYWORD2
-getI2cStopRestart	KEYWORD2
 setSpiTransactionSize   KEYWORD2
 getSpiTransactionSize   KEYWORD2
+setSpiBufferSize	KEYWORD2
+getSpiBufferSize	KEYWORD2
 setMaxNMEAByteCount   KEYWORD2
 getMaxNMEAByteCount   KEYWORD2
 isConnected	KEYWORD2
@@ -107,6 +110,7 @@ checkUblox	KEYWORD2
 checkUbloxI2C	KEYWORD2
 checkUbloxSerial	KEYWORD2
 checkUbloxSPI	KEYWORD2
+processSpiBuffer	KEYWORD2
 
 process	KEYWORD2
 processNMEA	KEYWORD2
@@ -117,6 +121,10 @@ processUBXpacket	KEYWORD2
 
 calcChecksum	KEYWORD2
 sendCommand	KEYWORD2
+sendI2cCommand	KEYWORD2
+sendSerialCommand	KEYWORD2
+sendSpiCommand	KEYWORD2
+spiTransfer	KEYWORD2
 printPacket	KEYWORD2
 
 checkCallbacks	KEYWORD2
@@ -138,39 +146,26 @@ getMaxFileBufferAvail	KEYWORD2
 clearFileBuffer	KEYWORD2
 clearMaxFileBufferAvail	KEYWORD2
 
-getPortSettings	KEYWORD2
-setPortOutput	KEYWORD2
-setPortInput	KEYWORD2
-
-setI2CAddress	KEYWORD2
-setSerialRate	KEYWORD2
-
 setI2COutput	KEYWORD2
 setUART1Output	KEYWORD2
 setUART2Output	KEYWORD2
 setUSBOutput	KEYWORD2
 setSPIOutput	KEYWORD2
+
 setNMEAOutputPort	KEYWORD2
 setOutputPort	KEYWORD2
 
 factoryReset	KEYWORD2
+factoryDefault	KEYWORD2
 hardReset	KEYWORD2
 softwareResetGNSSOnly	KEYWORD2
 softwareEnableGNSS	KEYWORD2
-factoryDefault	KEYWORD2
+cfgRst	KEYWORD2
 
 saveConfiguration	KEYWORD2
 saveConfigSelective	KEYWORD2
+cfgCfg	KEYWORD2
 
-configureMessage	KEYWORD2
-enableMessage	KEYWORD2
-disableMessage	KEYWORD2
-enableNMEAMessage	KEYWORD2
-disableNMEAMessage	KEYWORD2
-enableRTCMmessage	KEYWORD2
-disableRTCMmessage	KEYWORD2
-
-getSurveyMode	KEYWORD2
 setSurveyMode	KEYWORD2
 setSurveyModeFull	KEYWORD2
 enableSurveyMode	KEYWORD2
@@ -185,11 +180,8 @@ getProtocolVersion	KEYWORD2
 
 addGeofence	KEYWORD2
 clearGeofences	KEYWORD2
-clearAntPIO	KEYWORD2
 getGeofenceState	KEYWORD2
 
-powerSaveMode	KEYWORD2
-getPowerSaveMode	KEYWORD2
 powerOff	KEYWORD2
 powerOffWithInterrupt	KEYWORD2
 
@@ -200,17 +192,9 @@ resetOdometer	KEYWORD2
 
 enableGNSS	KEYWORD2
 isGNSSenabled	KEYWORD2
+getEnableGNSSConfigKey	KEYWORD2
 
 resetIMUalignment	KEYWORD2
-
-getESFAutoAlignment	KEYWORD2
-setESFAutoAlignment	KEYWORD2
-
-getTimePulseParameters	KEYWORD2
-setTimePulseParameters	KEYWORD2
-
-getJammingConfiguration	KEYWORD2
-setJammingConfiguration	KEYWORD2
 
 getRFinformation	KEYWORD2
 
@@ -226,22 +210,33 @@ setAopCfg	KEYWORD2
 setDynamicSPARTNKey	KEYWORD2
 setDynamicSPARTNKeys	KEYWORD2
 
-createKey	KEYWORD2
-getVal	KEYWORD2
 getVal8	KEYWORD2
 getVal16	KEYWORD2
 getVal32	KEYWORD2
 getVal64	KEYWORD2
-setVal	KEYWORD2
+
+newCfgValget	KEYWORD2
+addCfgValgetN	KEYWORD2
+addCfgValget8	KEYWORD2
+addCfgValget16	KEYWORD2
+addCfgValget32	KEYWORD2
+addCfgValget64	KEYWORD2
+sendCfgValget	KEYWORD2
+getNumGetCfgKeys	KEYWORD2
+getLenCfgValGetResponse	KEYWORD2
+
+setValN	KEYWORD2
 setVal8	KEYWORD2
 setVal16	KEYWORD2
 setVal32	KEYWORD2
 setVal64	KEYWORD2
+
 newCfgValset	KEYWORD2
 newCfgValset8	KEYWORD2
 newCfgValset16	KEYWORD2
 newCfgValset32	KEYWORD2
 newCfgValset64	KEYWORD2
+addCfgValsetN	KEYWORD2
 addCfgValset8	KEYWORD2
 addCfgValset16	KEYWORD2
 addCfgValset32	KEYWORD2
@@ -660,31 +655,23 @@ setMainTalkerID	KEYWORD2
 setHighPrecisionMode	KEYWORD2
 
 getLatestNMEAGPGGA	KEYWORD2
-setNMEAGPGGAcallback	KEYWORD2
 setNMEAGPGGAcallbackPtr	KEYWORD2
 getLatestNMEAGNGGA	KEYWORD2
-setNMEAGNGGAcallback	KEYWORD2
 setNMEAGNGGAcallbackPtr	KEYWORD2
 
 getLatestNMEAGPVTG	KEYWORD2
-setNMEAGPVTGcallback	KEYWORD2
 setNMEAGPVTGcallbackPtr	KEYWORD2
 getLatestNMEAGNVTG	KEYWORD2
-setNMEAGNVTGcallback	KEYWORD2
 setNMEAGNVTGcallbackPtr	KEYWORD2
 
 getLatestNMEAGPRMC	KEYWORD2
-setNMEAGPRMCcallback	KEYWORD2
 setNMEAGPRMCcallbackPtr	KEYWORD2
 getLatestNMEAGNRMC	KEYWORD2
-setNMEAGNRMCcallback	KEYWORD2
 setNMEAGNRMCcallbackPtr	KEYWORD2
 
 getLatestNMEAGPZDA	KEYWORD2
-setNMEAGPZDAcallback	KEYWORD2
 setNMEAGPZDAcallbackPtr	KEYWORD2
 getLatestNMEAGNZDA	KEYWORD2
-setNMEAGNZDAcallback	KEYWORD2
 setNMEAGNZDAcallbackPtr	KEYWORD2
 
 extractLong	KEYWORD2
