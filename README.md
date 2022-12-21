@@ -36,7 +36,7 @@ This library is the new and improved version of the very popular SparkFun u-blox
   * ```pushAssistNowData``` is also fully supported on SPI
 * The hardware interface has been abstracted:
   * All hardware communication is performed through ```class GNSSDeviceBus```
-  * This makes it _much_ easier to re-use this library on other hardware platforms. Only ```sfe_bus.h``` and ```sfe_bus-cpp``` need to be updated
+  * This makes it _much_ easier to re-use this library on other hardware platforms. Only ```sfe_bus.h``` and ```sfe_bus.cpp``` need to be updated
 
 ## Migrating to v3
 
