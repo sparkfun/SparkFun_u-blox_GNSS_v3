@@ -2,11 +2,14 @@
   Use the NEO-D9S L-Band receiver to provide corrections to a ZED-F9x via UBX-RXM-PMP messages
   By: SparkFun Electronics / Paul Clark
   Based on original code by: u-blox AG / Michael Ammann
-  Date: February 7th, 2022
-  License: MIT. See license file for more information but you can
-  basically do whatever you want with this code.
+  v3 updates: Decembe 22nd, 2022
+  License: MIT. See license file for more information.
 
   This example shows how to obtain SPARTN correction data from a NEO-D9S L-Band receiver and push it over I2C to a ZED-F9x.
+
+  If you are using the SparkFun Combo Board (SPX-20167), the correction data is transferred from the NEO to the ZED via UART2.
+  You don't need to push it over I2C. Doing so just gives the ZED twice as many correction messages.
+  Uncomment the "#define noPush" below to disable the I2C push.
 
   This is a proof of concept to show how the UBX-RXM-PMP corrections control the accuracy.
 
@@ -24,6 +27,8 @@
   If you don't have a platform with a Qwiic connection use the SparkFun Qwiic Breadboard Jumper (https://www.sparkfun.com/products/14425)
   Open the serial monitor at 115200 baud to see the output
 */
+
+//#define noPush // Uncomment this line to disable pushing the correction data over I2C. Useful for the combo board which uses UART2 instead.
 
 #include "secrets.h" // <- Copy and paste the Current Key and Next Key into secrets.h
 
@@ -51,12 +56,22 @@ void pushRXMPMP(UBX_RXM_PMP_message_data_t *pmpData)
   uint16_t payloadLen = ((uint16_t)pmpData->lengthMSB << 8) | (uint16_t)pmpData->lengthLSB;
   Serial.print(F("New RXM-PMP data received. Message payload length is "));
   Serial.print(payloadLen);
+
+#ifndef noPush
+
   Serial.println(F(" Bytes. Pushing it to the GNSS..."));
   
   //Push the PMP data to the GNSS
   //The payload length could be variable, so we need to push the header and payload, then checksum
   myGNSS.pushRawData(&pmpData->sync1, (size_t)payloadLen + 6); // Push the sync chars, class, ID, length and payload
   myGNSS.pushRawData(&pmpData->checksumA, (size_t)2); // Push the checksum bytes
+
+#else
+
+  Serial.println(F(" Bytes."));
+
+#endif
+
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -203,22 +218,11 @@ void setup()
   Serial.println(F("u-blox GNSS module connected"));
 
   uint8_t ok = myGNSS.setI2COutput(COM_TYPE_UBX); //Turn off NMEA noise
-  Serial.println(OK(ok));
-
-  if (ok) ok = myGNSS.setI2CInput(COM_PORT_I2C, COM_TYPE_UBX | COM_TYPE_NMEA | COM_TYPE_SPARTN); //Be sure SPARTN input is enabled
-  Serial.println(OK(ok));
-
+  if (ok) ok = myGNSS.setI2CInput(COM_TYPE_UBX | COM_TYPE_NMEA | COM_TYPE_SPARTN); //Be sure SPARTN input is enabled
   if (ok) ok = myGNSS.setDGNSSConfiguration(SFE_UBLOX_DGNSS_MODE_FIXED); // Set the differential mode - ambiguities are fixed whenever possible
-  Serial.println(OK(ok));
-
   if (ok) ok = myGNSS.setNavigationFrequency(1); //Set output in Hz.
-  Serial.println(OK(ok));
-  
   if (ok) ok = myGNSS.setVal8(UBLOX_CFG_SPARTN_USE_SOURCE, 1); // use LBAND PMP message
-  Serial.println(OK(ok));
-
   if (ok) ok = myGNSS.setVal8(UBLOX_CFG_MSGOUT_UBX_RXM_COR_I2C, 1); // Enable UBX-RXM-COR messages on I2C
-  Serial.println(OK(ok));
   
   //Configure the SPARTN IP Dynamic Keys
   //"When the receiver boots, the host should send 'current' and 'next' keys in one message." - Use setDynamicSPARTNKeys for this.
@@ -227,9 +231,8 @@ void setup()
   // The key can be provided in binary (uint8_t) format or in ASCII Hex (char) format, but in both cases keyLengthBytes _must_ represent the binary key length in bytes.
   if (ok) ok = myGNSS.setDynamicSPARTNKeys(currentKeyLengthBytes, currentKeyGPSWeek, currentKeyGPSToW, currentDynamicKey,
                                            nextKeyLengthBytes, nextKeyGPSWeek, nextKeyGPSToW, nextDynamicKey);
-  Serial.println(OK(ok));
 
-  //if (ok) ok = myGNSS.saveConfiguration(VAL_CFG_SUBSEC_IOPORT | VAL_CFG_SUBSEC_MSGCONF); //Optional: Save the ioPort and message settings to NVM
+  //if (ok) ok = myGNSS.saveConfiguration(VAL_CFG_SUBSEC_IOPORT | VAL_CFG_SUBSEC_MSGCONF); //Optional: Save the ioPort and message settings to NVM and BBR
   
   Serial.print(F("GNSS: configuration "));
   Serial.println(OK(ok));
