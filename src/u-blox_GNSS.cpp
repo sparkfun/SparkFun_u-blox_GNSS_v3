@@ -6782,11 +6782,7 @@ bool DevUBLOXGNSS::setStaticPosition(int32_t ecefXOrLat, int32_t ecefYOrLon, int
 // Set the DGNSS differential mode
 bool DevUBLOXGNSS::setDGNSSConfiguration(sfe_ublox_dgnss_mode_e dgnssMode, uint16_t maxWait)
 {
-  bool result = newCfgValset(VAL_LAYER_RAM);
-  result &= addCfgValset8(UBLOX_CFG_NAVHPG_DGNSSMODE, (uint8_t)dgnssMode);
-  result &= sendCfgValset(maxWait);
-
-  return result;
+  return setVal8(UBLOX_CFG_NAVHPG_DGNSSMODE, (uint8_t)dgnssMode, VAL_LAYER_RAM, maxWait);
 }
 
 // Module Protocol Version
