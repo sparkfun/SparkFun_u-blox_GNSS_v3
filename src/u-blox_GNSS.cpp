@@ -603,7 +603,7 @@ bool DevUBLOXGNSS::setPacketCfgPayloadSize(size_t payloadSize)
     else
       packetCfgPayloadSize = payloadSize;
 
-    if (packetCfgPayloadSize > spiBufferSize) // Warn the user if spiBuffer is now smaller than the packetCfg payload. Could result in lost data
+    if ((packetCfgPayloadSize + 8) > spiBufferSize) // Warn the user if spiBuffer is now smaller than the packetCfg payload. Could result in lost data
     {
       if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
         _debugSerial.println(F("setPacketCfgPayloadSize: packetCfgPayloadSize > spiBufferSize!"));
@@ -715,7 +715,7 @@ bool DevUBLOXGNSS::init(uint16_t maxWait, bool assumeSuccess)
     // Create the SPI buffer
     if (spiBuffer == nullptr) // Memory has not yet been allocated - so use new
     {
-      spiBuffer = new uint8_t[getSpiBufferSize()];
+      spiBuffer = new uint8_t[spiBufferSize];
     }
 
     if (spiBuffer == nullptr)
@@ -729,7 +729,7 @@ bool DevUBLOXGNSS::init(uint16_t maxWait, bool assumeSuccess)
     else
     {
       // Initialize/clear the SPI buffer - fill it with 0xFF as this is what is received from the UBLOX module if there's no data to be processed
-      for (uint8_t i = 0; i < getSpiBufferSize(); i++)
+      for (size_t i = 0; i < spiBufferSize; i++)
       {
         spiBuffer[i] = 0xFF;
       }
@@ -737,7 +737,7 @@ bool DevUBLOXGNSS::init(uint16_t maxWait, bool assumeSuccess)
       if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
       {
         _debugSerial.print(F("begin (SPI): spiBuffer size is "));
-        _debugSerial.println(getSpiBufferSize());
+        _debugSerial.println(spiBufferSize);
       }
       if ((packetCfgPayloadSize + 8) > spiBufferSize) // Warn the user if spiBuffer is now smaller than the packetCfg payload. Could result in lost data
       {
@@ -824,12 +824,12 @@ void DevUBLOXGNSS::setSpiTransactionSize(uint8_t transactionSize)
 {
   if (spiBuffer == nullptr)
   {
-    if (transactionSize < getI2CTransactionSize())
-      transactionSize = getI2CTransactionSize();
+    if (transactionSize < spiTransactionSize)
+      transactionSize = spiTransactionSize;
     spiTransactionSize = transactionSize;
 
-    if (spiBufferSize < transactionSize) // Ensure the buffer is at least spiTransactionSize
-      spiBufferSize = transactionSize;
+    if (spiBufferSize < spiTransactionSize) // Ensure the buffer is at least spiTransactionSize
+      spiBufferSize = spiTransactionSize;
 
   }
   else
@@ -855,8 +855,8 @@ void DevUBLOXGNSS::setSpiBufferSize(size_t bufferSize)
 {
   if (spiBuffer == nullptr)
   {
-    if (bufferSize < getI2CTransactionSize()) // Ensure the buffer is at least spiTransactionSize
-      bufferSize = getI2CTransactionSize();
+    if (bufferSize < spiTransactionSize) // Ensure the buffer is at least spiTransactionSize
+      bufferSize = spiTransactionSize;
     spiBufferSize = bufferSize;
   }
   else
@@ -864,7 +864,7 @@ void DevUBLOXGNSS::setSpiBufferSize(size_t bufferSize)
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
     if (_printDebug == true)
     {
-      _debugSerial.println(F("setSpiTransactionSize: you need to call setSpiTransactionSize _before_ begin!"));
+      _debugSerial.println(F("setSpiTransactionSize: you need to call setSpiBufferSize _before_ begin!"));
     }
 #endif
   }
@@ -4447,6 +4447,8 @@ sfe_ublox_status_e DevUBLOXGNSS::sendSpiCommand(ubxPacket *outgoingUBX)
       for (uint16_t i = 0; i < len; i++)
         spiTransfer(outgoingUBX->payload[bytesSent + i]);
 
+      bytesSent += len;
+
       endWriteReadByte();
     }
 
@@ -7740,7 +7742,7 @@ bool DevUBLOXGNSS::setValN(uint32_t key, uint8_t *value, uint8_t N, uint8_t laye
 {
   packetCfg.cls = UBX_CLASS_CFG;
   packetCfg.id = UBX_CFG_VALSET;
-  packetCfg.len = 4 + 4 + (N / 8); // 4 byte header, 4 byte key ID, 2 bytes of value
+  packetCfg.len = 4 + 4 + (N / 8); // 4 byte header, 4 byte key ID, N/8 bytes of value
   packetCfg.startingSpot = 0;
 
   // Clear packet payload
