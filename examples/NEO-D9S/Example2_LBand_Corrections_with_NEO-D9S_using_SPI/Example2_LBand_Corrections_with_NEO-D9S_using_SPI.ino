@@ -37,8 +37,8 @@ SFE_UBLOX_GNSS_SPI myLBand; // NEO-D9S
 #define gnssCS 4        // Define the GPIO pin for the GNSS (ZED-F9P) Chip Select. Change this as required
 #define lbandCS 17      // Define the GPIO pin for the L-Band (NEO-D9S) Chip Select. Change this as required
 
-//const uint32_t myLBandFreq = 1556290000; // Uncomment this line to use the US SPARTN 1.8 service
-const uint32_t myLBandFreq = 1545260000; // Uncomment this line to use the EU SPARTN 1.8 service
+const uint32_t myLBandFreq = 1556290000; // Uncomment this line to use the US SPARTN 1.8 service
+//const uint32_t myLBandFreq = 1545260000; // Uncomment this line to use the EU SPARTN 1.8 service
 
 #define OK(ok) (ok ? F("  ->  OK") : F("  ->  ERROR!")) // Convert bool into OK/ERROR
 
