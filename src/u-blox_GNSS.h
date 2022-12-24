@@ -301,20 +301,20 @@ public:
   // Specific commands
 
   // Port configurations
-  bool setI2CAddress(uint8_t deviceAddress, uint8_t layer = VAL_LAYER_ALL, uint16_t maxTime = kUBLOXGNSSDefaultMaxWait);                                // Changes the I2C address of the u-blox module
-  bool setSerialRate(uint32_t baudrate, uint8_t uartPort = COM_PORT_UART1, uint8_t layer = VAL_LAYER_ALL, uint16_t maxTime = kUBLOXGNSSDefaultMaxWait); // Changes the serial baud rate of the u-blox module, uartPort should be COM_PORT_UART1/2
+  bool setI2CAddress(uint8_t deviceAddress, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxTime = kUBLOXGNSSDefaultMaxWait);                                // Changes the I2C address of the u-blox module
+  bool setSerialRate(uint32_t baudrate, uint8_t uartPort = COM_PORT_UART1, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxTime = kUBLOXGNSSDefaultMaxWait); // Changes the serial baud rate of the u-blox module, uartPort should be COM_PORT_UART1/2
 
-  bool setI2COutput(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure I2C port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
-  bool setUART1Output(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Configure UART1 port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
-  bool setUART2Output(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Configure UART2 port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
-  bool setUSBOutput(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure USB port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
-  bool setSPIOutput(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure SPI port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+  bool setI2COutput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure I2C port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+  bool setUART1Output(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Configure UART1 port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+  bool setUART2Output(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Configure UART2 port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+  bool setUSBOutput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure USB port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+  bool setSPIOutput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure SPI port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
 
-  bool setI2CInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure I2C port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
-  bool setUART1Input(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Configure UART1 port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
-  bool setUART2Input(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Configure UART2 port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
-  bool setUSBInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure USB port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
-  bool setSPIInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure SPI port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+  bool setI2CInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure I2C port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+  bool setUART1Input(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Configure UART1 port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+  bool setUART2Input(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Configure UART2 port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+  bool setUSBInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure USB port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
+  bool setSPIInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure SPI port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
 
   void setNMEAOutputPort(Stream &nmeaOutputPort);                                                                       // Sets the internal variable for the port to direct NMEA characters to
   void setOutputPort(Stream &outputPort);                                                                               // Sets the internal variable for the port to direct ALL characters to
@@ -444,13 +444,13 @@ public:
   uint8_t getNumGetCfgKeys() { return _numGetCfgKeys; }                            // Return the number of keys in the VALGET packet
   uint16_t getLenCfgValGetResponse() { return _lenCfgValGetResponse; }             // Return the expected length of the VALGET response
 
-  bool setValN(uint32_t key, uint8_t *value, uint8_t N, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Sets the N-bit value at a given group/id/size location
-  bool setVal8(uint32_t key, uint8_t value, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);             // Sets the 8-bit value at a given group/id/size location
-  bool setVal16(uint32_t key, uint16_t value, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 16-bit value at a given group/id/size location
-  bool setVal32(uint32_t key, uint32_t value, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 32-bit value at a given group/id/size location
-  bool setVal64(uint32_t key, uint64_t value, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 64-bit value at a given group/id/size location
+  bool setValN(uint32_t key, uint8_t *value, uint8_t N, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Sets the N-bit value at a given group/id/size location
+  bool setVal8(uint32_t key, uint8_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);             // Sets the 8-bit value at a given group/id/size location
+  bool setVal16(uint32_t key, uint16_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 16-bit value at a given group/id/size location
+  bool setVal32(uint32_t key, uint32_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 32-bit value at a given group/id/size location
+  bool setVal64(uint32_t key, uint64_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 64-bit value at a given group/id/size location
 
-  bool newCfgValset(uint8_t layer = VAL_LAYER_ALL);                                                             // Create a new, empty UBX-CFG-VALSET. Add entries with addCfgValset8/16/32/64
+  bool newCfgValset(uint8_t layer = VAL_LAYER_RAM_BBR);                                                             // Create a new, empty UBX-CFG-VALSET. Add entries with addCfgValset8/16/32/64
   bool addCfgValsetN(uint32_t key, uint8_t *value, uint8_t N);                                                  // Add a new key and N-bit value to an existing UBX-CFG-VALSET ubxPacket
   bool addCfgValset8(uint32_t key, uint8_t value);                                                              // Add a new key and 8-bit value to an existing UBX-CFG-VALSET ubxPacket
   bool addCfgValset16(uint32_t key, uint16_t value);                                                            // Add a new key and 16-bit value to an existing UBX-CFG-VALSET ubxPacket
@@ -462,10 +462,10 @@ public:
   void autoSendCfgValsetAtSpaceRemaining(size_t spaceRemaining) { _autoSendAtSpaceRemaining = spaceRemaining; } // Cause CFG_VALSET packets to be sent automatically when packetCfg has less than this many bytes available
 
   // Deprecated - only included for backward-compatibility. Use newCfgValset and sendCfgValset
-  bool newCfgValset8(uint32_t key, uint8_t value, uint8_t layer = VAL_LAYER_ALL);                  // Define a new UBX-CFG-VALSET with the given key and 8-bit value
-  bool newCfgValset16(uint32_t key, uint16_t value, uint8_t layer = VAL_LAYER_ALL);                // Define a new UBX-CFG-VALSET with the given key and 16-bit value
-  bool newCfgValset32(uint32_t key, uint32_t value, uint8_t layer = VAL_LAYER_ALL);                // Define a new UBX-CFG-VALSET with the given key and 32-bit value
-  bool newCfgValset64(uint32_t key, uint64_t value, uint8_t layer = VAL_LAYER_ALL);                // Define a new UBX-CFG-VALSET with the given key and 64-bit value
+  bool newCfgValset8(uint32_t key, uint8_t value, uint8_t layer = VAL_LAYER_RAM_BBR);                  // Define a new UBX-CFG-VALSET with the given key and 8-bit value
+  bool newCfgValset16(uint32_t key, uint16_t value, uint8_t layer = VAL_LAYER_RAM_BBR);                // Define a new UBX-CFG-VALSET with the given key and 16-bit value
+  bool newCfgValset32(uint32_t key, uint32_t value, uint8_t layer = VAL_LAYER_RAM_BBR);                // Define a new UBX-CFG-VALSET with the given key and 32-bit value
+  bool newCfgValset64(uint32_t key, uint64_t value, uint8_t layer = VAL_LAYER_RAM_BBR);                // Define a new UBX-CFG-VALSET with the given key and 64-bit value
   bool sendCfgValset8(uint32_t key, uint8_t value, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Add the final key and 8-bit value to an existing UBX-CFG-VALSET ubxPacket and send it
   bool sendCfgValset16(uint32_t key, uint16_t value, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Add the final key and 16-bit value to an existing UBX-CFG-VALSET ubxPacket and send it
   bool sendCfgValset32(uint32_t key, uint32_t value, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Add the final key and 32-bit value to an existing UBX-CFG-VALSET ubxPacket and send it
@@ -788,14 +788,14 @@ public:
 
   // Helper functions for CFG RATE
 
-  bool setNavigationFrequency(uint8_t navFreq, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);  // Set the number of nav solutions sent per second
-  bool getNavigationFrequency(uint8_t *navFreq, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the number of nav solutions sent per second currently being output by module
+  bool setNavigationFrequency(uint8_t navFreq, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);  // Set the number of nav solutions sent per second
+  bool getNavigationFrequency(uint8_t *navFreq, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the number of nav solutions sent per second currently being output by module
   uint8_t getNavigationFrequency(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                               // Unsafe overload
-  bool setMeasurementRate(uint16_t rate, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);        // Set the elapsed time between GNSS measurements in milliseconds, which defines the rate
-  bool getMeasurementRate(uint16_t *measRate, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Return the elapsed time between GNSS measurements in milliseconds
+  bool setMeasurementRate(uint16_t rate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);        // Set the elapsed time between GNSS measurements in milliseconds, which defines the rate
+  bool getMeasurementRate(uint16_t *measRate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Return the elapsed time between GNSS measurements in milliseconds
   uint16_t getMeasurementRate(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                  // Unsafe overload
-  bool setNavigationRate(uint16_t rate, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);         // Set the ratio between the number of measurements and the number of navigation solutions. Unit is cycles. Max is 127
-  bool getNavigationRate(uint16_t *navRate, uint8_t layer = VAL_LAYER_ALL, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);     // Return the ratio between the number of measurements and the number of navigation solutions. Unit is cycles
+  bool setNavigationRate(uint16_t rate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);         // Set the ratio between the number of measurements and the number of navigation solutions. Unit is cycles. Max is 127
+  bool getNavigationRate(uint16_t *navRate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);     // Return the ratio between the number of measurements and the number of navigation solutions. Unit is cycles
   uint16_t getNavigationRate(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                   // Unsafe overload
 
   // Helper functions for DOP

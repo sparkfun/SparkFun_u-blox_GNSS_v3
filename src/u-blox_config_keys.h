@@ -65,6 +65,7 @@ const uint8_t VAL_SIZE_64 = 0x05; // Eight bytes
 const uint8_t VAL_LAYER_RAM = (1 << 0);
 const uint8_t VAL_LAYER_BBR = (1 << 1);
 const uint8_t VAL_LAYER_FLASH = (1 << 2);
+const uint8_t VAL_LAYER_RAM_BBR = VAL_LAYER_RAM | VAL_LAYER_BBR;
 const uint8_t VAL_LAYER_ALL = VAL_LAYER_RAM | VAL_LAYER_BBR | VAL_LAYER_FLASH; // Not valid with getVal()
 
 // Below are various Groups, IDs, and sizes for various settings

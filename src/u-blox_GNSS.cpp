@@ -6502,8 +6502,8 @@ bool DevUBLOXGNSS::setI2COutput(uint8_t comSettings, uint8_t layer, uint16_t max
   bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_I2COUTPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
   result &= addCfgValset8(UBLOX_CFG_I2COUTPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
-  result &= addCfgValset8(UBLOX_CFG_I2COUTPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1);
   result &= sendCfgValset(maxWait);
+  result |= setVal8(UBLOX_CFG_I2COUTPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support RTCM3
   return result;
 }
 bool DevUBLOXGNSS::setUART1Output(uint8_t comSettings, uint8_t layer, uint16_t maxWait)
@@ -6511,8 +6511,8 @@ bool DevUBLOXGNSS::setUART1Output(uint8_t comSettings, uint8_t layer, uint16_t m
   bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_UART1OUTPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
   result &= addCfgValset8(UBLOX_CFG_UART1OUTPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
-  result &= addCfgValset8(UBLOX_CFG_UART1OUTPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1);
   result &= sendCfgValset(maxWait);
+  result |= setVal8(UBLOX_CFG_UART1OUTPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support RTCM3
   return result;
 }
 bool DevUBLOXGNSS::setUART2Output(uint8_t comSettings, uint8_t layer, uint16_t maxWait)
@@ -6520,8 +6520,8 @@ bool DevUBLOXGNSS::setUART2Output(uint8_t comSettings, uint8_t layer, uint16_t m
   bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_UART2OUTPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
   result &= addCfgValset8(UBLOX_CFG_UART2OUTPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
-  result &= addCfgValset8(UBLOX_CFG_UART2OUTPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1);
   result &= sendCfgValset(maxWait);
+  result |= setVal8(UBLOX_CFG_UART2OUTPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support RTCM3
   return result;
 }
 bool DevUBLOXGNSS::setUSBOutput(uint8_t comSettings, uint8_t layer, uint16_t maxWait)
@@ -6529,8 +6529,8 @@ bool DevUBLOXGNSS::setUSBOutput(uint8_t comSettings, uint8_t layer, uint16_t max
   bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_USBOUTPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
   result &= addCfgValset8(UBLOX_CFG_USBOUTPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
-  result &= addCfgValset8(UBLOX_CFG_USBOUTPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1);
   result &= sendCfgValset(maxWait);
+  result |= setVal8(UBLOX_CFG_USBOUTPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support RTCM3
   return result;
 }
 bool DevUBLOXGNSS::setSPIOutput(uint8_t comSettings, uint8_t layer, uint16_t maxWait)
@@ -6538,8 +6538,8 @@ bool DevUBLOXGNSS::setSPIOutput(uint8_t comSettings, uint8_t layer, uint16_t max
   bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_SPIOUTPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
   result &= addCfgValset8(UBLOX_CFG_SPIOUTPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
-  result &= addCfgValset8(UBLOX_CFG_SPIOUTPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1);
   result &= sendCfgValset(maxWait);
+  result |= setVal8(UBLOX_CFG_SPIOUTPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support RTCM3
   return result;
 }
 
@@ -6549,9 +6549,9 @@ bool DevUBLOXGNSS::setI2CInput(uint8_t comSettings, uint8_t layer, uint16_t maxW
   bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_I2CINPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
   result &= addCfgValset8(UBLOX_CFG_I2CINPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
-  result &= addCfgValset8(UBLOX_CFG_I2CINPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1);
-  result &= addCfgValset8(UBLOX_CFG_I2CINPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1);
   result &= sendCfgValset(maxWait);
+  result |= setVal8(UBLOX_CFG_I2CINPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support RTCM3
+  result |= setVal8(UBLOX_CFG_I2CINPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support SPARTN
   return result;
 }
 bool DevUBLOXGNSS::setUART1Input(uint8_t comSettings, uint8_t layer, uint16_t maxWait)
@@ -6559,9 +6559,9 @@ bool DevUBLOXGNSS::setUART1Input(uint8_t comSettings, uint8_t layer, uint16_t ma
   bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_UART1INPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
   result &= addCfgValset8(UBLOX_CFG_UART1INPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
-  result &= addCfgValset8(UBLOX_CFG_UART1INPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1);
-  result &= addCfgValset8(UBLOX_CFG_UART1INPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1);
   result &= sendCfgValset(maxWait);
+  result |= setVal8(UBLOX_CFG_UART1INPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support RTCM3
+  result |= setVal8(UBLOX_CFG_UART1INPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support SPARTN
   return result;
 }
 bool DevUBLOXGNSS::setUART2Input(uint8_t comSettings, uint8_t layer, uint16_t maxWait)
@@ -6569,9 +6569,9 @@ bool DevUBLOXGNSS::setUART2Input(uint8_t comSettings, uint8_t layer, uint16_t ma
   bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_UART2INPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
   result &= addCfgValset8(UBLOX_CFG_UART2INPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
-  result &= addCfgValset8(UBLOX_CFG_UART2INPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1);
-  result &= addCfgValset8(UBLOX_CFG_UART2INPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1);
   result &= sendCfgValset(maxWait);
+  result |= setVal8(UBLOX_CFG_UART2INPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support RTCM3
+  result |= setVal8(UBLOX_CFG_UART2INPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support SPARTN
   return result;
 }
 bool DevUBLOXGNSS::setUSBInput(uint8_t comSettings, uint8_t layer, uint16_t maxWait)
@@ -6579,9 +6579,9 @@ bool DevUBLOXGNSS::setUSBInput(uint8_t comSettings, uint8_t layer, uint16_t maxW
   bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_USBINPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
   result &= addCfgValset8(UBLOX_CFG_USBINPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
-  result &= addCfgValset8(UBLOX_CFG_USBINPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1);
-  result &= addCfgValset8(UBLOX_CFG_USBINPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1);
   result &= sendCfgValset(maxWait);
+  result |= setVal8(UBLOX_CFG_USBINPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support RTCM3
+  result |= setVal8(UBLOX_CFG_USBINPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support SPARTN
   return result;
 }
 bool DevUBLOXGNSS::setSPIInput(uint8_t comSettings, uint8_t layer, uint16_t maxWait)
@@ -6589,9 +6589,9 @@ bool DevUBLOXGNSS::setSPIInput(uint8_t comSettings, uint8_t layer, uint16_t maxW
   bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_SPIINPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
   result &= addCfgValset8(UBLOX_CFG_SPIINPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
-  result &= addCfgValset8(UBLOX_CFG_SPIINPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1);
-  result &= addCfgValset8(UBLOX_CFG_SPIINPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1);
   result &= sendCfgValset(maxWait);
+  result |= setVal8(UBLOX_CFG_SPIINPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support RTCM3
+  result |= setVal8(UBLOX_CFG_SPIINPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support SPARTN
   return result;
 }
 
@@ -7139,7 +7139,7 @@ bool DevUBLOXGNSS::powerOffWithInterrupt(uint32_t durationInMs, uint32_t wakeupS
 // BIKE is supported in protocol versions 19.2
 bool DevUBLOXGNSS::setDynamicModel(dynModel newDynamicModel, uint16_t maxWait)
 {
-  return setVal8(UBLOX_CFG_NAVSPG_DYNMODEL, (uint8_t)newDynamicModel, VAL_LAYER_ALL, maxWait);
+  return setVal8(UBLOX_CFG_NAVSPG_DYNMODEL, (uint8_t)newDynamicModel, VAL_LAYER_RAM_BBR, maxWait);
 }
 
 // Get the dynamic platform model using UBX-CFG-NAV5
@@ -7187,7 +7187,7 @@ uint32_t getEnableGNSSConfigKey(sfe_ublox_gnss_ids_e id)
 bool DevUBLOXGNSS::enableGNSS(bool enable, sfe_ublox_gnss_ids_e id, uint16_t maxWait)
 {
   uint32_t key = getEnableGNSSConfigKey(id);
-  return (setVal8(key, enable ? 1 : 0, VAL_LAYER_ALL, maxWait));
+  return (setVal8(key, enable ? 1 : 0, VAL_LAYER_RAM_BBR, maxWait));
 }
 
 // Check if an individual GNSS system is enabled
@@ -8213,7 +8213,7 @@ bool DevUBLOXGNSS::setAutoNAVPOSECEFrate(uint8_t rate, bool implicitUpdate, uint
       key = UBLOX_CFG_MSGOUT_UBX_NAV_POSECEF_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVPOSECEF->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -8383,7 +8383,7 @@ bool DevUBLOXGNSS::setAutoNAVSTATUSrate(uint8_t rate, bool implicitUpdate, uint1
       key = UBLOX_CFG_MSGOUT_UBX_NAV_STATUS_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVSTATUS->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -8550,7 +8550,7 @@ bool DevUBLOXGNSS::setAutoDOPrate(uint8_t rate, bool implicitUpdate, uint16_t ma
       key = UBLOX_CFG_MSGOUT_UBX_NAV_DOP_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVDOP->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -8718,7 +8718,7 @@ bool DevUBLOXGNSS::setAutoNAVEOErate(uint8_t rate, bool implicitUpdate, uint16_t
       key = UBLOX_CFG_MSGOUT_UBX_NAV_EOE_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVEOE->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -8894,7 +8894,7 @@ bool DevUBLOXGNSS::setAutoNAVATTrate(uint8_t rate, bool implicitUpdate, uint16_t
       key = UBLOX_CFG_MSGOUT_UBX_NAV_ATT_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVATT->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -9063,7 +9063,7 @@ bool DevUBLOXGNSS::setAutoPVTrate(uint8_t rate, bool implicitUpdate, uint16_t ma
       key = UBLOX_CFG_MSGOUT_UBX_NAV_PVT_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVPVT->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -9235,7 +9235,7 @@ bool DevUBLOXGNSS::setAutoNAVODOrate(uint8_t rate, bool implicitUpdate, uint16_t
       key = UBLOX_CFG_MSGOUT_UBX_NAV_ODO_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVODO->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -9404,7 +9404,7 @@ bool DevUBLOXGNSS::setAutoNAVVELECEFrate(uint8_t rate, bool implicitUpdate, uint
       key = UBLOX_CFG_MSGOUT_UBX_NAV_VELECEF_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVVELECEF->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -9570,7 +9570,7 @@ bool DevUBLOXGNSS::setAutoNAVVELNEDrate(uint8_t rate, bool implicitUpdate, uint1
       key = UBLOX_CFG_MSGOUT_UBX_NAV_VELNED_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVVELNED->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -9739,7 +9739,7 @@ bool DevUBLOXGNSS::setAutoNAVHPPOSECEFrate(uint8_t rate, bool implicitUpdate, ui
       key = UBLOX_CFG_MSGOUT_UBX_NAV_HPPOSECEF_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVHPPOSECEF->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -9908,7 +9908,7 @@ bool DevUBLOXGNSS::setAutoHPPOSLLHrate(uint8_t rate, bool implicitUpdate, uint16
       key = UBLOX_CFG_MSGOUT_UBX_NAV_HPPOSLLH_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVHPPOSLLH->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -10077,7 +10077,7 @@ bool DevUBLOXGNSS::setAutoNAVPVATrate(uint8_t rate, bool implicitUpdate, uint16_
       key = UBLOX_CFG_MSGOUT_UBX_NAV_PVAT_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVPVAT->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -10246,7 +10246,7 @@ bool DevUBLOXGNSS::setAutoNAVTIMEUTCrate(uint8_t rate, bool implicitUpdate, uint
       key = UBLOX_CFG_MSGOUT_UBX_NAV_TIMEUTC_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVTIMEUTC->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -10415,7 +10415,7 @@ bool DevUBLOXGNSS::setAutoNAVCLOCKrate(uint8_t rate, bool implicitUpdate, uint16
       key = UBLOX_CFG_MSGOUT_UBX_NAV_CLOCK_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVCLOCK->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -10637,7 +10637,7 @@ bool DevUBLOXGNSS::setAutoNAVSVINrate(uint8_t rate, bool implicitUpdate, uint16_
       key = UBLOX_CFG_MSGOUT_UBX_NAV_SVIN_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVSVIN->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -10809,7 +10809,7 @@ bool DevUBLOXGNSS::setAutoNAVSATrate(uint8_t rate, bool implicitUpdate, uint16_t
       key = UBLOX_CFG_MSGOUT_UBX_NAV_SAT_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVSAT->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -10984,7 +10984,7 @@ bool DevUBLOXGNSS::setAutoRELPOSNEDrate(uint8_t rate, bool implicitUpdate, uint1
       key = UBLOX_CFG_MSGOUT_UBX_NAV_RELPOSNED_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVRELPOSNED->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -11145,7 +11145,7 @@ bool DevUBLOXGNSS::setAutoAOPSTATUSrate(uint8_t rate, bool implicitUpdate, uint1
   else if (_commType == COMM_TYPE_SERIAL)
     key = UBLOX_CFG_MSGOUT_UBX_NAV_AOPSTATUS_UART1; // Only supported on the M10 - no UART2
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXNAVAOPSTATUS->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -11481,7 +11481,7 @@ bool DevUBLOXGNSS::setAutoRXMSFRBXrate(uint8_t rate, bool implicitUpdate, uint16
       key = UBLOX_CFG_MSGOUT_UBX_RXM_SFRBX_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXRXMSFRBX->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -11650,7 +11650,7 @@ bool DevUBLOXGNSS::setAutoRXMRAWXrate(uint8_t rate, bool implicitUpdate, uint16_
       key = UBLOX_CFG_MSGOUT_UBX_RXM_RAWX_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXRXMRAWX->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -11819,7 +11819,7 @@ bool DevUBLOXGNSS::setAutoRXMMEASXrate(uint8_t rate, bool implicitUpdate, uint16
       key = UBLOX_CFG_MSGOUT_UBX_RXM_MEASX_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXRXMMEASX->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -11989,7 +11989,7 @@ bool DevUBLOXGNSS::setAutoTIMTM2rate(uint8_t rate, bool implicitUpdate, uint16_t
       key = UBLOX_CFG_MSGOUT_UBX_TIM_TM2_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXTIMTM2->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -12166,7 +12166,7 @@ bool DevUBLOXGNSS::setAutoESFALGrate(uint8_t rate, bool implicitUpdate, uint16_t
       key = UBLOX_CFG_MSGOUT_UBX_ESF_ALG_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXESFALG->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -12342,7 +12342,7 @@ bool DevUBLOXGNSS::setAutoESFSTATUSrate(uint8_t rate, bool implicitUpdate, uint1
       key = UBLOX_CFG_MSGOUT_UBX_ESF_STATUS_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXESFSTATUS->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -12519,7 +12519,7 @@ bool DevUBLOXGNSS::setAutoESFINSrate(uint8_t rate, bool implicitUpdate, uint16_t
       key = UBLOX_CFG_MSGOUT_UBX_ESF_INS_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXESFINS->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -12644,7 +12644,7 @@ bool DevUBLOXGNSS::setAutoESFMEASrate(uint8_t rate, bool implicitUpdate, uint16_
       key = UBLOX_CFG_MSGOUT_UBX_ESF_MEAS_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXESFMEAS->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -12763,7 +12763,7 @@ bool DevUBLOXGNSS::setAutoESFRAWrate(uint8_t rate, bool implicitUpdate, uint16_t
       key = UBLOX_CFG_MSGOUT_UBX_ESF_RAW_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_ALL, maxWait);
+  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
   if (ok)
   {
     packetUBXESFRAW->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -13383,13 +13383,13 @@ void DevUBLOXGNSS::logHNRPVT(bool enabled)
 // Set the mainTalkerId used by NMEA messages - allows all NMEA messages except GSV to be prefixed with GP instead of GN
 bool DevUBLOXGNSS::setMainTalkerID(sfe_ublox_talker_ids_e id, uint16_t maxWait)
 {
-  return (setVal8(UBLOX_CFG_NMEA_MAINTALKERID, (uint8_t)id, VAL_LAYER_ALL, maxWait));
+  return (setVal8(UBLOX_CFG_NMEA_MAINTALKERID, (uint8_t)id, VAL_LAYER_RAM_BBR, maxWait));
 }
 
 // Enable/Disable NMEA High Precision Mode - include extra decimal places in the Lat and Lon
 bool DevUBLOXGNSS::setHighPrecisionMode(bool enable, uint16_t maxWait)
 {
-  return (setVal8(UBLOX_CFG_NMEA_HIGHPREC, (uint8_t)enable, VAL_LAYER_ALL, maxWait));
+  return (setVal8(UBLOX_CFG_NMEA_HIGHPREC, (uint8_t)enable, VAL_LAYER_RAM_BBR, maxWait));
 }
 
 // Log selected NMEA messages to file buffer - if the messages are enabled and if the file buffer exists
