@@ -71,7 +71,10 @@ void printTIMTM2data(UBX_TIM_TM2_data_t *ubxDataStruct)
     Serial.print(ubxDataStruct->towMsF);
 
     Serial.print(F(" towSubMsF: ")); // Millisecond fraction of Time Of Week of falling edge in nanoseconds
-    Serial.println(ubxDataStruct->towSubMsF);
+    Serial.print(ubxDataStruct->towSubMsF);
+
+    Serial.print(F(" accEst: ")); // Accuracy estimate in nanoseconds
+    Serial.println(ubxDataStruct->accEst);
 
     dotsPrinted = 0; // Reset dotsPrinted
 }
