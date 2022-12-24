@@ -7346,7 +7346,8 @@ bool DevUBLOXGNSS::setAopCfg(uint8_t aopCfg, uint16_t aopOrbMaxErr, uint8_t laye
 {
   bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_ANA_USE_ANA, aopCfg);
-  result &= addCfgValset16(UBLOX_CFG_ANA_ORBMAXERR, aopOrbMaxErr);
+  if ((aopOrbMaxErr >= 5) && (aopOrbMaxErr <=1000)) // Maximum acceptable (modeled) orbit error in m. Range is from 5 to 1000.
+    result &= addCfgValset16(UBLOX_CFG_ANA_ORBMAXERR, aopOrbMaxErr);
   result &= sendCfgValset(maxWait);
   return result;
 }
