@@ -6782,9 +6782,9 @@ bool DevUBLOXGNSS::setStaticPosition(int32_t ecefXOrLat, int32_t ecefYOrLon, int
 }
 
 // Set the DGNSS differential mode
-bool DevUBLOXGNSS::setDGNSSConfiguration(sfe_ublox_dgnss_mode_e dgnssMode, uint16_t maxWait)
+bool DevUBLOXGNSS::setDGNSSConfiguration(sfe_ublox_dgnss_mode_e dgnssMode, uint8_t layer, uint16_t maxWait)
 {
-  return setVal8(UBLOX_CFG_NAVHPG_DGNSSMODE, (uint8_t)dgnssMode, VAL_LAYER_RAM, maxWait);
+  return setVal8(UBLOX_CFG_NAVHPG_DGNSSMODE, (uint8_t)dgnssMode, layer, maxWait);
 }
 
 // Module Protocol Version
@@ -7137,9 +7137,9 @@ bool DevUBLOXGNSS::powerOffWithInterrupt(uint32_t durationInMs, uint32_t wakeupS
 // AIRBORNE1g,AIRBORNE2g,AIRBORNE4g,WRIST,BIKE
 // WRIST is not supported in protocol versions less than 18
 // BIKE is supported in protocol versions 19.2
-bool DevUBLOXGNSS::setDynamicModel(dynModel newDynamicModel, uint16_t maxWait)
+bool DevUBLOXGNSS::setDynamicModel(dynModel newDynamicModel, uint8_t layer, uint16_t maxWait)
 {
-  return setVal8(UBLOX_CFG_NAVSPG_DYNMODEL, (uint8_t)newDynamicModel, VAL_LAYER_RAM_BBR, maxWait);
+  return setVal8(UBLOX_CFG_NAVSPG_DYNMODEL, (uint8_t)newDynamicModel, layer, maxWait);
 }
 
 // Get the dynamic platform model using UBX-CFG-NAV5
@@ -7184,10 +7184,10 @@ uint32_t getEnableGNSSConfigKey(sfe_ublox_gnss_ids_e id)
 }
 
 // Enable/Disable individual GNSS systems using UBX-CFG-GNSS
-bool DevUBLOXGNSS::enableGNSS(bool enable, sfe_ublox_gnss_ids_e id, uint16_t maxWait)
+bool DevUBLOXGNSS::enableGNSS(bool enable, sfe_ublox_gnss_ids_e id, uint8_t layer, uint16_t maxWait)
 {
   uint32_t key = getEnableGNSSConfigKey(id);
-  return (setVal8(key, enable ? 1 : 0, VAL_LAYER_RAM_BBR, maxWait));
+  return (setVal8(key, enable ? 1 : 0, layer, maxWait));
 }
 
 // Check if an individual GNSS system is enabled
@@ -8178,21 +8178,21 @@ bool DevUBLOXGNSS::getNAVPOSECEF(uint16_t maxWait)
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getPOSECEF
 // works.
-bool DevUBLOXGNSS::setAutoNAVPOSECEF(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVPOSECEF(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoNAVPOSECEFrate(enable ? 1 : 0, true, maxWait);
+  return setAutoNAVPOSECEFrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getPOSECEF
 // works.
-bool DevUBLOXGNSS::setAutoNAVPOSECEF(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVPOSECEF(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoNAVPOSECEFrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoNAVPOSECEFrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getPOSECEF
 // works.
-bool DevUBLOXGNSS::setAutoNAVPOSECEFrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVPOSECEFrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXNAVPOSECEF == nullptr)
     initPacketUBXNAVPOSECEF();        // Check that RAM has been allocated for the data
@@ -8213,7 +8213,7 @@ bool DevUBLOXGNSS::setAutoNAVPOSECEFrate(uint8_t rate, bool implicitUpdate, uint
       key = UBLOX_CFG_MSGOUT_UBX_NAV_POSECEF_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXNAVPOSECEF->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -8224,10 +8224,10 @@ bool DevUBLOXGNSS::setAutoNAVPOSECEFrate(uint8_t rate, bool implicitUpdate, uint
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoNAVPOSECEFcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_POSECEF_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVPOSECEFcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_POSECEF_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoNAVPOSECEF(true, false, maxWait);
+  bool result = setAutoNAVPOSECEF(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 

@@ -345,7 +345,7 @@ public:
   // For Lat/Lon/Alt the units are: degrees^-7, degrees^-9, degrees^-7, degrees^-9, cm, 0.1mm
   bool setStaticPosition(int32_t ecefXOrLat, int8_t ecefXOrLatHP, int32_t ecefYOrLon, int8_t ecefYOrLonHP, int32_t ecefZOrAlt, int8_t ecefZOrAltHP, bool latLong = false, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
   bool setStaticPosition(int32_t ecefXOrLat, int32_t ecefYOrLon, int32_t ecefZOrAlt, bool latLong = false, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
-  bool setDGNSSConfiguration(sfe_ublox_dgnss_mode_e dgnssMode = SFE_UBLOX_DGNSS_MODE_FIXED, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the DGNSS differential mode
+  bool setDGNSSConfiguration(sfe_ublox_dgnss_mode_e dgnssMode = SFE_UBLOX_DGNSS_MODE_FIXED, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the DGNSS differential mode
 
   // Read the module's protocol version
   uint8_t getProtocolVersionHigh(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the PROTVER XX.00 from UBX-MON-VER register
@@ -365,7 +365,7 @@ public:
   bool powerOffWithInterrupt(uint32_t durationInMs, uint32_t wakeupSources = VAL_RXM_PMREQ_WAKEUPSOURCE_EXTINT0, bool forceWhileUsb = true, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
 
   // Change the dynamic platform model using UBX-CFG-NAV5
-  bool setDynamicModel(dynModel newDynamicModel = DYN_MODEL_PORTABLE, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool setDynamicModel(dynModel newDynamicModel = DYN_MODEL_PORTABLE, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
   uint8_t getDynamicModel(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the dynamic model - returns 255 if the sendCommand fails
 
   // Reset the odometer
@@ -373,7 +373,7 @@ public:
 
   // Enable/Disable individual GNSS systems using UBX-CFG-GNSS
   // Note: you must leave at least one major GNSS enabled! If in doubt, enable GPS before disabling the others
-  bool enableGNSS(bool enable, sfe_ublox_gnss_ids_e id, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool enableGNSS(bool enable, sfe_ublox_gnss_ids_e id, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
   bool isGNSSenabled(sfe_ublox_gnss_ids_e id, bool *enabled, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
   bool isGNSSenabled(sfe_ublox_gnss_ids_e id, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Unsafe overload
   uint32_t getEnableGNSSConfigKey(sfe_ublox_gnss_ids_e id);
@@ -481,10 +481,10 @@ public:
   // then you should use a shorter maxWait. 300msec would be about right: getPVT(300)
 
   bool getNAVPOSECEF(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                      // NAV POSECEF
-  bool setAutoNAVPOSECEF(bool enabled, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                    // Enable/disable automatic POSECEF reports at the navigation frequency
-  bool setAutoNAVPOSECEF(bool enabled, bool implicitUpdate, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                               // Enable/disable automatic POSECEF reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
-  bool setAutoNAVPOSECEFrate(uint8_t rate, bool implicitUpdate = true, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                    // Set the rate for automatic POSECEF reports
-  bool setAutoNAVPOSECEFcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_POSECEF_data_t *), uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic POSECEF reports at the navigation frequency. Data is accessed from the callback.
+  bool setAutoNAVPOSECEF(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                    // Enable/disable automatic POSECEF reports at the navigation frequency
+  bool setAutoNAVPOSECEF(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                               // Enable/disable automatic POSECEF reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
+  bool setAutoNAVPOSECEFrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                    // Set the rate for automatic POSECEF reports
+  bool setAutoNAVPOSECEFcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_POSECEF_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic POSECEF reports at the navigation frequency. Data is accessed from the callback.
   bool assumeAutoNAVPOSECEF(bool enabled, bool implicitUpdate = true);                                                                  // In case no config access to the GPS is possible and POSECEF is send cyclically already
   void flushNAVPOSECEF();                                                                                                               // Mark all the data as read/stale
   void logNAVPOSECEF(bool enabled = true);                                                                                              // Log data to file buffer
