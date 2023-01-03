@@ -10088,10 +10088,10 @@ bool DevUBLOXGNSS::setAutoNAVPVATrate(uint8_t rate, bool implicitUpdate, uint8_t
 }
 
 // Enable automatic navigation message generation by the GNSS. This changes the way getPVAT works.
-bool DevUBLOXGNSS::setAutoNAVPVATcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_PVAT_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVPVATcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_PVAT_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoNAVPVAT(true, false, maxWait);
+  bool result = setAutoNAVPVAT(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAutoPVAT failed
 
@@ -10257,10 +10257,10 @@ bool DevUBLOXGNSS::setAutoNAVTIMEUTCrate(uint8_t rate, bool implicitUpdate, uint
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoNAVTIMEUTCcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_TIMEUTC_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVTIMEUTCcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_TIMEUTC_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoNAVTIMEUTC(true, false, maxWait);
+  bool result = setAutoNAVTIMEUTC(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -10426,10 +10426,10 @@ bool DevUBLOXGNSS::setAutoNAVCLOCKrate(uint8_t rate, bool implicitUpdate, uint8_
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoNAVCLOCKcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_CLOCK_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVCLOCKcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_CLOCK_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoNAVCLOCK(true, false, maxWait);
+  bool result = setAutoNAVCLOCK(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -10648,10 +10648,10 @@ bool DevUBLOXGNSS::setAutoNAVSVINrate(uint8_t rate, bool implicitUpdate, uint8_t
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoNAVSVINcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_SVIN_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVSVINcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_SVIN_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoNAVSVIN(true, false, maxWait);
+  bool result = setAutoNAVSVIN(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -10820,10 +10820,10 @@ bool DevUBLOXGNSS::setAutoNAVSATrate(uint8_t rate, bool implicitUpdate, uint8_t 
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoNAVSATcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_SAT_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVSATcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_SAT_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoNAVSAT(true, false, maxWait);
+  bool result = setAutoNAVSAT(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -10995,10 +10995,10 @@ bool DevUBLOXGNSS::setAutoRELPOSNEDrate(uint8_t rate, bool implicitUpdate, uint8
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoRELPOSNEDcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_RELPOSNED_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRELPOSNEDcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_RELPOSNED_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoRELPOSNED(true, false, maxWait);
+  bool result = setAutoRELPOSNED(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -11156,10 +11156,10 @@ bool DevUBLOXGNSS::setAutoAOPSTATUSrate(uint8_t rate, bool implicitUpdate, uint8
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoAOPSTATUScallbackPtr(void (*callbackPointerPtr)(UBX_NAV_AOPSTATUS_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoAOPSTATUScallbackPtr(void (*callbackPointerPtr)(UBX_NAV_AOPSTATUS_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoAOPSTATUS(true, false, maxWait);
+  bool result = setAutoAOPSTATUS(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -11492,10 +11492,10 @@ bool DevUBLOXGNSS::setAutoRXMSFRBXrate(uint8_t rate, bool implicitUpdate, uint8_
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoRXMSFRBXcallbackPtr(void (*callbackPointerPtr)(UBX_RXM_SFRBX_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRXMSFRBXcallbackPtr(void (*callbackPointerPtr)(UBX_RXM_SFRBX_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoRXMSFRBX(true, false, maxWait);
+  bool result = setAutoRXMSFRBX(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -11661,10 +11661,10 @@ bool DevUBLOXGNSS::setAutoRXMRAWXrate(uint8_t rate, bool implicitUpdate, uint8_t
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoRXMRAWXcallbackPtr(void (*callbackPointerPtr)(UBX_RXM_RAWX_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRXMRAWXcallbackPtr(void (*callbackPointerPtr)(UBX_RXM_RAWX_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoRXMRAWX(true, false, maxWait);
+  bool result = setAutoRXMRAWX(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -11830,10 +11830,10 @@ bool DevUBLOXGNSS::setAutoRXMMEASXrate(uint8_t rate, bool implicitUpdate, uint8_
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoRXMMEASXcallbackPtr(void (*callbackPointerPtr)(UBX_RXM_MEASX_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRXMMEASXcallbackPtr(void (*callbackPointerPtr)(UBX_RXM_MEASX_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoRXMMEASX(true, false, maxWait);
+  bool result = setAutoRXMMEASX(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -12000,10 +12000,10 @@ bool DevUBLOXGNSS::setAutoTIMTM2rate(uint8_t rate, bool implicitUpdate, uint8_t 
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoTIMTM2callbackPtr(void (*callbackPointerPtr)(UBX_TIM_TM2_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoTIMTM2callbackPtr(void (*callbackPointerPtr)(UBX_TIM_TM2_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoTIMTM2(true, false, maxWait);
+  bool result = setAutoTIMTM2(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -12177,10 +12177,10 @@ bool DevUBLOXGNSS::setAutoESFALGrate(uint8_t rate, bool implicitUpdate, uint8_t 
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoESFALGcallbackPtr(void (*callbackPointerPtr)(UBX_ESF_ALG_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFALGcallbackPtr(void (*callbackPointerPtr)(UBX_ESF_ALG_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoESFALG(true, false, maxWait);
+  bool result = setAutoESFALG(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -12353,10 +12353,10 @@ bool DevUBLOXGNSS::setAutoESFSTATUSrate(uint8_t rate, bool implicitUpdate, uint8
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoESFSTATUScallbackPtr(void (*callbackPointerPtr)(UBX_ESF_STATUS_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFSTATUScallbackPtr(void (*callbackPointerPtr)(UBX_ESF_STATUS_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoESFSTATUS(true, false, maxWait);
+  bool result = setAutoESFSTATUS(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -12530,10 +12530,10 @@ bool DevUBLOXGNSS::setAutoESFINSrate(uint8_t rate, bool implicitUpdate, uint8_t 
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoESFINScallbackPtr(void (*callbackPointerPtr)(UBX_ESF_INS_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFINScallbackPtr(void (*callbackPointerPtr)(UBX_ESF_INS_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoESFINS(true, false, maxWait);
+  bool result = setAutoESFINS(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -12654,10 +12654,10 @@ bool DevUBLOXGNSS::setAutoESFMEASrate(uint8_t rate, bool implicitUpdate, uint8_t
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoESFMEAScallbackPtr(void (*callbackPointerPtr)(UBX_ESF_MEAS_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFMEAScallbackPtr(void (*callbackPointerPtr)(UBX_ESF_MEAS_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoESFMEAS(true, false, maxWait);
+  bool result = setAutoESFMEAS(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -12773,10 +12773,10 @@ bool DevUBLOXGNSS::setAutoESFRAWrate(uint8_t rate, bool implicitUpdate, uint8_t 
 }
 
 // Enable automatic message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoESFRAWcallbackPtr(void (*callbackPointerPtr)(UBX_ESF_RAW_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFRAWcallbackPtr(void (*callbackPointerPtr)(UBX_ESF_RAW_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoESFRAW(true, false, maxWait);
+  bool result = setAutoESFRAW(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -12947,10 +12947,10 @@ bool DevUBLOXGNSS::setAutoHNRATTrate(uint8_t rate, bool implicitUpdate, uint8_t 
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoHNRATTcallbackPtr(void (*callbackPointerPtr)(UBX_HNR_ATT_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHNRATTcallbackPtr(void (*callbackPointerPtr)(UBX_HNR_ATT_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoHNRATT(true, false, maxWait);
+  bool result = setAutoHNRATT(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -13128,10 +13128,10 @@ bool DevUBLOXGNSS::setAutoHNRINSrate(uint8_t rate, bool implicitUpdate, uint8_t 
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoHNRINScallbackPtr(void (*callbackPointerPtr)(UBX_HNR_INS_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHNRINScallbackPtr(void (*callbackPointerPtr)(UBX_HNR_INS_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoHNRINS(true, false, maxWait);
+  bool result = setAutoHNRINS(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -13302,10 +13302,10 @@ bool DevUBLOXGNSS::setAutoHNRPVTrate(uint8_t rate, bool implicitUpdate, uint8_t 
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoHNRPVTcallbackPtr(void (*callbackPointerPtr)(UBX_HNR_PVT_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHNRPVTcallbackPtr(void (*callbackPointerPtr)(UBX_HNR_PVT_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoHNRPVT(true, false, maxWait);
+  bool result = setAutoHNRPVT(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
