@@ -366,7 +366,7 @@ public:
 
   // Change the dynamic platform model using UBX-CFG-NAV5
   bool setDynamicModel(dynModel newDynamicModel = DYN_MODEL_PORTABLE, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
-  uint8_t getDynamicModel(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the dynamic model - returns 255 if the sendCommand fails
+  uint8_t getDynamicModel(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the dynamic model - returns 255 if the sendCommand fails
 
   // Reset the odometer
   bool resetOdometer(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Reset the odometer
@@ -374,8 +374,8 @@ public:
   // Enable/Disable individual GNSS systems using UBX-CFG-GNSS
   // Note: you must leave at least one major GNSS enabled! If in doubt, enable GPS before disabling the others
   bool enableGNSS(bool enable, sfe_ublox_gnss_ids_e id, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
-  bool isGNSSenabled(sfe_ublox_gnss_ids_e id, bool *enabled, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
-  bool isGNSSenabled(sfe_ublox_gnss_ids_e id, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Unsafe overload
+  bool isGNSSenabled(sfe_ublox_gnss_ids_e id, bool *enabled, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool isGNSSenabled(sfe_ublox_gnss_ids_e id, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Unsafe overload
   uint32_t getEnableGNSSConfigKey(sfe_ublox_gnss_ids_e id);
 
   // Reset ESF automatic IMU-mount alignment
@@ -394,13 +394,13 @@ public:
   bool getHW2status(UBX_MON_HW2_data_t *data = nullptr, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the extended hardware status using UBX_MON_HW2
 
   // UBX-CFG-NAVX5 - get/set the ackAiding byte. If ackAiding is 1, UBX-MGA-ACK messages will be sent by the module to acknowledge the MGA data
-  uint8_t getAckAiding(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                 // Get the ackAiding byte - returns 255 if the sendCommand fails
-  bool setAckAiding(uint8_t ackAiding, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the ackAiding byte
+  uint8_t getAckAiding(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                 // Get the ackAiding byte - returns 255 if the sendCommand fails
+  bool setAckAiding(uint8_t ackAiding, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the ackAiding byte
 
   // AssistNow Autonomous support
   // UBX-CFG-NAVX5 - get/set the aopCfg byte and set the aopOrdMaxErr word. If aopOrbMaxErr is 0 (default), the max orbit error is reset to the firmware default.
-  uint8_t getAopCfg(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                         // Get the AssistNow Autonomous configuration (aopCfg) - returns 255 if the sendCommand fails
-  bool setAopCfg(uint8_t aopCfg, uint16_t aopOrbMaxErr = 0, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the aopCfg byte and the aopOrdMaxErr word
+  uint8_t getAopCfg(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                         // Get the AssistNow Autonomous configuration (aopCfg) - returns 255 if the sendCommand fails
+  bool setAopCfg(uint8_t aopCfg, uint16_t aopOrbMaxErr = 0, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the aopCfg byte and the aopOrdMaxErr word
 
   // SPARTN dynamic keys
   //"When the receiver boots, the host should send 'current' and 'next' keys in one message." - Use setDynamicSPARTNKeys for this.

@@ -7144,11 +7144,11 @@ bool DevUBLOXGNSS::setDynamicModel(dynModel newDynamicModel, uint8_t layer, uint
 
 // Get the dynamic platform model using UBX-CFG-NAV5
 // Returns DYN_MODEL_UNKNOWN (255) if the sendCommand fails
-uint8_t DevUBLOXGNSS::getDynamicModel(uint16_t maxWait)
+uint8_t DevUBLOXGNSS::getDynamicModel(uint8_t layer, uint16_t maxWait)
 {
   uint8_t model;
 
-  if (!getVal8(UBLOX_CFG_NAVSPG_DYNMODEL, &model, VAL_LAYER_RAM, maxWait))
+  if (!getVal8(UBLOX_CFG_NAVSPG_DYNMODEL, &model, layer, maxWait))
     return (DYN_MODEL_UNKNOWN);
 
   return (model); // Return the dynamic model
@@ -7191,16 +7191,16 @@ bool DevUBLOXGNSS::enableGNSS(bool enable, sfe_ublox_gnss_ids_e id, uint8_t laye
 }
 
 // Check if an individual GNSS system is enabled
-bool DevUBLOXGNSS::isGNSSenabled(sfe_ublox_gnss_ids_e id, bool *enabled, uint16_t maxWait)
+bool DevUBLOXGNSS::isGNSSenabled(sfe_ublox_gnss_ids_e id, bool *enabled, uint8_t layer, uint16_t maxWait)
 {
   uint32_t key = getEnableGNSSConfigKey(id);
-  return (getVal8(key, (uint8_t *)enabled, VAL_LAYER_RAM, maxWait));
+  return (getVal8(key, (uint8_t *)enabled, layer, maxWait));
 }
-bool DevUBLOXGNSS::isGNSSenabled(sfe_ublox_gnss_ids_e id, uint16_t maxWait) // Unsafe
+bool DevUBLOXGNSS::isGNSSenabled(sfe_ublox_gnss_ids_e id, uint8_t layer, uint16_t maxWait) // Unsafe
 {
   uint32_t key = getEnableGNSSConfigKey(id);
   uint8_t enabled;
-  getVal8(key, &enabled, VAL_LAYER_RAM, maxWait);
+  getVal8(key, &enabled, layer, maxWait);
   return ((bool)enabled);
 }
 
@@ -7318,10 +7318,10 @@ bool DevUBLOXGNSS::getHW2status(UBX_MON_HW2_data_t *data, uint16_t maxWait)
 }
 
 // UBX-CFG-NAVX5 - get/set the ackAiding byte. If ackAiding is 1, UBX-MGA-ACK messages will be sent by the module to acknowledge the MGA data
-uint8_t DevUBLOXGNSS::getAckAiding(uint16_t maxWait) // Get the ackAiding byte - returns 255 if the sendCommand fails
+uint8_t DevUBLOXGNSS::getAckAiding(uint8_t layer, uint16_t maxWait) // Get the ackAiding byte - returns 255 if the sendCommand fails
 {
   uint8_t enabled;
-  bool success = getVal8(UBLOX_CFG_NAVSPG_ACKAIDING, &enabled, VAL_LAYER_RAM, maxWait);
+  bool success = getVal8(UBLOX_CFG_NAVSPG_ACKAIDING, &enabled, layer, maxWait);
   if (success)
     return enabled;
   return 255;
@@ -7333,10 +7333,10 @@ bool DevUBLOXGNSS::setAckAiding(uint8_t ackAiding, uint8_t layer, uint16_t maxWa
 
 // AssistNow Autonomous support
 // UBX-CFG-NAVX5 - get the AssistNow Autonomous configuration (aopCfg) - returns 255 if the sendCommand fails
-uint8_t DevUBLOXGNSS::getAopCfg(uint16_t maxWait)
+uint8_t DevUBLOXGNSS::getAopCfg(uint8_t layer, uint16_t maxWait)
 {
   uint8_t enabled;
-  bool success = getVal8(UBLOX_CFG_ANA_USE_ANA, &enabled, VAL_LAYER_RAM, maxWait);
+  bool success = getVal8(UBLOX_CFG_ANA_USE_ANA, &enabled, layer, maxWait);
   if (success)
     return enabled;
   return 255;
@@ -9873,21 +9873,21 @@ bool DevUBLOXGNSS::getHPPOSLLH(uint16_t maxWait)
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getHPPOSLLH
 // works.
-bool DevUBLOXGNSS::setAutoHPPOSLLH(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHPPOSLLH(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoHPPOSLLHrate(enable ? 1 : 0, true, maxWait);
+  return setAutoHPPOSLLHrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getHPPOSLLH
 // works.
-bool DevUBLOXGNSS::setAutoHPPOSLLH(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHPPOSLLH(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoHPPOSLLHrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoHPPOSLLHrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getHPPOSLLH
 // works.
-bool DevUBLOXGNSS::setAutoHPPOSLLHrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHPPOSLLHrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXNAVHPPOSLLH == nullptr)
     initPacketUBXNAVHPPOSLLH();        // Check that RAM has been allocated for the data
@@ -9908,7 +9908,7 @@ bool DevUBLOXGNSS::setAutoHPPOSLLHrate(uint8_t rate, bool implicitUpdate, uint16
       key = UBLOX_CFG_MSGOUT_UBX_NAV_HPPOSLLH_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXNAVHPPOSLLH->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -9919,10 +9919,10 @@ bool DevUBLOXGNSS::setAutoHPPOSLLHrate(uint8_t rate, bool implicitUpdate, uint16
 }
 
 // Enable automatic navigation message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoHPPOSLLHcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_HPPOSLLH_data_t *), uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHPPOSLLHcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_HPPOSLLH_data_t *), uint8_t layer, uint16_t maxWait)
 {
   // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
-  bool result = setAutoHPPOSLLH(true, false, maxWait);
+  bool result = setAutoHPPOSLLH(true, false, layer, maxWait);
   if (!result)
     return (result); // Bail if setAuto failed
 
@@ -10042,21 +10042,21 @@ bool DevUBLOXGNSS::getNAVPVAT(uint16_t maxWait)
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getPVAT
 // works.
-bool DevUBLOXGNSS::setAutoNAVPVAT(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVPVAT(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoNAVPVATrate(enable ? 1 : 0, true, maxWait);
+  return setAutoNAVPVATrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getPVAT
 // works.
-bool DevUBLOXGNSS::setAutoNAVPVAT(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVPVAT(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoNAVPVATrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoNAVPVATrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getPVAT
 // works.
-bool DevUBLOXGNSS::setAutoNAVPVATrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVPVATrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXNAVPVAT == nullptr)
     initPacketUBXNAVPVAT();        // Check that RAM has been allocated for the PVAT data
@@ -10077,7 +10077,7 @@ bool DevUBLOXGNSS::setAutoNAVPVATrate(uint8_t rate, bool implicitUpdate, uint16_
       key = UBLOX_CFG_MSGOUT_UBX_NAV_PVAT_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXNAVPVAT->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -10214,21 +10214,21 @@ bool DevUBLOXGNSS::getNAVTIMEUTC(uint16_t maxWait)
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getTIMEUTC
 // works.
-bool DevUBLOXGNSS::setAutoNAVTIMEUTC(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVTIMEUTC(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoNAVTIMEUTCrate(enable ? 1 : 0, true, maxWait);
+  return setAutoNAVTIMEUTCrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getTIMEUTC
 // works.
-bool DevUBLOXGNSS::setAutoNAVTIMEUTC(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVTIMEUTC(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoNAVTIMEUTCrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoNAVTIMEUTCrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getTIMEUTC
 // works.
-bool DevUBLOXGNSS::setAutoNAVTIMEUTCrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVTIMEUTCrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXNAVTIMEUTC == nullptr)
     initPacketUBXNAVTIMEUTC();        // Check that RAM has been allocated for the data
@@ -10246,7 +10246,7 @@ bool DevUBLOXGNSS::setAutoNAVTIMEUTCrate(uint8_t rate, bool implicitUpdate, uint
       key = UBLOX_CFG_MSGOUT_UBX_NAV_TIMEUTC_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXNAVTIMEUTC->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -10380,21 +10380,21 @@ bool DevUBLOXGNSS::getNAVCLOCK(uint16_t maxWait)
 
 // Enable or disable automatic CLOCK message generation by the GNSS. This changes the way getNAVCLOCK
 // works.
-bool DevUBLOXGNSS::setAutoNAVCLOCK(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVCLOCK(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoNAVCLOCKrate(enable ? 1 : 0, true, maxWait);
+  return setAutoNAVCLOCKrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic CLOCK message generation by the GNSS. This changes the way getNAVCLOCK
 // works.
-bool DevUBLOXGNSS::setAutoNAVCLOCK(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVCLOCK(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoNAVCLOCKrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoNAVCLOCKrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic CLOCK message generation by the GNSS. This changes the way getNAVCLOCK
 // works.
-bool DevUBLOXGNSS::setAutoNAVCLOCKrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVCLOCKrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXNAVCLOCK == nullptr)
     initPacketUBXNAVCLOCK();        // Check that RAM has been allocated for the data
@@ -10415,7 +10415,7 @@ bool DevUBLOXGNSS::setAutoNAVCLOCKrate(uint8_t rate, bool implicitUpdate, uint16
       key = UBLOX_CFG_MSGOUT_UBX_NAV_CLOCK_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXNAVCLOCK->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -10602,21 +10602,21 @@ bool DevUBLOXGNSS::getSurveyStatus(uint16_t maxWait)
 
 // Enable or disable automatic SVIN message generation by the GNSS. This changes the way getSurveyStatus
 // works.
-bool DevUBLOXGNSS::setAutoNAVSVIN(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVSVIN(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoNAVSVINrate(enable ? 1 : 0, true, maxWait);
+  return setAutoNAVSVINrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic SVIN message generation by the GNSS. This changes the way getSurveyStatus
 // works.
-bool DevUBLOXGNSS::setAutoNAVSVIN(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVSVIN(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoNAVSVINrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoNAVSVINrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic SVIN message generation by the GNSS. This changes the way getSurveyStatus
 // works.
-bool DevUBLOXGNSS::setAutoNAVSVINrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVSVINrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXNAVSVIN == nullptr)
     initPacketUBXNAVSVIN();        // Check that RAM has been allocated for the data
@@ -10637,7 +10637,7 @@ bool DevUBLOXGNSS::setAutoNAVSVINrate(uint8_t rate, bool implicitUpdate, uint16_
       key = UBLOX_CFG_MSGOUT_UBX_NAV_SVIN_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXNAVSVIN->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -10774,21 +10774,21 @@ bool DevUBLOXGNSS::getNAVSAT(uint16_t maxWait)
 
 // Enable or disable automatic NAVSAT message generation by the GNSS. This changes the way getNAVSAT
 // works.
-bool DevUBLOXGNSS::setAutoNAVSAT(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVSAT(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoNAVSATrate(enable ? 1 : 0, true, maxWait);
+  return setAutoNAVSATrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic NAVSAT message generation by the GNSS. This changes the way getNAVSAT
 // works.
-bool DevUBLOXGNSS::setAutoNAVSAT(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVSAT(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoNAVSATrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoNAVSATrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic NAV SAT message generation by the GNSS. This changes the way getNAVSAT
 // works.
-bool DevUBLOXGNSS::setAutoNAVSATrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoNAVSATrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXNAVSAT == nullptr)
     initPacketUBXNAVSAT();        // Check that RAM has been allocated for the data
@@ -10809,7 +10809,7 @@ bool DevUBLOXGNSS::setAutoNAVSATrate(uint8_t rate, bool implicitUpdate, uint16_t
       key = UBLOX_CFG_MSGOUT_UBX_NAV_SAT_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXNAVSAT->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -10949,21 +10949,21 @@ bool DevUBLOXGNSS::getRELPOSNED(uint16_t maxWait)
 
 // Enable or disable automatic RELPOSNED message generation by the GNSS. This changes the way getRELPOSNED
 // works.
-bool DevUBLOXGNSS::setAutoRELPOSNED(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRELPOSNED(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoRELPOSNEDrate(enable ? 1 : 0, true, maxWait);
+  return setAutoRELPOSNEDrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic RELPOSNED message generation by the GNSS. This changes the way getRELPOSNED
 // works.
-bool DevUBLOXGNSS::setAutoRELPOSNED(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRELPOSNED(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoRELPOSNEDrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoRELPOSNEDrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic RELPOSNED message generation by the GNSS. This changes the way getRELPOSNED
 // works.
-bool DevUBLOXGNSS::setAutoRELPOSNEDrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRELPOSNEDrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXNAVRELPOSNED == nullptr)
     initPacketUBXNAVRELPOSNED();        // Check that RAM has been allocated for the data
@@ -10984,7 +10984,7 @@ bool DevUBLOXGNSS::setAutoRELPOSNEDrate(uint8_t rate, bool implicitUpdate, uint1
       key = UBLOX_CFG_MSGOUT_UBX_NAV_RELPOSNED_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXNAVRELPOSNED->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -11118,21 +11118,21 @@ bool DevUBLOXGNSS::getAOPSTATUS(uint16_t maxWait)
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getAOPSTATUS
 // works.
-bool DevUBLOXGNSS::setAutoAOPSTATUS(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoAOPSTATUS(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoAOPSTATUSrate(enable ? 1 : 0, true, maxWait);
+  return setAutoAOPSTATUSrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getAOPSTATUS
 // works.
-bool DevUBLOXGNSS::setAutoAOPSTATUS(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoAOPSTATUS(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoAOPSTATUSrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoAOPSTATUSrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getAOPSTATUS
 // works.
-bool DevUBLOXGNSS::setAutoAOPSTATUSrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoAOPSTATUSrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXNAVAOPSTATUS == nullptr)
     initPacketUBXNAVAOPSTATUS();        // Check that RAM has been allocated for the data
@@ -11145,7 +11145,7 @@ bool DevUBLOXGNSS::setAutoAOPSTATUSrate(uint8_t rate, bool implicitUpdate, uint1
   else if (_commType == COMM_TYPE_SERIAL)
     key = UBLOX_CFG_MSGOUT_UBX_NAV_AOPSTATUS_UART1; // Only supported on the M10 - no UART2
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXNAVAOPSTATUS->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -11446,21 +11446,21 @@ bool DevUBLOXGNSS::getRXMSFRBX(uint16_t maxWait)
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getRXMSFRBX
 // works.
-bool DevUBLOXGNSS::setAutoRXMSFRBX(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRXMSFRBX(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoRXMSFRBXrate(enable ? 1 : 0, true, maxWait);
+  return setAutoRXMSFRBXrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getRXMSFRBX
 // works.
-bool DevUBLOXGNSS::setAutoRXMSFRBX(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRXMSFRBX(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoRXMSFRBXrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoRXMSFRBXrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getRXMSFRBX
 // works.
-bool DevUBLOXGNSS::setAutoRXMSFRBXrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRXMSFRBXrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXRXMSFRBX == nullptr)
     initPacketUBXRXMSFRBX();        // Check that RAM has been allocated for the data
@@ -11481,7 +11481,7 @@ bool DevUBLOXGNSS::setAutoRXMSFRBXrate(uint8_t rate, bool implicitUpdate, uint16
       key = UBLOX_CFG_MSGOUT_UBX_RXM_SFRBX_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXRXMSFRBX->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -11615,21 +11615,21 @@ bool DevUBLOXGNSS::getRXMRAWX(uint16_t maxWait)
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getRXMRAWX
 // works.
-bool DevUBLOXGNSS::setAutoRXMRAWX(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRXMRAWX(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoRXMRAWXrate(enable ? 1 : 0, true, maxWait);
+  return setAutoRXMRAWXrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getRXMRAWX
 // works.
-bool DevUBLOXGNSS::setAutoRXMRAWX(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRXMRAWX(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoRXMRAWXrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoRXMRAWXrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getRXMRAWX
 // works.
-bool DevUBLOXGNSS::setAutoRXMRAWXrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRXMRAWXrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXRXMRAWX == nullptr)
     initPacketUBXRXMRAWX();        // Check that RAM has been allocated for the data
@@ -11650,7 +11650,7 @@ bool DevUBLOXGNSS::setAutoRXMRAWXrate(uint8_t rate, bool implicitUpdate, uint16_
       key = UBLOX_CFG_MSGOUT_UBX_RXM_RAWX_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXRXMRAWX->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -11784,21 +11784,21 @@ bool DevUBLOXGNSS::getRXMMEASX(uint16_t maxWait)
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getRXMMEASX
 // works.
-bool DevUBLOXGNSS::setAutoRXMMEASX(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRXMMEASX(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoRXMMEASXrate(enable ? 1 : 0, true, maxWait);
+  return setAutoRXMMEASXrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getRXMMEASX
 // works.
-bool DevUBLOXGNSS::setAutoRXMMEASX(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRXMMEASX(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoRXMMEASXrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoRXMMEASXrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getRXMMEASX
 // works.
-bool DevUBLOXGNSS::setAutoRXMMEASXrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoRXMMEASXrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXRXMMEASX == nullptr)
     initPacketUBXRXMMEASX();        // Check that RAM has been allocated for the data
@@ -11819,7 +11819,7 @@ bool DevUBLOXGNSS::setAutoRXMMEASXrate(uint8_t rate, bool implicitUpdate, uint16
       key = UBLOX_CFG_MSGOUT_UBX_RXM_MEASX_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXRXMMEASX->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -11954,21 +11954,21 @@ bool DevUBLOXGNSS::getTIMTM2(uint16_t maxWait)
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getTIMTM2
 // works.
-bool DevUBLOXGNSS::setAutoTIMTM2(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoTIMTM2(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoTIMTM2rate(enable ? 1 : 0, true, maxWait);
+  return setAutoTIMTM2rate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getTIMTM2
 // works.
-bool DevUBLOXGNSS::setAutoTIMTM2(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoTIMTM2(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoTIMTM2rate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoTIMTM2rate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getTIMTM2
 // works.
-bool DevUBLOXGNSS::setAutoTIMTM2rate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoTIMTM2rate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXTIMTM2 == nullptr)
     initPacketUBXTIMTM2();        // Check that RAM has been allocated for the data
@@ -11989,7 +11989,7 @@ bool DevUBLOXGNSS::setAutoTIMTM2rate(uint8_t rate, bool implicitUpdate, uint16_t
       key = UBLOX_CFG_MSGOUT_UBX_TIM_TM2_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXTIMTM2->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -12131,21 +12131,21 @@ bool DevUBLOXGNSS::getESFALG(uint16_t maxWait)
 
 // Enable or disable automatic ESF ALG message generation by the GNSS. This changes the way getEsfAlignment
 // works.
-bool DevUBLOXGNSS::setAutoESFALG(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFALG(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoESFALGrate(enable ? 1 : 0, true, maxWait);
+  return setAutoESFALGrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic ESF ALG message generation by the GNSS. This changes the way getEsfAlignment
 // works.
-bool DevUBLOXGNSS::setAutoESFALG(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFALG(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoESFALGrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoESFALGrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic ESF ALG message generation by the GNSS. This changes the way getEsfAlignment
 // works.
-bool DevUBLOXGNSS::setAutoESFALGrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFALGrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXESFALG == nullptr)
     initPacketUBXESFALG();        // Check that RAM has been allocated for the data
@@ -12166,7 +12166,7 @@ bool DevUBLOXGNSS::setAutoESFALGrate(uint8_t rate, bool implicitUpdate, uint16_t
       key = UBLOX_CFG_MSGOUT_UBX_ESF_ALG_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXESFALG->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -12307,21 +12307,21 @@ bool DevUBLOXGNSS::getESFSTATUS(uint16_t maxWait)
 
 // Enable or disable automatic ESF STATUS message generation by the GNSS. This changes the way getESFInfo
 // works.
-bool DevUBLOXGNSS::setAutoESFSTATUS(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFSTATUS(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoESFSTATUSrate(enable ? 1 : 0, true, maxWait);
+  return setAutoESFSTATUSrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic ESF STATUS message generation by the GNSS. This changes the way getESFInfo
 // works.
-bool DevUBLOXGNSS::setAutoESFSTATUS(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFSTATUS(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoESFSTATUSrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoESFSTATUSrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic ESF STATUS message generation by the GNSS. This changes the way getESFInfo
 // works.
-bool DevUBLOXGNSS::setAutoESFSTATUSrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFSTATUSrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXESFSTATUS == nullptr)
     initPacketUBXESFSTATUS();        // Check that RAM has been allocated for the data
@@ -12342,7 +12342,7 @@ bool DevUBLOXGNSS::setAutoESFSTATUSrate(uint8_t rate, bool implicitUpdate, uint1
       key = UBLOX_CFG_MSGOUT_UBX_ESF_STATUS_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXESFSTATUS->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -12484,21 +12484,21 @@ bool DevUBLOXGNSS::getESFINS(uint16_t maxWait)
 
 // Enable or disable automatic ESF INS message generation by the GNSS. This changes the way getESFIns
 // works.
-bool DevUBLOXGNSS::setAutoESFINS(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFINS(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoESFINSrate(enable ? 1 : 0, true, maxWait);
+  return setAutoESFINSrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic ESF INS message generation by the GNSS. This changes the way getESFIns
 // works.
-bool DevUBLOXGNSS::setAutoESFINS(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFINS(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoESFINSrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoESFINSrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic ESF INS message generation by the GNSS. This changes the way getESFIns
 // works.
-bool DevUBLOXGNSS::setAutoESFINSrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFINSrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXESFINS == nullptr)
     initPacketUBXESFINS();        // Check that RAM has been allocated for the data
@@ -12519,7 +12519,7 @@ bool DevUBLOXGNSS::setAutoESFINSrate(uint8_t rate, bool implicitUpdate, uint16_t
       key = UBLOX_CFG_MSGOUT_UBX_ESF_INS_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXESFINS->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -12611,19 +12611,19 @@ void DevUBLOXGNSS::logESFINS(bool enabled)
 // ***** ESF MEAS automatic support
 
 // Enable or disable automatic ESF MEAS message generation by the GNSS
-bool DevUBLOXGNSS::setAutoESFMEAS(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFMEAS(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoESFMEASrate(enable ? 1 : 0, true, maxWait);
+  return setAutoESFMEASrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic ESF MEAS message generation by the GNSS
-bool DevUBLOXGNSS::setAutoESFMEAS(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFMEAS(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoESFMEASrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoESFMEASrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic ESF MEAS message generation by the GNSS
-bool DevUBLOXGNSS::setAutoESFMEASrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFMEASrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXESFMEAS == nullptr)
     initPacketUBXESFMEAS();        // Check that RAM has been allocated for the data
@@ -12644,7 +12644,7 @@ bool DevUBLOXGNSS::setAutoESFMEASrate(uint8_t rate, bool implicitUpdate, uint16_
       key = UBLOX_CFG_MSGOUT_UBX_ESF_MEAS_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXESFMEAS->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -12728,21 +12728,21 @@ void DevUBLOXGNSS::logESFMEAS(bool enabled)
 // ESF RAW messages are output only. They cannot be polled.
 
 // Enable or disable automatic ESF RAW message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoESFRAW(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFRAW(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoESFRAWrate(enable ? 1 : 0, true, maxWait);
+  return setAutoESFRAWrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic ESF RAW message generation by the GNSS.
-bool DevUBLOXGNSS::setAutoESFRAW(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFRAW(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoESFRAWrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoESFRAWrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic ESF RAW message generation by the GNSS.
 // Note: this function can only be used to enable or disable the messages. A rate of zero disables the messages.
 // A rate of 1 or more causes the messages to be generated at the full 100Hz.
-bool DevUBLOXGNSS::setAutoESFRAWrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoESFRAWrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXESFRAW == nullptr)
     initPacketUBXESFRAW();        // Check that RAM has been allocated for the data
@@ -12763,7 +12763,7 @@ bool DevUBLOXGNSS::setAutoESFRAWrate(uint8_t rate, bool implicitUpdate, uint16_t
       key = UBLOX_CFG_MSGOUT_UBX_ESF_RAW_UART2;
   }
 
-  bool ok = setVal8(key, rate, VAL_LAYER_RAM_BBR, maxWait);
+  bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXESFRAW->automaticFlags.flags.bits.automatic = (rate > 0);
@@ -12901,21 +12901,21 @@ bool DevUBLOXGNSS::getHNRATT(uint16_t maxWait)
 
 // Enable or disable automatic HNR attitude message generation by the GNSS. This changes the way getHNRAtt
 // works.
-bool DevUBLOXGNSS::setAutoHNRATT(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHNRATT(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoHNRATTrate(enable ? 1 : 0, true, maxWait);
+  return setAutoHNRATTrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic HNR attitude message generation by the GNSS. This changes the way getHNRAtt
 // works.
-bool DevUBLOXGNSS::setAutoHNRATT(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHNRATT(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoHNRATTrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoHNRATTrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic HNR attitude message generation by the GNSS. This changes the way getHNRAtt
 // works.
-bool DevUBLOXGNSS::setAutoHNRATTrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHNRATTrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXHNRATT == nullptr)
     initPacketUBXHNRATT();        // Check that RAM has been allocated for the data
@@ -12925,7 +12925,8 @@ bool DevUBLOXGNSS::setAutoHNRATTrate(uint8_t rate, bool implicitUpdate, uint16_t
   if (rate > 127)
     rate = 127;
 
-  // Note: HNR is only supported on the NEO-M8U - which does not support the configuration interface
+  // Note: HNR is only supported on the NEO-M8U - which does not currently support the configuration interface
+  (void)layer; // Placeholder - until the configuration interface is implemented on the NEO-M8U
 
   packetCfg.cls = UBX_CLASS_CFG;
   packetCfg.id = UBX_CFG_MSG;
@@ -13081,21 +13082,21 @@ bool DevUBLOXGNSS::getHNRINS(uint16_t maxWait)
 
 // Enable or disable automatic HNR vehicle dynamics message generation by the GNSS. This changes the way getHNRINS
 // works.
-bool DevUBLOXGNSS::setAutoHNRINS(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHNRINS(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoHNRINSrate(enable ? 1 : 0, true, maxWait);
+  return setAutoHNRINSrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic HNR vehicle dynamics message generation by the GNSS. This changes the way getHNRINS
 // works.
-bool DevUBLOXGNSS::setAutoHNRINS(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHNRINS(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoHNRINSrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoHNRINSrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic HNR vehicle dynamics message generation by the GNSS. This changes the way getHNRINS
 // works.
-bool DevUBLOXGNSS::setAutoHNRINSrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHNRINSrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXHNRINS == nullptr)
     initPacketUBXHNRINS();        // Check that RAM has been allocated for the data
@@ -13105,7 +13106,8 @@ bool DevUBLOXGNSS::setAutoHNRINSrate(uint8_t rate, bool implicitUpdate, uint16_t
   if (rate > 127)
     rate = 127;
 
-  // Note: HNR is only supported on the NEO-M8U - which does not support the configuration interface
+  // Note: HNR is only supported on the NEO-M8U - which does not currently support the configuration interface
+  (void)layer; // Placeholder - until the configuration interface is implemented on the NEO-M8U
 
   packetCfg.cls = UBX_CLASS_CFG;
   packetCfg.id = UBX_CFG_MSG;
@@ -13254,21 +13256,21 @@ bool DevUBLOXGNSS::getHNRPVT(uint16_t maxWait)
 
 // Enable or disable automatic HNR PVT message generation by the GNSS. This changes the way getHNRPVT
 // works.
-bool DevUBLOXGNSS::setAutoHNRPVT(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHNRPVT(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoHNRPVTrate(enable ? 1 : 0, true, maxWait);
+  return setAutoHNRPVTrate(enable ? 1 : 0, true, layer, maxWait);
 }
 
 // Enable or disable automatic HNR PVT message generation by the GNSS. This changes the way getHNRPVT
 // works.
-bool DevUBLOXGNSS::setAutoHNRPVT(bool enable, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHNRPVT(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
-  return setAutoHNRPVTrate(enable ? 1 : 0, implicitUpdate, maxWait);
+  return setAutoHNRPVTrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
 }
 
 // Enable or disable automatic HNR PVT message generation by the GNSS. This changes the way getHNRPVT
 // works.
-bool DevUBLOXGNSS::setAutoHNRPVTrate(uint8_t rate, bool implicitUpdate, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoHNRPVTrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
 {
   if (packetUBXHNRPVT == nullptr)
     initPacketUBXHNRPVT();        // Check that RAM has been allocated for the data
@@ -13278,7 +13280,8 @@ bool DevUBLOXGNSS::setAutoHNRPVTrate(uint8_t rate, bool implicitUpdate, uint16_t
   if (rate > 127)
     rate = 127;
 
-  // Note: HNR is only supported on the NEO-M8U - which does not support the configuration interface
+  // Note: HNR is only supported on the NEO-M8U - which does not currently support the configuration interface
+  (void)layer; // Placeholder - until the configuration interface is implemented on the NEO-M8U
 
   packetCfg.cls = UBX_CLASS_CFG;
   packetCfg.id = UBX_CFG_MSG;
@@ -13381,15 +13384,15 @@ void DevUBLOXGNSS::logHNRPVT(bool enabled)
 // ***** Helper Functions for NMEA Logging / Processing
 
 // Set the mainTalkerId used by NMEA messages - allows all NMEA messages except GSV to be prefixed with GP instead of GN
-bool DevUBLOXGNSS::setMainTalkerID(sfe_ublox_talker_ids_e id, uint16_t maxWait)
+bool DevUBLOXGNSS::setMainTalkerID(sfe_ublox_talker_ids_e id, uint8_t layer, uint16_t maxWait)
 {
-  return (setVal8(UBLOX_CFG_NMEA_MAINTALKERID, (uint8_t)id, VAL_LAYER_RAM_BBR, maxWait));
+  return (setVal8(UBLOX_CFG_NMEA_MAINTALKERID, (uint8_t)id, layer, maxWait));
 }
 
 // Enable/Disable NMEA High Precision Mode - include extra decimal places in the Lat and Lon
-bool DevUBLOXGNSS::setHighPrecisionMode(bool enable, uint16_t maxWait)
+bool DevUBLOXGNSS::setHighPrecisionMode(bool enable, uint8_t layer, uint16_t maxWait)
 {
-  return (setVal8(UBLOX_CFG_NMEA_HIGHPREC, (uint8_t)enable, VAL_LAYER_RAM_BBR, maxWait));
+  return (setVal8(UBLOX_CFG_NMEA_HIGHPREC, (uint8_t)enable, layer, maxWait));
 }
 
 // Log selected NMEA messages to file buffer - if the messages are enabled and if the file buffer exists
