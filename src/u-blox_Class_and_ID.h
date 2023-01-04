@@ -11,7 +11,7 @@
   https://www.sparkfun.com/products/18774
   https://www.sparkfun.com/products/19663
   https://www.sparkfun.com/products/17722
-  
+
   Original version by Nathan Seidle @ SparkFun Electronics, September 6th, 2018
   v2.0 rework by Paul Clark @ SparkFun Electronics, December 31st, 2020
   v3.0 rework by Paul Clark @ SparkFun Electronics, December 8th, 2022
@@ -438,4 +438,3 @@ enum sfe_ublox_dgnss_mode_e
   SFE_UBLOX_DGNSS_MODE_FLOAT = 2, // No attempts are made to fix ambiguities
   SFE_UBLOX_DGNSS_MODE_FIXED      // Ambiguities are fixed whenever possible
 };
-

@@ -11,7 +11,7 @@
   https://www.sparkfun.com/products/18774
   https://www.sparkfun.com/products/19663
   https://www.sparkfun.com/products/17722
-  
+
   Original version by Nathan Seidle @ SparkFun Electronics, September 6th, 2018
   v2.0 rework by Paul Clark @ SparkFun Electronics, December 31st, 2020
   v3.0 rework by Paul Clark @ SparkFun Electronics, December 8th, 2022
@@ -741,7 +741,7 @@ bool DevUBLOXGNSS::init(uint16_t maxWait, bool assumeSuccess)
       }
       if ((packetCfgPayloadSize + 8) > spiBufferSize) // Warn the user if spiBuffer is now smaller than the packetCfg payload. Could result in lost data
       {
-          _debugSerial.println(F("begin (SPI): packetCfgPayloadSize > spiBufferSize!"));
+        _debugSerial.println(F("begin (SPI): packetCfgPayloadSize > spiBufferSize!"));
       }
 #endif
     }
@@ -830,7 +830,6 @@ void DevUBLOXGNSS::setSpiTransactionSize(uint8_t transactionSize)
 
     if (spiBufferSize < spiTransactionSize) // Ensure the buffer is at least spiTransactionSize
       spiBufferSize = spiTransactionSize;
-
   }
   else
   {
@@ -1036,12 +1035,12 @@ bool DevUBLOXGNSS::checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClass,
 
     if (bytesAvailable == 0)
     {
-// #ifndef SFE_UBLOX_REDUCED_PROG_MEM
-//       if (_printDebug == true)
-//       {
-//         _debugSerial.println(F("checkUbloxI2C: OK, zero bytes available"));
-//       }
-// #endif
+      // #ifndef SFE_UBLOX_REDUCED_PROG_MEM
+      //       if (_printDebug == true)
+      //       {
+      //         _debugSerial.println(F("checkUbloxI2C: OK, zero bytes available"));
+      //       }
+      // #endif
       lastCheck = millis(); // Put off checking to avoid I2C bus traffic
       return (false);
     }
@@ -4406,7 +4405,7 @@ sfe_ublox_status_e DevUBLOXGNSS::sendSpiCommand(ubxPacket *outgoingUBX)
   }
 
   // Start at the beginning of the SPI buffer
-  //spiBufferIndex = 0;
+  // spiBufferIndex = 0;
 
   uint16_t bytesLeftToSend = outgoingUBX->len; // How many bytes remain to be sent
 
@@ -6550,7 +6549,7 @@ bool DevUBLOXGNSS::setI2CInput(uint8_t comSettings, uint8_t layer, uint16_t maxW
   result &= addCfgValset8(UBLOX_CFG_I2CINPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
   result &= addCfgValset8(UBLOX_CFG_I2CINPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
   result &= sendCfgValset(maxWait);
-  result |= setVal8(UBLOX_CFG_I2CINPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support RTCM3
+  result |= setVal8(UBLOX_CFG_I2CINPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait);  // This will be NACK'd if the module does not support RTCM3
   result |= setVal8(UBLOX_CFG_I2CINPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support SPARTN
   return result;
 }
@@ -6560,7 +6559,7 @@ bool DevUBLOXGNSS::setUART1Input(uint8_t comSettings, uint8_t layer, uint16_t ma
   result &= addCfgValset8(UBLOX_CFG_UART1INPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
   result &= addCfgValset8(UBLOX_CFG_UART1INPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
   result &= sendCfgValset(maxWait);
-  result |= setVal8(UBLOX_CFG_UART1INPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support RTCM3
+  result |= setVal8(UBLOX_CFG_UART1INPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait);  // This will be NACK'd if the module does not support RTCM3
   result |= setVal8(UBLOX_CFG_UART1INPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support SPARTN
   return result;
 }
@@ -6570,7 +6569,7 @@ bool DevUBLOXGNSS::setUART2Input(uint8_t comSettings, uint8_t layer, uint16_t ma
   result &= addCfgValset8(UBLOX_CFG_UART2INPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
   result &= addCfgValset8(UBLOX_CFG_UART2INPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
   result &= sendCfgValset(maxWait);
-  result |= setVal8(UBLOX_CFG_UART2INPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support RTCM3
+  result |= setVal8(UBLOX_CFG_UART2INPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait);  // This will be NACK'd if the module does not support RTCM3
   result |= setVal8(UBLOX_CFG_UART2INPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support SPARTN
   return result;
 }
@@ -6580,7 +6579,7 @@ bool DevUBLOXGNSS::setUSBInput(uint8_t comSettings, uint8_t layer, uint16_t maxW
   result &= addCfgValset8(UBLOX_CFG_USBINPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
   result &= addCfgValset8(UBLOX_CFG_USBINPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
   result &= sendCfgValset(maxWait);
-  result |= setVal8(UBLOX_CFG_USBINPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support RTCM3
+  result |= setVal8(UBLOX_CFG_USBINPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait);  // This will be NACK'd if the module does not support RTCM3
   result |= setVal8(UBLOX_CFG_USBINPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support SPARTN
   return result;
 }
@@ -6590,7 +6589,7 @@ bool DevUBLOXGNSS::setSPIInput(uint8_t comSettings, uint8_t layer, uint16_t maxW
   result &= addCfgValset8(UBLOX_CFG_SPIINPROT_UBX, (comSettings & COM_TYPE_UBX) == 0 ? 0 : 1);
   result &= addCfgValset8(UBLOX_CFG_SPIINPROT_NMEA, (comSettings & COM_TYPE_NMEA) == 0 ? 0 : 1);
   result &= sendCfgValset(maxWait);
-  result |= setVal8(UBLOX_CFG_SPIINPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support RTCM3
+  result |= setVal8(UBLOX_CFG_SPIINPROT_RTCM3X, (comSettings & COM_TYPE_RTCM3) == 0 ? 0 : 1, layer, maxWait);  // This will be NACK'd if the module does not support RTCM3
   result |= setVal8(UBLOX_CFG_SPIINPROT_SPARTN, (comSettings & COM_TYPE_SPARTN) == 0 ? 0 : 1, layer, maxWait); // This will be NACK'd if the module does not support SPARTN
   return result;
 }
@@ -6715,15 +6714,15 @@ bool DevUBLOXGNSS::cfgCfg(uint8_t *data, uint8_t len, uint16_t maxWait)
 // Functions used for RTK and base station setup
 
 // Control Survey-In for NEO-M8P
-bool DevUBLOXGNSS::setSurveyMode(uint8_t mode, uint16_t observationTime, float requiredAccuracy, uint16_t maxWait)
+bool DevUBLOXGNSS::setSurveyMode(uint8_t mode, uint16_t observationTime, float requiredAccuracy, uint8_t layer, uint16_t maxWait)
 {
-  return (setSurveyModeFull(mode, (uint32_t)observationTime, requiredAccuracy, maxWait));
+  return (setSurveyModeFull(mode, (uint32_t)observationTime, requiredAccuracy, layer, maxWait));
 }
-bool DevUBLOXGNSS::setSurveyModeFull(uint8_t mode, uint32_t observationTime, float requiredAccuracy, uint16_t maxWait)
+bool DevUBLOXGNSS::setSurveyModeFull(uint8_t mode, uint32_t observationTime, float requiredAccuracy, uint8_t layer, uint16_t maxWait)
 {
   uint32_t svinAccLimit = (uint32_t)(requiredAccuracy * 10000.0); // Convert m to 0.1mm
 
-  bool result = newCfgValset(VAL_LAYER_RAM);
+  bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_TMODE_MODE, mode);
   result &= addCfgValset32(UBLOX_CFG_TMODE_SVIN_MIN_DUR, observationTime);
   result &= addCfgValset32(UBLOX_CFG_TMODE_SVIN_ACC_LIMIT, svinAccLimit);
@@ -6733,19 +6732,19 @@ bool DevUBLOXGNSS::setSurveyModeFull(uint8_t mode, uint32_t observationTime, flo
 }
 
 // Begin Survey-In for NEO-M8P
-bool DevUBLOXGNSS::enableSurveyMode(uint16_t observationTime, float requiredAccuracy, uint16_t maxWait)
+bool DevUBLOXGNSS::enableSurveyMode(uint16_t observationTime, float requiredAccuracy, uint8_t layer, uint16_t maxWait)
 {
-  return (setSurveyModeFull(SVIN_MODE_ENABLE, (uint32_t)observationTime, requiredAccuracy, maxWait));
+  return (setSurveyModeFull(SVIN_MODE_ENABLE, (uint32_t)observationTime, requiredAccuracy, layer, maxWait));
 }
-bool DevUBLOXGNSS::enableSurveyModeFull(uint32_t observationTime, float requiredAccuracy, uint16_t maxWait)
+bool DevUBLOXGNSS::enableSurveyModeFull(uint32_t observationTime, float requiredAccuracy, uint8_t layer, uint16_t maxWait)
 {
-  return (setSurveyModeFull(SVIN_MODE_ENABLE, observationTime, requiredAccuracy, maxWait));
+  return (setSurveyModeFull(SVIN_MODE_ENABLE, observationTime, requiredAccuracy, layer, maxWait));
 }
 
 // Stop Survey-In for NEO-M8P
-bool DevUBLOXGNSS::disableSurveyMode(uint16_t maxWait)
+bool DevUBLOXGNSS::disableSurveyMode(uint8_t layer, uint16_t maxWait)
 {
-  return (setSurveyMode(SVIN_MODE_DISABLE, 0, 0, maxWait));
+  return (setSurveyMode(SVIN_MODE_DISABLE, 0, 0, layer, maxWait));
 }
 
 // Set the ECEF or Lat/Long coordinates of a receiver
@@ -6753,11 +6752,11 @@ bool DevUBLOXGNSS::disableSurveyMode(uint16_t maxWait)
 // This is helpful once an antenna's position has been established. See this tutorial: https://learn.sparkfun.com/tutorials/how-to-build-a-diy-gnss-reference-station#gather-raw-gnss-data
 //  For ECEF the units are: cm, 0.1mm, cm, 0.1mm, cm, 0.1mm
 //  For Lat/Lon/Alt the units are: degrees^-7, degrees^-9, degrees^-7, degrees^-9, cm, 0.1mm
-bool DevUBLOXGNSS::setStaticPosition(int32_t ecefXOrLat, int8_t ecefXOrLatHP, int32_t ecefYOrLon, int8_t ecefYOrLonHP, int32_t ecefZOrAlt, int8_t ecefZOrAltHP, bool latLong, uint16_t maxWait)
+bool DevUBLOXGNSS::setStaticPosition(int32_t ecefXOrLat, int8_t ecefXOrLatHP, int32_t ecefYOrLon, int8_t ecefYOrLonHP, int32_t ecefZOrAlt, int8_t ecefZOrAltHP, bool latLong, uint8_t layer, uint16_t maxWait)
 {
   unsignedSigned32 converter32;
   unsignedSigned8 converter8;
-  bool result = newCfgValset(VAL_LAYER_RAM);
+  bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_TMODE_POS_TYPE, (uint8_t)latLong);
   converter32.signed32 = ecefXOrLat;
   result &= addCfgValset32(latLong ? UBLOX_CFG_TMODE_LAT : UBLOX_CFG_TMODE_ECEF_X, converter32.unsigned32);
@@ -6776,9 +6775,9 @@ bool DevUBLOXGNSS::setStaticPosition(int32_t ecefXOrLat, int8_t ecefXOrLatHP, in
   return result;
 }
 
-bool DevUBLOXGNSS::setStaticPosition(int32_t ecefXOrLat, int32_t ecefYOrLon, int32_t ecefZOrAlt, bool latlong, uint16_t maxWait)
+bool DevUBLOXGNSS::setStaticPosition(int32_t ecefXOrLat, int32_t ecefYOrLon, int32_t ecefZOrAlt, bool latlong, uint8_t layer, uint16_t maxWait)
 {
-  return (setStaticPosition(ecefXOrLat, 0, ecefYOrLon, 0, ecefZOrAlt, 0, latlong, maxWait));
+  return (setStaticPosition(ecefXOrLat, 0, ecefYOrLon, 0, ecefZOrAlt, 0, latlong, layer, maxWait));
 }
 
 // Set the DGNSS differential mode
@@ -6885,7 +6884,7 @@ bool DevUBLOXGNSS::initModuleSWVersion()
 // Geofences
 
 // Add a new geofence using UBX-CFG-GEOFENCE
-bool DevUBLOXGNSS::addGeofence(int32_t latitude, int32_t longitude, uint32_t radius, uint8_t confidence, bool pinPolarity, uint8_t pin, uint16_t maxWait)
+bool DevUBLOXGNSS::addGeofence(int32_t latitude, int32_t longitude, uint32_t radius, uint8_t confidence, bool pinPolarity, uint8_t pin, uint8_t layer, uint16_t maxWait)
 {
   if (currentGeofenceParams == nullptr)
     initGeofenceParams();               // Check if RAM has been allocated for currentGeofenceParams
@@ -6902,7 +6901,7 @@ bool DevUBLOXGNSS::addGeofence(int32_t latitude, int32_t longitude, uint32_t rad
   currentGeofenceParams->numFences += 1; // Increment the number of fences
 
   unsignedSigned32 converter32;
-  bool result = newCfgValset(VAL_LAYER_RAM);
+  bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_GEOFENCE_CONFLVL, confidence);
   result &= addCfgValset8(UBLOX_CFG_GEOFENCE_PINPOL, (uint8_t)pinPolarity);
   result &= addCfgValset8(UBLOX_CFG_GEOFENCE_PIN, pin);
@@ -6946,7 +6945,7 @@ bool DevUBLOXGNSS::addGeofence(int32_t latitude, int32_t longitude, uint32_t rad
 }
 
 // Clear all geofences using UBX-CFG-GEOFENCE
-bool DevUBLOXGNSS::clearGeofences(uint16_t maxWait)
+bool DevUBLOXGNSS::clearGeofences(uint8_t layer, uint16_t maxWait)
 {
   if (currentGeofenceParams == nullptr)
     initGeofenceParams();               // Check if RAM has been allocated for currentGeofenceParams
@@ -6955,7 +6954,7 @@ bool DevUBLOXGNSS::clearGeofences(uint16_t maxWait)
 
   currentGeofenceParams->numFences = 0; // Zero the number of geofences currently in use
 
-  bool result = newCfgValset(VAL_LAYER_RAM);
+  bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_GEOFENCE_USE_FENCE1, 0);
   result &= addCfgValset8(UBLOX_CFG_GEOFENCE_USE_FENCE2, 0);
   result &= addCfgValset8(UBLOX_CFG_GEOFENCE_USE_FENCE3, 0);
@@ -7346,7 +7345,7 @@ bool DevUBLOXGNSS::setAopCfg(uint8_t aopCfg, uint16_t aopOrbMaxErr, uint8_t laye
 {
   bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_ANA_USE_ANA, aopCfg);
-  if ((aopOrbMaxErr >= 5) && (aopOrbMaxErr <=1000)) // Maximum acceptable (modeled) orbit error in m. Range is from 5 to 1000.
+  if ((aopOrbMaxErr >= 5) && (aopOrbMaxErr <= 1000)) // Maximum acceptable (modeled) orbit error in m. Range is from 5 to 1000.
     result &= addCfgValset16(UBLOX_CFG_ANA_ORBMAXERR, aopOrbMaxErr);
   result &= sendCfgValset(maxWait);
   return result;
@@ -7635,10 +7634,18 @@ sfe_ublox_status_e DevUBLOXGNSS::getVal(uint32_t key, uint8_t layer, uint16_t ma
   // So we need to fiddle the layer here.
   // And just to complicate things further, the ZED-F9P only responds
   // correctly to layer 0 (RAM) and layer 7 (Default)!
-  uint8_t getLayer = 7;                         // 7 is the "Default Layer"
-  if ((layer & VAL_LAYER_RAM) == VAL_LAYER_RAM) // Did the user request the RAM layer?
+  uint8_t getLayer = VAL_LAYER_DEFAULT; // 7 is the "Default Layer"
+  if (layer == VAL_LAYER_RAM)           // Did the user request the RAM layer?
   {
     getLayer = 0; // Layer 0 is RAM
+  }
+  else if (layer == VAL_LAYER_BBR) // Did the user request the BBR layer?
+  {
+    getLayer = 1; // Layer 1 is BBR
+  }
+  else if (layer == VAL_LAYER_FLASH) // Did the user request the Flash layer?
+  {
+    getLayer = 2; // Layer 2 is Flash
   }
 
   payloadCfg[0] = 0;        // Message Version - set to 0
@@ -8022,10 +8029,18 @@ bool DevUBLOXGNSS::newCfgValget(ubxPacket *pkt, uint8_t layer) // Create a new, 
   // So we need to fiddle the layer here.
   // And just to complicate things further, the ZED-F9P only responds
   // correctly to layer 0 (RAM) and layer 7 (Default)!
-  uint8_t getLayer = 7;                         // 7 is the "Default Layer"
-  if ((layer & VAL_LAYER_RAM) == VAL_LAYER_RAM) // Did the user request the RAM layer?
+  uint8_t getLayer = VAL_LAYER_DEFAULT; // 7 is the "Default Layer"
+  if (layer == VAL_LAYER_RAM)           // Did the user request the RAM layer?
   {
     getLayer = 0; // Layer 0 is RAM
+  }
+  else if (layer == VAL_LAYER_BBR) // Did the user request the BBR layer?
+  {
+    getLayer = 1; // Layer 1 is BBR
+  }
+  else if (layer == VAL_LAYER_FLASH) // Did the user request the Flash layer?
+  {
+    getLayer = 2; // Layer 2 is Flash
   }
 
   pkt->payload[0] = 0;        // Message Version - set to 0
@@ -14090,11 +14105,11 @@ bool DevUBLOXGNSS::getNavigationFrequency(uint8_t *navFreq, uint8_t layer, uint1
 
   return result;
 }
-uint8_t DevUBLOXGNSS::getNavigationFrequency(uint16_t maxWait) // Unsafe overload...
+uint8_t DevUBLOXGNSS::getNavigationFrequency(uint8_t layer, uint16_t maxWait) // Unsafe overload...
 {
   uint8_t navFreq = 0;
 
-  getNavigationFrequency(&navFreq, VAL_LAYER_RAM, maxWait);
+  getNavigationFrequency(&navFreq, layer, maxWait);
 
   return navFreq;
 }
@@ -14127,11 +14142,11 @@ bool DevUBLOXGNSS::getMeasurementRate(uint16_t *measRate, uint8_t layer, uint16_
 
   return result;
 }
-uint16_t DevUBLOXGNSS::getMeasurementRate(uint16_t maxWait) // Unsafe overload...
+uint16_t DevUBLOXGNSS::getMeasurementRate(uint8_t layer, uint16_t maxWait) // Unsafe overload...
 {
   uint16_t measurementRate;
 
-  getMeasurementRate(&measurementRate, VAL_LAYER_RAM, maxWait);
+  getMeasurementRate(&measurementRate, layer, maxWait);
 
   return measurementRate;
 }
@@ -14154,11 +14169,11 @@ bool DevUBLOXGNSS::getNavigationRate(uint16_t *navRate, uint8_t layer, uint16_t 
 
   return result;
 }
-uint16_t DevUBLOXGNSS::getNavigationRate(uint16_t maxWait) // Unsafe overload...
+uint16_t DevUBLOXGNSS::getNavigationRate(uint8_t layer, uint16_t maxWait) // Unsafe overload...
 {
   uint16_t navigationRate;
 
-  getNavigationRate(&navigationRate, VAL_LAYER_RAM, maxWait);
+  getNavigationRate(&navigationRate, layer, maxWait);
 
   return navigationRate;
 }
@@ -15616,13 +15631,16 @@ bool DevUBLOXGNSS::getSensorFusionStatus(UBX_ESF_STATUS_sensorStatus_t *sensorSt
 
 // Set the High Navigation Rate
 // Returns true if the setHNRNavigationRate is successful
-bool DevUBLOXGNSS::setHNRNavigationRate(uint8_t rate, uint16_t maxWait)
+bool DevUBLOXGNSS::setHNRNavigationRate(uint8_t rate, uint8_t layer, uint16_t maxWait)
 {
   if (rate == 0) // Return now if rate is zero
     return (false);
 
   if (rate > 40)
     rate = 40; // Limit rate to 40Hz so i2cPollingWait is set correctly
+
+  // Placeholder for when HNR switches to the configuration interface
+  (void)layer;
 
   // Adjust the I2C polling timeout based on update rate
   // Do this even if the sendCommand is not ACK'd
@@ -15649,8 +15667,11 @@ bool DevUBLOXGNSS::setHNRNavigationRate(uint8_t rate, uint16_t maxWait)
 
 // Get the High Navigation Rate
 // Returns 0 if the getHNRNavigationRate fails
-uint8_t DevUBLOXGNSS::getHNRNavigationRate(uint16_t maxWait)
+uint8_t DevUBLOXGNSS::getHNRNavigationRate(uint8_t layer, uint16_t maxWait)
 {
+  // Placeholder for when HNR switches to the configuration interface
+  (void)layer;
+
   packetCfg.cls = UBX_CLASS_CFG;
   packetCfg.id = UBX_CFG_HNR;
   packetCfg.len = 0;

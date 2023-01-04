@@ -11,7 +11,7 @@
   https://www.sparkfun.com/products/18774
   https://www.sparkfun.com/products/19663
   https://www.sparkfun.com/products/17722
-  
+
   Original version by Nathan Seidle @ SparkFun Electronics, September 6th, 2018
   v2.0 rework by Paul Clark @ SparkFun Electronics, December 31st, 2020
   v3.0 rework by Paul Clark @ SparkFun Electronics, December 8th, 2022
@@ -1444,7 +1444,8 @@ typedef struct
 const uint8_t UBX_RXM_MEASX_MAX_BLOCKS = 92;
 const uint16_t UBX_RXM_MEASX_MAX_LEN = 44 + (24 * UBX_RXM_MEASX_MAX_BLOCKS);
 
-typedef struct {
+typedef struct
+{
   uint8_t version; // Message version (0x01 for this version)
   uint8_t reserved1[3];
   uint32_t gpsTOW;
@@ -1463,13 +1464,14 @@ typedef struct {
     uint8_t all;
     struct
     {
-      uint8_t towSet : 2;    // TOW set (0 = no, 1 or 2 = yes)
+      uint8_t towSet : 2; // TOW set (0 = no, 1 or 2 = yes)
     } bits;
   } flags;
   uint8_t reserved4[8];
 } UBX_RXM_MEASX_header_t;
 
-typedef struct {
+typedef struct
+{
   uint8_t gnssId;
   uint8_t svId;
   uint8_t cNo;
@@ -1484,7 +1486,8 @@ typedef struct {
   uint8_t reserved5[2];
 } UBX_RXM_MEASX_block_t;
 
-typedef struct {
+typedef struct
+{
   UBX_RXM_MEASX_header_t header;
   UBX_RXM_MEASX_block_t blocks[UBX_RXM_MEASX_MAX_BLOCKS];
 } UBX_RXM_MEASX_data_t;

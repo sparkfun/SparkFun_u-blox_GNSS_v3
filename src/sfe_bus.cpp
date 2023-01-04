@@ -11,7 +11,7 @@
   https://www.sparkfun.com/products/18774
   https://www.sparkfun.com/products/19663
   https://www.sparkfun.com/products/17722
-  
+
   Original version by Nathan Seidle @ SparkFun Electronics, September 6th, 2018
   v2.0 rework by Paul Clark @ SparkFun Electronics, December 31st, 2020
   v3.0 rework by Paul Clark @ SparkFun Electronics, December 8th, 2022
@@ -174,7 +174,7 @@ namespace SparkFun_UBLOX_GNSS
     if (_i2cPort->endTransmission() == 0)
       return written;
 
-    return 0;      
+    return 0;
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -390,11 +390,11 @@ namespace SparkFun_UBLOX_GNSS
   }
   void SfeSPI::writeReadByte(const uint8_t *data, uint8_t *readData)
   {
-      *readData = _spiPort->transfer(*data);
+    *readData = _spiPort->transfer(*data);
   }
   void SfeSPI::writeReadByte(const uint8_t data, uint8_t *readData)
   {
-      *readData = _spiPort->transfer(data);
+    *readData = _spiPort->transfer(data);
   }
   void SfeSPI::endWriteReadByte() // endTransaction
   {
@@ -470,5 +470,3 @@ namespace SparkFun_UBLOX_GNSS
     return _serialPort->readBytes(data, length);
   }
 }
-
-

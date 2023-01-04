@@ -11,7 +11,7 @@
   https://www.sparkfun.com/products/18774
   https://www.sparkfun.com/products/19663
   https://www.sparkfun.com/products/17722
-  
+
   Original version by Nathan Seidle @ SparkFun Electronics, September 6th, 2018
   v2.0 rework by Paul Clark @ SparkFun Electronics, December 31st, 2020
   v3.0 rework by Paul Clark @ SparkFun Electronics, December 8th, 2022
@@ -62,10 +62,11 @@ const uint8_t VAL_SIZE_32 = 0x04; // Four bytes
 const uint8_t VAL_SIZE_64 = 0x05; // Eight bytes
 
 // These are the Bitfield layers definitions for the UBX-CFG-VALSET message (not to be confused with Bitfield deviceMask in UBX-CFG-CFG)
+const uint8_t VAL_LAYER_DEFAULT = 0x7; // ONLY valid with getVal()
 const uint8_t VAL_LAYER_RAM = (1 << 0);
 const uint8_t VAL_LAYER_BBR = (1 << 1);
 const uint8_t VAL_LAYER_FLASH = (1 << 2);
-const uint8_t VAL_LAYER_RAM_BBR = VAL_LAYER_RAM | VAL_LAYER_BBR;
+const uint8_t VAL_LAYER_RAM_BBR = VAL_LAYER_RAM | VAL_LAYER_BBR;               // Not valid with getVal()
 const uint8_t VAL_LAYER_ALL = VAL_LAYER_RAM | VAL_LAYER_BBR | VAL_LAYER_FLASH; // Not valid with getVal()
 
 // Below are various Groups, IDs, and sizes for various settings
@@ -93,7 +94,7 @@ const uint8_t VAL_ID_I2C_ADDRESS = 0x01;
 
 // CFG-ANA: AssistNow Autonomous and Offline configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_ANA_USE_ANA = 0x10230001; // Use AssistNow Autonomous
+const uint32_t UBLOX_CFG_ANA_USE_ANA = 0x10230001;   // Use AssistNow Autonomous
 const uint32_t UBLOX_CFG_ANA_ORBMAXERR = 0x30230002; // Maximum acceptable (modeled) orbit error in m. Range is from 5 to 1000.
 
 // CFG-BDS: BeiDou system configuration
@@ -961,11 +962,11 @@ const uint32_t UBLOX_CFG_PMP_UNIQUE_WORD = 0x50b1001a;       // Unique word. Def
 
 // CFG-QZSS-L6: QZSS system configuration configuration (NEO-D9C)
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_QZSSL6_SVIDA = 0x20370020;          // QZSS L6 SV Id to be decoded by channel A
-const uint32_t UBLOX_CFG_QZSSL6_SVIDB = 0x20370030;          // QZSS L6 SV Id to be decoded by channel B
-const uint32_t UBLOX_CFG_QZSSL6_MSGA = 0x20370050;           // QZSS L6 messages to be decoded by channel A
-const uint32_t UBLOX_CFG_QZSSL6_MSGB = 0x20370060;           // QZSS L6 messages to be decoded by channel B
-const uint32_t UBLOX_CFG_QZSSL6_RSDECODER = 0x20370080;      // QZSS L6 message Reed-Solomon decoder mode
+const uint32_t UBLOX_CFG_QZSSL6_SVIDA = 0x20370020;     // QZSS L6 SV Id to be decoded by channel A
+const uint32_t UBLOX_CFG_QZSSL6_SVIDB = 0x20370030;     // QZSS L6 SV Id to be decoded by channel B
+const uint32_t UBLOX_CFG_QZSSL6_MSGA = 0x20370050;      // QZSS L6 messages to be decoded by channel A
+const uint32_t UBLOX_CFG_QZSSL6_MSGB = 0x20370060;      // QZSS L6 messages to be decoded by channel B
+const uint32_t UBLOX_CFG_QZSSL6_RSDECODER = 0x20370080; // QZSS L6 message Reed-Solomon decoder mode
 
 // CFG-QZSS: QZSS system configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

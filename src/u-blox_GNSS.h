@@ -11,7 +11,7 @@
   https://www.sparkfun.com/products/18774
   https://www.sparkfun.com/products/19663
   https://www.sparkfun.com/products/17722
-  
+
   Original version by Nathan Seidle @ SparkFun Electronics, September 6th, 2018
   v2.0 rework by Paul Clark @ SparkFun Electronics, December 31st, 2020
   v3.0 rework by Paul Clark @ SparkFun Electronics, December 8th, 2022
@@ -96,6 +96,7 @@ public:
 
   // New in v3.0: hardware interface is abstracted
   bool isConnected(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+
 protected:
   enum commTypes
   {
@@ -316,8 +317,8 @@ public:
   bool setUSBInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure USB port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
   bool setSPIInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure SPI port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
 
-  void setNMEAOutputPort(Stream &nmeaOutputPort);                                                                       // Sets the internal variable for the port to direct NMEA characters to
-  void setOutputPort(Stream &outputPort);                                                                               // Sets the internal variable for the port to direct ALL characters to
+  void setNMEAOutputPort(Stream &nmeaOutputPort); // Sets the internal variable for the port to direct NMEA characters to
+  void setOutputPort(Stream &outputPort);         // Sets the internal variable for the port to direct ALL characters to
 
   // Reset to defaults
 
@@ -335,16 +336,16 @@ public:
   bool cfgCfg(uint8_t *data, uint8_t len, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);       // Common method for CFG CFG
 
   // Functions used for RTK and base station setup
-  bool setSurveyMode(uint8_t mode, uint16_t observationTime, float requiredAccuracy, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);     // Control survey in mode
-  bool setSurveyModeFull(uint8_t mode, uint32_t observationTime, float requiredAccuracy, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Control survey in mode
-  bool enableSurveyMode(uint16_t observationTime, float requiredAccuracy, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Begin Survey-In for NEO-M8P / ZED-F9x
-  bool enableSurveyModeFull(uint32_t observationTime, float requiredAccuracy, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);            // Begin Survey-In for NEO-M8P / ZED-F9x
-  bool disableSurveyMode(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                 // Stop Survey-In mode
+  bool setSurveyMode(uint8_t mode, uint16_t observationTime, float requiredAccuracy, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);     // Control survey in mode
+  bool setSurveyModeFull(uint8_t mode, uint32_t observationTime, float requiredAccuracy, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Control survey in mode
+  bool enableSurveyMode(uint16_t observationTime, float requiredAccuracy, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Begin Survey-In for NEO-M8P / ZED-F9x
+  bool enableSurveyModeFull(uint32_t observationTime, float requiredAccuracy, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);            // Begin Survey-In for NEO-M8P / ZED-F9x
+  bool disableSurveyMode(uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                 // Stop Survey-In mode
   // Given coordinates, put receiver into static position. Set latlong to true to pass in lat/long values instead of ecef.
   // For ECEF the units are: cm, 0.1mm, cm, 0.1mm, cm, 0.1mm
   // For Lat/Lon/Alt the units are: degrees^-7, degrees^-9, degrees^-7, degrees^-9, cm, 0.1mm
-  bool setStaticPosition(int32_t ecefXOrLat, int8_t ecefXOrLatHP, int32_t ecefYOrLon, int8_t ecefYOrLonHP, int32_t ecefZOrAlt, int8_t ecefZOrAltHP, bool latLong = false, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
-  bool setStaticPosition(int32_t ecefXOrLat, int32_t ecefYOrLon, int32_t ecefZOrAlt, bool latLong = false, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool setStaticPosition(int32_t ecefXOrLat, int8_t ecefXOrLatHP, int32_t ecefYOrLon, int8_t ecefYOrLonHP, int32_t ecefZOrAlt, int8_t ecefZOrAltHP, bool latLong = false, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool setStaticPosition(int32_t ecefXOrLat, int32_t ecefYOrLon, int32_t ecefZOrAlt, bool latLong = false, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
   bool setDGNSSConfiguration(sfe_ublox_dgnss_mode_e dgnssMode = SFE_UBLOX_DGNSS_MODE_FIXED, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the DGNSS differential mode
 
   // Read the module's protocol version
@@ -354,9 +355,9 @@ public:
   moduleSWVersion_t *moduleSWVersion = nullptr;                                // Pointer to struct. RAM will be allocated for this if/when necessary
 
   // Support for geofences
-  bool addGeofence(int32_t latitude, int32_t longitude, uint32_t radius, uint8_t confidence = 0, bool pinPolarity = 0, uint8_t pin = 0, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Add a new geofence
-  bool clearGeofences(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                                   // Clears all geofences
-  bool getGeofenceState(geofenceState &currentGeofenceState, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                            // Returns the combined geofence state
+  bool addGeofence(int32_t latitude, int32_t longitude, uint32_t radius, uint8_t confidence = 0, bool pinPolarity = 0, uint8_t pin = 0, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Add a new geofence
+  bool clearGeofences(uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                                   // Clears all geofences
+  bool getGeofenceState(geofenceState &currentGeofenceState, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                               // Returns the combined geofence state
   // Storage for the geofence parameters. RAM is allocated for this if/when required.
   geofenceParams_t *currentGeofenceParams = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
 
@@ -394,12 +395,12 @@ public:
   bool getHW2status(UBX_MON_HW2_data_t *data = nullptr, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the extended hardware status using UBX_MON_HW2
 
   // UBX-CFG-NAVX5 - get/set the ackAiding byte. If ackAiding is 1, UBX-MGA-ACK messages will be sent by the module to acknowledge the MGA data
-  uint8_t getAckAiding(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                 // Get the ackAiding byte - returns 255 if the sendCommand fails
+  uint8_t getAckAiding(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                     // Get the ackAiding byte - returns 255 if the sendCommand fails
   bool setAckAiding(uint8_t ackAiding, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the ackAiding byte
 
   // AssistNow Autonomous support
   // UBX-CFG-NAVX5 - get/set the aopCfg byte and set the aopOrdMaxErr word. If aopOrbMaxErr is 0 (default), the max orbit error is reset to the firmware default.
-  uint8_t getAopCfg(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                         // Get the AssistNow Autonomous configuration (aopCfg) - returns 255 if the sendCommand fails
+  uint8_t getAopCfg(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                             // Get the AssistNow Autonomous configuration (aopCfg) - returns 255 if the sendCommand fails
   bool setAopCfg(uint8_t aopCfg, uint16_t aopOrbMaxErr = 0, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the aopCfg byte and the aopOrdMaxErr word
 
   // SPARTN dynamic keys
@@ -450,7 +451,7 @@ public:
   bool setVal32(uint32_t key, uint32_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 32-bit value at a given group/id/size location
   bool setVal64(uint32_t key, uint64_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 64-bit value at a given group/id/size location
 
-  bool newCfgValset(uint8_t layer = VAL_LAYER_RAM_BBR);                                                             // Create a new, empty UBX-CFG-VALSET. Add entries with addCfgValset8/16/32/64
+  bool newCfgValset(uint8_t layer = VAL_LAYER_RAM_BBR);                                                         // Create a new, empty UBX-CFG-VALSET. Add entries with addCfgValset8/16/32/64
   bool addCfgValsetN(uint32_t key, uint8_t *value, uint8_t N);                                                  // Add a new key and N-bit value to an existing UBX-CFG-VALSET ubxPacket
   bool addCfgValset8(uint32_t key, uint8_t value);                                                              // Add a new key and 8-bit value to an existing UBX-CFG-VALSET ubxPacket
   bool addCfgValset16(uint32_t key, uint16_t value);                                                            // Add a new key and 16-bit value to an existing UBX-CFG-VALSET ubxPacket
@@ -462,10 +463,10 @@ public:
   void autoSendCfgValsetAtSpaceRemaining(size_t spaceRemaining) { _autoSendAtSpaceRemaining = spaceRemaining; } // Cause CFG_VALSET packets to be sent automatically when packetCfg has less than this many bytes available
 
   // Deprecated - only included for backward-compatibility. Use newCfgValset and sendCfgValset
-  bool newCfgValset8(uint32_t key, uint8_t value, uint8_t layer = VAL_LAYER_RAM_BBR);                  // Define a new UBX-CFG-VALSET with the given key and 8-bit value
-  bool newCfgValset16(uint32_t key, uint16_t value, uint8_t layer = VAL_LAYER_RAM_BBR);                // Define a new UBX-CFG-VALSET with the given key and 16-bit value
-  bool newCfgValset32(uint32_t key, uint32_t value, uint8_t layer = VAL_LAYER_RAM_BBR);                // Define a new UBX-CFG-VALSET with the given key and 32-bit value
-  bool newCfgValset64(uint32_t key, uint64_t value, uint8_t layer = VAL_LAYER_RAM_BBR);                // Define a new UBX-CFG-VALSET with the given key and 64-bit value
+  bool newCfgValset8(uint32_t key, uint8_t value, uint8_t layer = VAL_LAYER_RAM_BBR);              // Define a new UBX-CFG-VALSET with the given key and 8-bit value
+  bool newCfgValset16(uint32_t key, uint16_t value, uint8_t layer = VAL_LAYER_RAM_BBR);            // Define a new UBX-CFG-VALSET with the given key and 16-bit value
+  bool newCfgValset32(uint32_t key, uint32_t value, uint8_t layer = VAL_LAYER_RAM_BBR);            // Define a new UBX-CFG-VALSET with the given key and 32-bit value
+  bool newCfgValset64(uint32_t key, uint64_t value, uint8_t layer = VAL_LAYER_RAM_BBR);            // Define a new UBX-CFG-VALSET with the given key and 64-bit value
   bool sendCfgValset8(uint32_t key, uint8_t value, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Add the final key and 8-bit value to an existing UBX-CFG-VALSET ubxPacket and send it
   bool sendCfgValset16(uint32_t key, uint16_t value, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Add the final key and 16-bit value to an existing UBX-CFG-VALSET ubxPacket and send it
   bool sendCfgValset32(uint32_t key, uint32_t value, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Add the final key and 32-bit value to an existing UBX-CFG-VALSET ubxPacket and send it
@@ -480,173 +481,173 @@ public:
   // If you change the navigation frequency to (e.g.) 4Hz using setNavigationFrequency(4)
   // then you should use a shorter maxWait. 300msec would be about right: getPVT(300)
 
-  bool getNAVPOSECEF(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                      // NAV POSECEF
+  bool getNAVPOSECEF(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                         // NAV POSECEF
   bool setAutoNAVPOSECEF(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                    // Enable/disable automatic POSECEF reports at the navigation frequency
   bool setAutoNAVPOSECEF(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                               // Enable/disable automatic POSECEF reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoNAVPOSECEFrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                    // Set the rate for automatic POSECEF reports
   bool setAutoNAVPOSECEFcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_POSECEF_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic POSECEF reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoNAVPOSECEF(bool enabled, bool implicitUpdate = true);                                                                  // In case no config access to the GPS is possible and POSECEF is send cyclically already
-  void flushNAVPOSECEF();                                                                                                               // Mark all the data as read/stale
-  void logNAVPOSECEF(bool enabled = true);                                                                                              // Log data to file buffer
+  bool assumeAutoNAVPOSECEF(bool enabled, bool implicitUpdate = true);                                                                                                     // In case no config access to the GPS is possible and POSECEF is send cyclically already
+  void flushNAVPOSECEF();                                                                                                                                                  // Mark all the data as read/stale
+  void logNAVPOSECEF(bool enabled = true);                                                                                                                                 // Log data to file buffer
 
-  bool getNAVSTATUS(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                     // NAV STATUS
+  bool getNAVSTATUS(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                        // NAV STATUS
   bool setAutoNAVSTATUS(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                   // Enable/disable automatic STATUS reports at the navigation frequency
   bool setAutoNAVSTATUS(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                              // Enable/disable automatic STATUS reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoNAVSTATUSrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                   // Set the rate for automatic STATUS reports
   bool setAutoNAVSTATUScallbackPtr(void (*callbackPointerPtr)(UBX_NAV_STATUS_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic STATUS reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoNAVSTATUS(bool enabled, bool implicitUpdate = true);                                                                 // In case no config access to the GPS is possible and STATUS is send cyclically already
-  void flushNAVSTATUS();                                                                                                              // Mark all the data as read/stale
-  void logNAVSTATUS(bool enabled = true);                                                                                             // Log data to file buffer
+  bool assumeAutoNAVSTATUS(bool enabled, bool implicitUpdate = true);                                                                                                    // In case no config access to the GPS is possible and STATUS is send cyclically already
+  void flushNAVSTATUS();                                                                                                                                                 // Mark all the data as read/stale
+  void logNAVSTATUS(bool enabled = true);                                                                                                                                // Log data to file buffer
 
-  bool getDOP(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // Query module for latest dilution of precision values and load global vars:. If autoDOP is disabled, performs an explicit poll and waits, if enabled does not block. Returns true if new DOP is available.
+  bool getDOP(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // Query module for latest dilution of precision values and load global vars:. If autoDOP is disabled, performs an explicit poll and waits, if enabled does not block. Returns true if new DOP is available.
   bool setAutoDOP(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic DOP reports at the navigation frequency
   bool setAutoDOP(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic DOP reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoDOPrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic DOP reports
   bool setAutoDOPcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_DOP_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic DOP reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoDOP(bool enabled, bool implicitUpdate = true);                                                              // In case no config access to the GPS is possible and DOP is send cyclically already
-  void flushDOP();                                                                                                           // Mark all the DOP data as read/stale
-  void logNAVDOP(bool enabled = true);                                                                                       // Log data to file buffer
+  bool assumeAutoDOP(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and DOP is send cyclically already
+  void flushDOP();                                                                                                                                              // Mark all the DOP data as read/stale
+  void logNAVDOP(bool enabled = true);                                                                                                                          // Log data to file buffer
 
-  bool getVehAtt(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // NAV ATT Helper
-  bool getNAVATT(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // NAV ATT
+  bool getVehAtt(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // NAV ATT Helper
+  bool getNAVATT(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // NAV ATT
   bool setAutoNAVATT(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic vehicle attitude reports at the navigation frequency
   bool setAutoNAVATT(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic vehicle attitude reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoNAVATTrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic ATT reports
   bool setAutoNAVATTcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_ATT_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic ATT reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoNAVATT(bool enabled, bool implicitUpdate = true);                                                              // In case no config access to the GPS is possible and vehicle attitude is send cyclically already
-  void flushNAVATT();                                                                                                           // Mark all the data as read/stale
-  void logNAVATT(bool enabled = true);                                                                                          // Log data to file buffer
+  bool assumeAutoNAVATT(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and vehicle attitude is send cyclically already
+  void flushNAVATT();                                                                                                                                              // Mark all the data as read/stale
+  void logNAVATT(bool enabled = true);                                                                                                                             // Log data to file buffer
 
-  bool getPVT(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // Query module for latest group of datums and load global vars: lat, long, alt, speed, SIV, accuracies, etc. If autoPVT is disabled, performs an explicit poll and waits, if enabled does not block. Returns true if new PVT is available.
+  bool getPVT(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // Query module for latest group of datums and load global vars: lat, long, alt, speed, SIV, accuracies, etc. If autoPVT is disabled, performs an explicit poll and waits, if enabled does not block. Returns true if new PVT is available.
   bool setAutoPVT(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic PVT reports at the navigation frequency
   bool setAutoPVT(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic PVT reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoPVTrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic PVT reports
   bool setAutoPVTcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_PVT_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic PVT reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoPVT(bool enabled, bool implicitUpdate = true);                                                              // In case no config access to the GPS is possible and PVT is send cyclically already
-  void flushPVT();                                                                                                           // Mark all the PVT data as read/stale
-  void logNAVPVT(bool enabled = true);                                                                                       // Log data to file buffer
+  bool assumeAutoPVT(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and PVT is send cyclically already
+  void flushPVT();                                                                                                                                              // Mark all the PVT data as read/stale
+  void logNAVPVT(bool enabled = true);                                                                                                                          // Log data to file buffer
 
-  bool getNAVODO(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // NAV ODO
+  bool getNAVODO(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // NAV ODO
   bool setAutoNAVODO(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic ODO reports at the navigation frequency
   bool setAutoNAVODO(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic ODO reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoNAVODOrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic ODO reports
   bool setAutoNAVODOcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_ODO_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic ODO reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoNAVODO(bool enabled, bool implicitUpdate = true);                                                              // In case no config access to the GPS is possible and ODO is send cyclically already
-  void flushNAVODO();                                                                                                           // Mark all the data as read/stale
-  void logNAVODO(bool enabled = true);                                                                                          // Log data to file buffer
+  bool assumeAutoNAVODO(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and ODO is send cyclically already
+  void flushNAVODO();                                                                                                                                              // Mark all the data as read/stale
+  void logNAVODO(bool enabled = true);                                                                                                                             // Log data to file buffer
 
-  bool getNAVVELECEF(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                      // NAV VELECEF
+  bool getNAVVELECEF(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                         // NAV VELECEF
   bool setAutoNAVVELECEF(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                    // Enable/disable automatic VELECEF reports at the navigation frequency
   bool setAutoNAVVELECEF(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                               // Enable/disable automatic VELECEF reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoNAVVELECEFrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                    // Set the rate for automatic VELECEF reports
   bool setAutoNAVVELECEFcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_VELECEF_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic VELECEF reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoNAVVELECEF(bool enabled, bool implicitUpdate = true);                                                                  // In case no config access to the GPS is possible and VELECEF is send cyclically already
-  void flushNAVVELECEF();                                                                                                               // Mark all the data as read/stale
-  void logNAVVELECEF(bool enabled = true);                                                                                              // Log data to file buffer
+  bool assumeAutoNAVVELECEF(bool enabled, bool implicitUpdate = true);                                                                                                     // In case no config access to the GPS is possible and VELECEF is send cyclically already
+  void flushNAVVELECEF();                                                                                                                                                  // Mark all the data as read/stale
+  void logNAVVELECEF(bool enabled = true);                                                                                                                                 // Log data to file buffer
 
-  bool getNAVVELNED(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                     // NAV VELNED
+  bool getNAVVELNED(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                        // NAV VELNED
   bool setAutoNAVVELNED(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                   // Enable/disable automatic VELNED reports at the navigation frequency
   bool setAutoNAVVELNED(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                              // Enable/disable automatic VELNED reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoNAVVELNEDrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                   // Set the rate for automatic VELNED reports
   bool setAutoNAVVELNEDcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_VELNED_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic VELNED reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoNAVVELNED(bool enabled, bool implicitUpdate = true);                                                                 // In case no config access to the GPS is possible and VELNED is send cyclically already
-  void flushNAVVELNED();                                                                                                              // Mark all the data as read/stale
-  void logNAVVELNED(bool enabled = true);                                                                                             // Log data to file buffer
+  bool assumeAutoNAVVELNED(bool enabled, bool implicitUpdate = true);                                                                                                    // In case no config access to the GPS is possible and VELNED is send cyclically already
+  void flushNAVVELNED();                                                                                                                                                 // Mark all the data as read/stale
+  void logNAVVELNED(bool enabled = true);                                                                                                                                // Log data to file buffer
 
-  bool getNAVHPPOSECEF(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                        // NAV HPPOSECEF
+  bool getNAVHPPOSECEF(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                           // NAV HPPOSECEF
   bool setAutoNAVHPPOSECEF(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                      // Enable/disable automatic HPPOSECEF reports at the navigation frequency
   bool setAutoNAVHPPOSECEF(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                 // Enable/disable automatic HPPOSECEF reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoNAVHPPOSECEFrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                      // Set the rate for automatic HPPOSECEF reports
   bool setAutoNAVHPPOSECEFcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_HPPOSECEF_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic HPPOSECEF reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoNAVHPPOSECEF(bool enabled, bool implicitUpdate = true);                                                                    // In case no config access to the GPS is possible and HPPOSECEF is send cyclically already
-  void flushNAVHPPOSECEF();                                                                                                                 // Mark all the data as read/stale
-  void logNAVHPPOSECEF(bool enabled = true);                                                                                                // Log data to file buffer
+  bool assumeAutoNAVHPPOSECEF(bool enabled, bool implicitUpdate = true);                                                                                                       // In case no config access to the GPS is possible and HPPOSECEF is send cyclically already
+  void flushNAVHPPOSECEF();                                                                                                                                                    // Mark all the data as read/stale
+  void logNAVHPPOSECEF(bool enabled = true);                                                                                                                                   // Log data to file buffer
 
-  bool getHPPOSLLH(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                       // NAV HPPOSLLH
+  bool getHPPOSLLH(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                          // NAV HPPOSLLH
   bool setAutoHPPOSLLH(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                     // Enable/disable automatic HPPOSLLH reports at the navigation frequency
   bool setAutoHPPOSLLH(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                // Enable/disable automatic HPPOSLLH reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoHPPOSLLHrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                     // Set the rate for automatic HPPOSLLH reports
   bool setAutoHPPOSLLHcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_HPPOSLLH_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic HPPOSLLH reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoHPPOSLLH(bool enabled, bool implicitUpdate = true);                                                                   // In case no config access to the GPS is possible and HPPOSLLH is send cyclically already
-  void flushHPPOSLLH();                                                                                                                // Mark all the HPPPOSLLH data as read/stale. This is handy to get data alignment after CRC failure
-  void logNAVHPPOSLLH(bool enabled = true);                                                                                            // Log data to file buffer
+  bool assumeAutoHPPOSLLH(bool enabled, bool implicitUpdate = true);                                                                                                      // In case no config access to the GPS is possible and HPPOSLLH is send cyclically already
+  void flushHPPOSLLH();                                                                                                                                                   // Mark all the HPPPOSLLH data as read/stale. This is handy to get data alignment after CRC failure
+  void logNAVHPPOSLLH(bool enabled = true);                                                                                                                               // Log data to file buffer
 
-  bool getNAVPVAT(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                   // NAV PVAT
+  bool getNAVPVAT(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                      // NAV PVAT
   bool setAutoNAVPVAT(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                 // Enable/disable automatic PVAT reports at the navigation frequency
   bool setAutoNAVPVAT(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                            // Enable/disable automatic PVAT reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoNAVPVATrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                 // Set the rate for automatic PVAT reports
   bool setAutoNAVPVATcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_PVAT_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic PVAT reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoNAVPVAT(bool enabled, bool implicitUpdate = true);                                                               // In case no config access to the GPS is possible and PVAT is send cyclically already
-  void flushNAVPVAT();                                                                                                            // Mark all the PVAT data as read/stale
-  void logNAVPVAT(bool enabled = true);                                                                                           // Log data to file buffer
+  bool assumeAutoNAVPVAT(bool enabled, bool implicitUpdate = true);                                                                                                  // In case no config access to the GPS is possible and PVAT is send cyclically already
+  void flushNAVPVAT();                                                                                                                                               // Mark all the PVAT data as read/stale
+  void logNAVPVAT(bool enabled = true);                                                                                                                              // Log data to file buffer
 
-  bool getNAVTIMEUTC(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                      // NAV TIMEUTC
+  bool getNAVTIMEUTC(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                         // NAV TIMEUTC
   bool setAutoNAVTIMEUTC(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                    // Enable/disable automatic TIMEUTC reports at the navigation frequency
   bool setAutoNAVTIMEUTC(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                               // Enable/disable automatic TIMEUTC reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
-  bool setAutoNAVTIMEUTCrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Set the rate for automatic TIMEUTC reports
+  bool setAutoNAVTIMEUTCrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                    // Set the rate for automatic TIMEUTC reports
   bool setAutoNAVTIMEUTCcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_TIMEUTC_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic TIMEUTC reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoNAVTIMEUTC(bool enabled, bool implicitUpdate = true);                                                                  // In case no config access to the GPS is possible and TIMEUTC is send cyclically already
-  void flushNAVTIMEUTC();                                                                                                               // Mark all the data as read/stale
-  void logNAVTIMEUTC(bool enabled = true);                                                                                              // Log data to file buffer
+  bool assumeAutoNAVTIMEUTC(bool enabled, bool implicitUpdate = true);                                                                                                     // In case no config access to the GPS is possible and TIMEUTC is send cyclically already
+  void flushNAVTIMEUTC();                                                                                                                                                  // Mark all the data as read/stale
+  void logNAVTIMEUTC(bool enabled = true);                                                                                                                                 // Log data to file buffer
 
-  bool getNAVCLOCK(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                    // NAV CLOCK
+  bool getNAVCLOCK(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                       // NAV CLOCK
   bool setAutoNAVCLOCK(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                  // Enable/disable automatic clock reports at the navigation frequency
   bool setAutoNAVCLOCK(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                             // Enable/disable automatic clock reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoNAVCLOCKrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                  // Set the rate for automatic CLOCK reports
   bool setAutoNAVCLOCKcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_CLOCK_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic CLOCK reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoNAVCLOCK(bool enabled, bool implicitUpdate = true);                                                                // In case no config access to the GPS is possible and clock is send cyclically already
-  void flushNAVCLOCK();                                                                                                             // Mark all the data as read/stale
-  void logNAVCLOCK(bool enabled = true);                                                                                            // Log data to file buffer
+  bool assumeAutoNAVCLOCK(bool enabled, bool implicitUpdate = true);                                                                                                   // In case no config access to the GPS is possible and clock is send cyclically already
+  void flushNAVCLOCK();                                                                                                                                                // Mark all the data as read/stale
+  void logNAVCLOCK(bool enabled = true);                                                                                                                               // Log data to file buffer
 
-  bool getSurveyStatus(uint16_t maxWait = 2100);                                                                                  // NAV SVIN - Reads survey in status
+  bool getSurveyStatus(uint16_t maxWait = 2100);                                                                                                                     // NAV SVIN - Reads survey in status
   bool setAutoNAVSVIN(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                 // Enable/disable automatic survey in reports at the navigation frequency
   bool setAutoNAVSVIN(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                            // Enable/disable automatic survey in reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoNAVSVINrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                 // Set the rate for automatic SVIN reports
   bool setAutoNAVSVINcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_SVIN_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic SVIN reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoNAVSVIN(bool enabled, bool implicitUpdate = true);                                                               // In case no config access to the GPS is possible and survey in is send cyclically already
-  void flushNAVSVIN();                                                                                                            // Mark all the data as read/stale
-  void logNAVSVIN(bool enabled = true);                                                                                           // Log data to file buffer
+  bool assumeAutoNAVSVIN(bool enabled, bool implicitUpdate = true);                                                                                                  // In case no config access to the GPS is possible and survey in is send cyclically already
+  void flushNAVSVIN();                                                                                                                                               // Mark all the data as read/stale
+  void logNAVSVIN(bool enabled = true);                                                                                                                              // Log data to file buffer
 
-  bool getNAVEOE(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // Query module for latest dilution of precision values and load global vars:. If autoEOE is disabled, performs an explicit poll and waits, if enabled does not block. Returns true if new EOE is available.
+  bool getNAVEOE(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // Query module for latest dilution of precision values and load global vars:. If autoEOE is disabled, performs an explicit poll and waits, if enabled does not block. Returns true if new EOE is available.
   bool setAutoNAVEOE(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic EOE reports at the navigation frequency
   bool setAutoNAVEOE(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic EOE reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
-  bool setAutoNAVEOErate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                       // Set the rate for automatic EOE reports
+  bool setAutoNAVEOErate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic EOE reports
   bool setAutoNAVEOEcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_EOE_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic EOE reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoNAVEOE(bool enabled, bool implicitUpdate = true);                                                              // In case no config access to the GPS is possible and EOE is send cyclically already
-  void flushNAVEOE();                                                                                                           // Mark all the EOE data as read/stale
-  void logNAVEOE(bool enabled = true);                                                                                          // Log data to file buffer
+  bool assumeAutoNAVEOE(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and EOE is send cyclically already
+  void flushNAVEOE();                                                                                                                                              // Mark all the EOE data as read/stale
+  void logNAVEOE(bool enabled = true);                                                                                                                             // Log data to file buffer
 
   // Add "auto" support for NAV TIMELS - to avoid needing 'global' storage
   bool getLeapSecondEvent(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Reads leap second event info
 
 #ifndef SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
-  bool getNAVSAT(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // Query module for latest AssistNow Autonomous status and load global vars:. If autoNAVSAT is disabled, performs an explicit poll and waits, if enabled does not block. Returns true if new NAVSAT is available.
+  bool getNAVSAT(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // Query module for latest AssistNow Autonomous status and load global vars:. If autoNAVSAT is disabled, performs an explicit poll and waits, if enabled does not block. Returns true if new NAVSAT is available.
   bool setAutoNAVSAT(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic NAVSAT reports at the navigation frequency
   bool setAutoNAVSAT(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic NAVSAT reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoNAVSATrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic NAVSAT reports
   bool setAutoNAVSATcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_SAT_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic NAVSAT reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoNAVSAT(bool enabled, bool implicitUpdate = true);                                                              // In case no config access to the GPS is possible and NAVSAT is send cyclically already
-  void flushNAVSAT();                                                                                                           // Mark all the NAVSAT data as read/stale
-  void logNAVSAT(bool enabled = true);                                                                                          // Log data to file buffer
+  bool assumeAutoNAVSAT(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and NAVSAT is send cyclically already
+  void flushNAVSAT();                                                                                                                                              // Mark all the NAVSAT data as read/stale
+  void logNAVSAT(bool enabled = true);                                                                                                                             // Log data to file buffer
 #endif
 
-  bool getRELPOSNED(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                        // Get Relative Positioning Information of the NED frame
+  bool getRELPOSNED(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                           // Get Relative Positioning Information of the NED frame
   bool setAutoRELPOSNED(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                      // Enable/disable automatic RELPOSNED reports
   bool setAutoRELPOSNED(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                 // Enable/disable automatic RELPOSNED, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoRELPOSNEDrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                      // Set the rate for automatic RELPOSNEDreports
   bool setAutoRELPOSNEDcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_RELPOSNED_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic RELPOSNED reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoRELPOSNED(bool enabled, bool implicitUpdate = true);                                                                    // In case no config access to the GPS is possible and RELPOSNED is send cyclically already
-  void flushNAVRELPOSNED();                                                                                                              // Mark all the data as read/stale
-  void logNAVRELPOSNED(bool enabled = true);                                                                                             // Log data to file buffer
+  bool assumeAutoRELPOSNED(bool enabled, bool implicitUpdate = true);                                                                                                       // In case no config access to the GPS is possible and RELPOSNED is send cyclically already
+  void flushNAVRELPOSNED();                                                                                                                                                 // Mark all the data as read/stale
+  void logNAVRELPOSNED(bool enabled = true);                                                                                                                                // Log data to file buffer
 
-  bool getAOPSTATUS(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                        // Query module for latest AssistNow Autonomous status and load global vars:. If autoAOPSTATUS is disabled, performs an explicit poll and waits, if enabled does not block. Returns true if new AOPSTATUS is available.
+  bool getAOPSTATUS(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                           // Query module for latest AssistNow Autonomous status and load global vars:. If autoAOPSTATUS is disabled, performs an explicit poll and waits, if enabled does not block. Returns true if new AOPSTATUS is available.
   bool setAutoAOPSTATUS(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                      // Enable/disable automatic AOPSTATUS reports at the navigation frequency
   bool setAutoAOPSTATUS(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                 // Enable/disable automatic AOPSTATUS reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoAOPSTATUSrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                      // Set the rate for automatic AOPSTATUS reports
   bool setAutoAOPSTATUScallbackPtr(void (*callbackPointerPtr)(UBX_NAV_AOPSTATUS_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic AOPSTATUS reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoAOPSTATUS(bool enabled, bool implicitUpdate = true);                                                                    // In case no config access to the GPS is possible and AOPSTATUS is send cyclically already
-  void flushAOPSTATUS();                                                                                                                 // Mark all the AOPSTATUS data as read/stale
-  void logAOPSTATUS(bool enabled = true);                                                                                                // Log data to file buffer
+  bool assumeAutoAOPSTATUS(bool enabled, bool implicitUpdate = true);                                                                                                       // In case no config access to the GPS is possible and AOPSTATUS is send cyclically already
+  void flushAOPSTATUS();                                                                                                                                                    // Mark all the AOPSTATUS data as read/stale
+  void logAOPSTATUS(bool enabled = true);                                                                                                                                   // Log data to file buffer
 
 #ifndef SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
   // Receiver Manager Messages (RXM)
@@ -666,137 +667,137 @@ public:
 
   bool setRXMCORcallbackPtr(void (*callbackPointerPtr)(UBX_RXM_COR_data_t *)); // RXM COR
 
-  bool getRXMSFRBX(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                    // RXM SFRBX
+  bool getRXMSFRBX(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                       // RXM SFRBX
   bool setAutoRXMSFRBX(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                  // Enable/disable automatic RXM SFRBX reports at the navigation frequency
   bool setAutoRXMSFRBX(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                             // Enable/disable automatic RXM SFRBX reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoRXMSFRBXrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                  // Set the rate for automatic SFRBX reports
   bool setAutoRXMSFRBXcallbackPtr(void (*callbackPointerPtr)(UBX_RXM_SFRBX_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic SFRBX reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoRXMSFRBX(bool enabled, bool implicitUpdate = true);                                                                // In case no config access to the GPS is possible and RXM SFRBX is send cyclically already
-  void flushRXMSFRBX();                                                                                                             // Mark all the data as read/stale
-  void logRXMSFRBX(bool enabled = true);                                                                                            // Log data to file buffer
+  bool assumeAutoRXMSFRBX(bool enabled, bool implicitUpdate = true);                                                                                                   // In case no config access to the GPS is possible and RXM SFRBX is send cyclically already
+  void flushRXMSFRBX();                                                                                                                                                // Mark all the data as read/stale
+  void logRXMSFRBX(bool enabled = true);                                                                                                                               // Log data to file buffer
 
-  bool getRXMRAWX(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                   // RXM RAWX
+  bool getRXMRAWX(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                      // RXM RAWX
   bool setAutoRXMRAWX(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                 // Enable/disable automatic RXM RAWX reports at the navigation frequency
   bool setAutoRXMRAWX(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                            // Enable/disable automatic RXM RAWX reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoRXMRAWXrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                 // Set the rate for automatic RAWX reports
   bool setAutoRXMRAWXcallbackPtr(void (*callbackPointerPtr)(UBX_RXM_RAWX_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic RAWX reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoRXMRAWX(bool enabled, bool implicitUpdate = true);                                                               // In case no config access to the GPS is possible and RXM RAWX is send cyclically already
-  void flushRXMRAWX();                                                                                                            // Mark all the data as read/stale
-  void logRXMRAWX(bool enabled = true);                                                                                           // Log data to file buffer
+  bool assumeAutoRXMRAWX(bool enabled, bool implicitUpdate = true);                                                                                                  // In case no config access to the GPS is possible and RXM RAWX is send cyclically already
+  void flushRXMRAWX();                                                                                                                                               // Mark all the data as read/stale
+  void logRXMRAWX(bool enabled = true);                                                                                                                              // Log data to file buffer
 
-  bool getRXMMEASX(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                    // RXM MEASX
+  bool getRXMMEASX(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                       // RXM MEASX
   bool setAutoRXMMEASX(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                  // Enable/disable automatic RXM MEASX reports at the navigation frequency
   bool setAutoRXMMEASX(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                             // Enable/disable automatic RXM MEASX reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoRXMMEASXrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                  // Set the rate for automatic MEASX reports
   bool setAutoRXMMEASXcallbackPtr(void (*callbackPointerPtr)(UBX_RXM_MEASX_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic MEASX reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoRXMMEASX(bool enabled, bool implicitUpdate = true);                                                                // In case no config access to the GPS is possible and RXM MEASX is send cyclically already
-  void flushRXMMEASX();                                                                                                             // Mark all the data as read/stale
-  void logRXMMEASX(bool enabled = true);                                                                                            // Log data to file buffer
+  bool assumeAutoRXMMEASX(bool enabled, bool implicitUpdate = true);                                                                                                   // In case no config access to the GPS is possible and RXM MEASX is send cyclically already
+  void flushRXMMEASX();                                                                                                                                                // Mark all the data as read/stale
+  void logRXMMEASX(bool enabled = true);                                                                                                                               // Log data to file buffer
 #endif
 
   // Timing messages (TIM)
 
-  bool getTIMTM2(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // TIM TM2
+  bool getTIMTM2(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // TIM TM2
   bool setAutoTIMTM2(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic TIM TM2 reports at the navigation frequency
   bool setAutoTIMTM2(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic TIM TM2 reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoTIMTM2rate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic TIM TM2 reports
   bool setAutoTIMTM2callbackPtr(void (*callbackPointerPtr)(UBX_TIM_TM2_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic TM2 reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoTIMTM2(bool enabled, bool implicitUpdate = true);                                                              // In case no config access to the GPS is possible and TIM TM2 is send cyclically already
-  void flushTIMTM2();                                                                                                           // Mark all the data as read/stale
-  void logTIMTM2(bool enabled = true);                                                                                          // Log data to file buffer
+  bool assumeAutoTIMTM2(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and TIM TM2 is send cyclically already
+  void flushTIMTM2();                                                                                                                                              // Mark all the data as read/stale
+  void logTIMTM2(bool enabled = true);                                                                                                                             // Log data to file buffer
 
 #ifndef SFE_UBLOX_DISABLE_ESF
   // Sensor fusion (dead reckoning) (ESF)
 
-  bool getEsfAlignment(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                            // ESF ALG Helper
-  bool getESFALG(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // ESF ALG
+  bool getEsfAlignment(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                               // ESF ALG Helper
+  bool getESFALG(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // ESF ALG
   bool setAutoESFALG(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic ESF ALG reports
   bool setAutoESFALG(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic ESF ALG reports, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoESFALGrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic ALG reports
   bool setAutoESFALGcallbackPtr(void (*callbackPointerPtr)(UBX_ESF_ALG_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic ALG reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoESFALG(bool enabled, bool implicitUpdate = true);                                                              // In case no config access to the GPS is possible and ESF ALG is send cyclically already
-  void flushESFALG();                                                                                                           // Mark all the data as read/stale
-  void logESFALG(bool enabled = true);                                                                                          // Log data to file buffer
+  bool assumeAutoESFALG(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and ESF ALG is send cyclically already
+  void flushESFALG();                                                                                                                                              // Mark all the data as read/stale
+  void logESFALG(bool enabled = true);                                                                                                                             // Log data to file buffer
 
-  bool getEsfInfo(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                       // ESF STATUS Helper
-  bool getESFSTATUS(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                     // ESF STATUS
+  bool getEsfInfo(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                          // ESF STATUS Helper
+  bool getESFSTATUS(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                        // ESF STATUS
   bool setAutoESFSTATUS(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                   // Enable/disable automatic ESF STATUS reports
   bool setAutoESFSTATUS(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                              // Enable/disable automatic ESF STATUS reports, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoESFSTATUSrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                   // Set the rate for automatic STATUS reports
   bool setAutoESFSTATUScallbackPtr(void (*callbackPointerPtr)(UBX_ESF_STATUS_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic STATUS reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoESFSTATUS(bool enabled, bool implicitUpdate = true);                                                                 // In case no config access to the GPS is possible and ESF STATUS is send cyclically already
-  void flushESFSTATUS();                                                                                                              // Mark all the data as read/stale
-  void logESFSTATUS(bool enabled = true);                                                                                             // Log data to file buffer
+  bool assumeAutoESFSTATUS(bool enabled, bool implicitUpdate = true);                                                                                                    // In case no config access to the GPS is possible and ESF STATUS is send cyclically already
+  void flushESFSTATUS();                                                                                                                                                 // Mark all the data as read/stale
+  void logESFSTATUS(bool enabled = true);                                                                                                                                // Log data to file buffer
 
-  bool getEsfIns(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // ESF INS Helper
-  bool getESFINS(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // ESF INS
+  bool getEsfIns(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // ESF INS Helper
+  bool getESFINS(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // ESF INS
   bool setAutoESFINS(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic ESF INS reports
   bool setAutoESFINS(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic ESF INS reports, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoESFINSrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic INS reports
   bool setAutoESFINScallbackPtr(void (*callbackPointerPtr)(UBX_ESF_INS_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic INS reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoESFINS(bool enabled, bool implicitUpdate = true);                                                              // In case no config access to the GPS is possible and ESF INS is send cyclically already
-  void flushESFINS();                                                                                                           // Mark all the data as read/stale
-  void logESFINS(bool enabled = true);                                                                                          // Log data to file buffer
+  bool assumeAutoESFINS(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and ESF INS is send cyclically already
+  void flushESFINS();                                                                                                                                              // Mark all the data as read/stale
+  void logESFINS(bool enabled = true);                                                                                                                             // Log data to file buffer
 
   bool setAutoESFMEAS(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                 // Enable/disable automatic ESF MEAS reports
   bool setAutoESFMEAS(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                            // Enable/disable automatic ESF MEAS reports, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoESFMEASrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                 // Set the rate for automatic MEAS reports
   bool setAutoESFMEAScallbackPtr(void (*callbackPointerPtr)(UBX_ESF_MEAS_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic MEAS reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoESFMEAS(bool enabled, bool implicitUpdate = true);                                                               // In case no config access to the GPS is possible and ESF MEAS is send cyclically already
-  void logESFMEAS(bool enabled = true);                                                                                           // Log data to file buffer
+  bool assumeAutoESFMEAS(bool enabled, bool implicitUpdate = true);                                                                                                  // In case no config access to the GPS is possible and ESF MEAS is send cyclically already
+  void logESFMEAS(bool enabled = true);                                                                                                                              // Log data to file buffer
 
   bool setAutoESFRAW(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic ESF RAW reports
   bool setAutoESFRAW(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic ESF RAW reports, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoESFRAWrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic RAW reports
   bool setAutoESFRAWcallbackPtr(void (*callbackPointerPtr)(UBX_ESF_RAW_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic RAW reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoESFRAW(bool enabled, bool implicitUpdate = true);                                                              // In case no config access to the GPS is possible and ESF RAW is send cyclically already
-  void logESFRAW(bool enabled = true);                                                                                          // Log data to file buffer
+  bool assumeAutoESFRAW(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and ESF RAW is send cyclically already
+  void logESFRAW(bool enabled = true);                                                                                                                             // Log data to file buffer
 #endif
 
 #ifndef SFE_UBLOX_DISABLE_HNR
   // High navigation rate (HNR)
 
-  bool getHNRAtt(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // HNR ATT Helper
-  bool getHNRATT(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // Returns true if the get HNR attitude is successful
+  bool getHNRAtt(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // HNR ATT Helper
+  bool getHNRATT(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // Returns true if the get HNR attitude is successful
   bool setAutoHNRATT(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic HNR Attitude reports at the HNR rate
   bool setAutoHNRATT(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic HNR Attitude reports at the HNR rate, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoHNRATTrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic ATT reports
   bool setAutoHNRATTcallbackPtr(void (*callbackPointerPtr)(UBX_HNR_ATT_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic ATT reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoHNRATT(bool enabled, bool implicitUpdate = true);                                                              // In case no config access to the GPS is possible and HNR Attitude is send cyclically already
-  void flushHNRATT();                                                                                                           // Mark all the data as read/stale
-  void logHNRATT(bool enabled = true);                                                                                          // Log data to file buffer
+  bool assumeAutoHNRATT(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and HNR Attitude is send cyclically already
+  void flushHNRATT();                                                                                                                                              // Mark all the data as read/stale
+  void logHNRATT(bool enabled = true);                                                                                                                             // Log data to file buffer
 
-  bool getHNRDyn(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // HNR INS Helper
-  bool getHNRINS(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // Returns true if the get HNR dynamics is successful
+  bool getHNRDyn(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // HNR INS Helper
+  bool getHNRINS(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // Returns true if the get HNR dynamics is successful
   bool setAutoHNRINS(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic HNR dynamics reports at the HNR rate
   bool setAutoHNRINS(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic HNR dynamics reports at the HNR rate, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoHNRINSrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic INS reports
   bool setAutoHNRINScallbackPtr(void (*callbackPointerPtr)(UBX_HNR_INS_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic INS reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoHNRINS(bool enabled, bool implicitUpdate = true);                                                              // In case no config access to the GPS is possible and HNR dynamics is send cyclically already
-  void flushHNRINS();                                                                                                           // Mark all the data as read/stale
-  void logHNRINS(bool enabled = true);                                                                                          // Log data to file buffer
+  bool assumeAutoHNRINS(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and HNR dynamics is send cyclically already
+  void flushHNRINS();                                                                                                                                              // Mark all the data as read/stale
+  void logHNRINS(bool enabled = true);                                                                                                                             // Log data to file buffer
 
-  bool getHNRPVT(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                  // Returns true if the get HNR PVT is successful
+  bool getHNRPVT(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // Returns true if the get HNR PVT is successful
   bool setAutoHNRPVT(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic HNR PVT reports at the HNR rate
   bool setAutoHNRPVT(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic HNR PVT reports at the HNR rate, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoHNRPVTrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic PVT reports
   bool setAutoHNRPVTcallbackPtr(void (*callbackPointerPtr)(UBX_HNR_PVT_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic PVT reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoHNRPVT(bool enabled, bool implicitUpdate = true);                                                              // In case no config access to the GPS is possible and HNR PVT is send cyclically already
-  void flushHNRPVT();                                                                                                           // Mark all the data as read/stale
-  void logHNRPVT(bool enabled = true);                                                                                          // Log data to file buffer
+  bool assumeAutoHNRPVT(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and HNR PVT is send cyclically already
+  void flushHNRPVT();                                                                                                                                              // Mark all the data as read/stale
+  void logHNRPVT(bool enabled = true);                                                                                                                             // Log data to file buffer
 #endif
 
   // Helper functions for CFG RATE
 
-  bool setNavigationFrequency(uint8_t navFreq, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);  // Set the number of nav solutions sent per second
-  bool getNavigationFrequency(uint8_t *navFreq, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the number of nav solutions sent per second currently being output by module
-  uint8_t getNavigationFrequency(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                               // Unsafe overload
-  bool setMeasurementRate(uint16_t rate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);        // Set the elapsed time between GNSS measurements in milliseconds, which defines the rate
-  bool getMeasurementRate(uint16_t *measRate, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Return the elapsed time between GNSS measurements in milliseconds
-  uint16_t getMeasurementRate(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                  // Unsafe overload
-  bool setNavigationRate(uint16_t rate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);         // Set the ratio between the number of measurements and the number of navigation solutions. Unit is cycles. Max is 127
-  bool getNavigationRate(uint16_t *navRate, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);     // Return the ratio between the number of measurements and the number of navigation solutions. Unit is cycles
-  uint16_t getNavigationRate(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                   // Unsafe overload
+  bool setNavigationFrequency(uint8_t navFreq, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the number of nav solutions sent per second
+  bool getNavigationFrequency(uint8_t *navFreq, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);    // Get the number of nav solutions sent per second currently being output by module
+  uint8_t getNavigationFrequency(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                   // Unsafe overload
+  bool setMeasurementRate(uint16_t rate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);       // Set the elapsed time between GNSS measurements in milliseconds, which defines the rate
+  bool getMeasurementRate(uint16_t *measRate, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Return the elapsed time between GNSS measurements in milliseconds
+  uint16_t getMeasurementRate(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                      // Unsafe overload
+  bool setNavigationRate(uint16_t rate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);        // Set the ratio between the number of measurements and the number of navigation solutions. Unit is cycles. Max is 127
+  bool getNavigationRate(uint16_t *navRate, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);        // Return the ratio between the number of measurements and the number of navigation solutions. Unit is cycles
+  uint16_t getNavigationRate(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                       // Unsafe overload
 
   // Helper functions for DOP
 
@@ -939,10 +940,10 @@ public:
   // Helper functions for HNR
 
   bool setHNRNavigationRate(uint8_t rate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns true if the setHNRNavigationRate is successful
-  uint8_t getHNRNavigationRate(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);            // Returns 0 if the getHNRNavigationRate fails
-  float getHNRroll(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                        // Returned as degrees
-  float getHNRpitch(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                       // Returned as degrees
-  float getHNRheading(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                     // Returned as degrees
+  uint8_t getHNRNavigationRate(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Returns 0 if the getHNRNavigationRate fails
+  float getHNRroll(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                           // Returned as degrees
+  float getHNRpitch(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                          // Returned as degrees
+  float getHNRheading(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                        // Returned as degrees
 #endif
 
   // Set the mainTalkerId used by NMEA messages - allows all NMEA messages except GSV to be prefixed with GP instead of GN
@@ -1065,7 +1066,7 @@ protected:
 
   // Functions
   bool checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requestedClass = 0, uint8_t requestedID = 0); // Checks module with user selected commType
-  void addToChecksum(uint8_t incoming);                                                                     // Given an incoming byte, adjust rollingChecksumA/B
+  void addToChecksum(uint8_t incoming);                                                                 // Given an incoming byte, adjust rollingChecksumA/B
   size_t pushAssistNowDataInternal(size_t offset, bool skipTime, const uint8_t *dataBytes, size_t numDataBytes, sfe_ublox_mga_assist_ack_e mgaAck, uint16_t maxWait);
   size_t findMGAANOForDateInternal(const uint8_t *dataBytes, size_t numDataBytes, uint16_t year, uint8_t month, uint8_t day, uint8_t daysIntoFuture);
 

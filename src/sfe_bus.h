@@ -11,7 +11,7 @@
   https://www.sparkfun.com/products/18774
   https://www.sparkfun.com/products/19663
   https://www.sparkfun.com/products/17722
-  
+
   Original version by Nathan Seidle @ SparkFun Electronics, September 6th, 2018
   v2.0 rework by Paul Clark @ SparkFun Electronics, December 31st, 2020
   v3.0 rework by Paul Clark @ SparkFun Electronics, December 8th, 2022
@@ -79,10 +79,10 @@ namespace SparkFun_UBLOX_GNSS
 
     // For SPI, writing bytes will also read bytes simultaneously. Read data is returned in readData
     virtual uint8_t writeReadBytes(const uint8_t *data, uint8_t *readData, uint8_t length) = 0;
-    virtual void startWriteReadByte() = 0; // beginTransaction
+    virtual void startWriteReadByte() = 0;                                  // beginTransaction
     virtual void writeReadByte(const uint8_t *data, uint8_t *readData) = 0; // transfer
-    virtual void writeReadByte(const uint8_t data, uint8_t *readData) = 0; // transfer
-    virtual void endWriteReadByte() = 0; // endTransaction
+    virtual void writeReadByte(const uint8_t data, uint8_t *readData) = 0;  // transfer
+    virtual void endWriteReadByte() = 0;                                    // endTransaction
 
     // For Serial, attempt Serial.read
     // For I2C, read from register 0xFF
@@ -135,7 +135,7 @@ namespace SparkFun_UBLOX_GNSS
 
     bool init(SPIClass &spiPort, uint32_t spiSpeed, uint8_t cs, bool bInit = false);
 
-    bool ping() {return false;}
+    bool ping() { return false; }
 
     uint16_t available();
 
@@ -166,7 +166,7 @@ namespace SparkFun_UBLOX_GNSS
 
     bool init(Stream &serialPort);
 
-    bool ping() {return false;}
+    bool ping() { return false; }
 
     uint16_t available();
 
@@ -193,16 +193,56 @@ namespace SparkFun_UBLOX_GNSS
     SfeStream(void) { _serialPort = nullptr; }
 
     void init(Stream &serialPort) { _serialPort = &serialPort; }
-    void write(uint8_t c) { if (_serialPort != nullptr) _serialPort->write(c); }
-    void print(const char *c) { if (_serialPort != nullptr) _serialPort->print(c); }
-    void print(const __FlashStringHelper*c) { if (_serialPort != nullptr) _serialPort->print(c); }
-    void print(unsigned int c, int f) { if (_serialPort != nullptr) _serialPort->print(c, f); }
-    void print(uint16_t c) { if (_serialPort != nullptr) _serialPort->print(c); }
-    void println() { if (_serialPort != nullptr) _serialPort->println(); }
-    void println(const char *c) { if (_serialPort != nullptr) _serialPort->println(c); }
-    void println(const __FlashStringHelper*c) { if (_serialPort != nullptr) _serialPort->println(c); }
-    void println(size_t c) { if (_serialPort != nullptr) _serialPort->println(c); }
-    void println(uint8_t c, int f) { if (_serialPort != nullptr) _serialPort->println(c, f); }
+    void write(uint8_t c)
+    {
+      if (_serialPort != nullptr)
+        _serialPort->write(c);
+    }
+    void print(const char *c)
+    {
+      if (_serialPort != nullptr)
+        _serialPort->print(c);
+    }
+    void print(const __FlashStringHelper *c)
+    {
+      if (_serialPort != nullptr)
+        _serialPort->print(c);
+    }
+    void print(unsigned int c, int f)
+    {
+      if (_serialPort != nullptr)
+        _serialPort->print(c, f);
+    }
+    void print(uint16_t c)
+    {
+      if (_serialPort != nullptr)
+        _serialPort->print(c);
+    }
+    void println()
+    {
+      if (_serialPort != nullptr)
+        _serialPort->println();
+    }
+    void println(const char *c)
+    {
+      if (_serialPort != nullptr)
+        _serialPort->println(c);
+    }
+    void println(const __FlashStringHelper *c)
+    {
+      if (_serialPort != nullptr)
+        _serialPort->println(c);
+    }
+    void println(size_t c)
+    {
+      if (_serialPort != nullptr)
+        _serialPort->println(c);
+    }
+    void println(uint8_t c, int f)
+    {
+      if (_serialPort != nullptr)
+        _serialPort->println(c, f);
+    }
 
   private:
     Stream *_serialPort;
