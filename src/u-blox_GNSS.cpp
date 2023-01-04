@@ -7165,7 +7165,7 @@ bool DevUBLOXGNSS::resetOdometer(uint16_t maxWait)
   return (sendCommand(&packetCfg, maxWait, true) == SFE_UBLOX_STATUS_DATA_SENT); // We are only expecting an ACK
 }
 
-uint32_t getEnableGNSSConfigKey(sfe_ublox_gnss_ids_e id)
+uint32_t DevUBLOXGNSS::getEnableGNSSConfigKey(sfe_ublox_gnss_ids_e id)
 {
   const uint32_t gnssConfigKeys[(uint8_t)SFE_UBLOX_GNSS_ID_UNKNOWN] = {
       UBLOX_CFG_SIGNAL_GPS_ENA,
