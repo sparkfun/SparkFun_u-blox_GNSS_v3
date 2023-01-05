@@ -6478,9 +6478,11 @@ void DevUBLOXGNSS::writeToFileBuffer(uint8_t *theBytes, uint16_t numBytes)
 
 // Changes the I2C address that the u-blox module responds to
 // 0x42 is the default but can be changed with this command
+// Note: the module stores the address in shifted format - not unshifted.
+// We need to shift left by one bit to compensate.
 bool DevUBLOXGNSS::setI2CAddress(uint8_t deviceAddress, uint8_t layer, uint16_t maxWait)
 {
-  return setVal8(UBLOX_CFG_I2C_ADDRESS, deviceAddress, layer, maxWait);
+  return setVal8(UBLOX_CFG_I2C_ADDRESS, deviceAddress << 1, layer, maxWait); // Change the I2C address. Shift left by one bit.
 }
 
 // Changes the serial baud rate of the u-blox module, can't return success/fail 'cause ACK from modem
