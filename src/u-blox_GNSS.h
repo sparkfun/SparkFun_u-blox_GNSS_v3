@@ -459,6 +459,8 @@ public:
   bool addCfgValset16(uint32_t key, uint16_t value);                                                            // Add a new key and 16-bit value to an existing UBX-CFG-VALSET ubxPacket
   bool addCfgValset32(uint32_t key, uint32_t value);                                                            // Add a new key and 32-bit value to an existing UBX-CFG-VALSET ubxPacket
   bool addCfgValset64(uint32_t key, uint64_t value);                                                            // Add a new key and 64-bit value to an existing UBX-CFG-VALSET ubxPacket
+  bool addCfgValsetFloat(uint32_t key, float value);                                                            // Add a new key and 32-bit float (R4) to an existing UBX-CFG-VALSET ubxPacket
+  bool addCfgValsetDouble(uint32_t key, double value);                                                          // Add a new key and 64-bit double (R8) to an existing UBX-CFG-VALSET ubxPacket
   bool sendCfgValset(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                              // Send the CfgValset (UBX-CFG-VALSET) construct
   uint8_t getCfgValsetLen();                                                                                    // Returns the length of the current CfgValset construct as number-of-keys
   size_t getCfgValsetSpaceRemaining();                                                                          // Returns the number of free bytes remaining in packetCfg

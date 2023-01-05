@@ -7951,6 +7951,47 @@ bool DevUBLOXGNSS::addCfgValset8(uint32_t key, uint8_t value)
   return (addCfgValsetN(key, val, 8));
 }
 
+// Add another key and value to an existing UBX-CFG-VALSET ubxPacket
+// This function takes a full 32-bit key and 32-bit float (R4) value
+bool DevUBLOXGNSS::addCfgValsetFloat(uint32_t key, float value)
+{
+  if (sizeof(float) != 4)
+    return false;
+
+  // Define a union to convert from float to uint32_t
+  union
+  {
+    float flt;
+    uint32_t unsigned32;
+    //uint8_t bytes[4]; // Could be useful for endian byte reversal?
+  } convert32;
+
+  convert32.flt = value;
+
+  return (addCfgValset32(key, convert32.unsigned32));
+}
+
+// Add another key and value to an existing UBX-CFG-VALSET ubxPacket
+// This function takes a full 32-bit key and 64-bit double (R8) value
+// This won't work on older AVR platforms where double is 32-bit
+bool DevUBLOXGNSS::addCfgValsetDouble(uint32_t key, double value)
+{
+  if (sizeof(double) != 8)
+    return false;
+
+  // Define a union to convert from double to uint64_t
+  union
+  {
+    double dbl;
+    uint64_t unsigned64;
+    //uint8_t bytes[8]; // Could be useful for endian byte reversal?
+  } convert64;
+
+  convert64.dbl = value;
+
+  return (addCfgValset64(key, convert64.unsigned64));
+}
+
 // Send the UBX-CFG-VALSET ubxPacket
 bool DevUBLOXGNSS::sendCfgValset(uint16_t maxWait)
 {
