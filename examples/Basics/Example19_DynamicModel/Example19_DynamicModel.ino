@@ -41,8 +41,6 @@
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
 SFE_UBLOX_GNSS myGNSS;
 
-long lastTime = 0; //Simple local timer. Limits amount if I2C traffic to u-blox module.
-
 void setup()
 {
   delay(1000);
@@ -93,12 +91,9 @@ void setup()
 
 void loop()
 {
-  //Query module only every second. Doing it more often will just cause I2C traffic.
   //The module only responds when a new position is available
-  if (millis() - lastTime > 1000)
+  if (myGNSS.getPVT())
   {
-    lastTime = millis(); //Update the timer
-
     long latitude = myGNSS.getLatitude();
     Serial.print(F("Lat: "));
     Serial.print(latitude);
