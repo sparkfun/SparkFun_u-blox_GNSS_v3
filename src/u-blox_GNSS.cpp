@@ -6905,9 +6905,16 @@ bool DevUBLOXGNSS::addGeofence(int32_t latitude, int32_t longitude, uint32_t rad
   unsignedSigned32 converter32;
   bool result = newCfgValset(layer);
   result &= addCfgValset8(UBLOX_CFG_GEOFENCE_CONFLVL, confidence);
-  result &= addCfgValset8(UBLOX_CFG_GEOFENCE_PINPOL, (uint8_t)pinPolarity);
-  result &= addCfgValset8(UBLOX_CFG_GEOFENCE_PIN, pin);
-  result &= addCfgValset8(UBLOX_CFG_GEOFENCE_USE_PIO, pin > 0 ? 1 : 0);
+  if (pin > 0)
+  {
+    result &= addCfgValset8(UBLOX_CFG_GEOFENCE_PINPOL, (uint8_t)pinPolarity);
+    result &= addCfgValset8(UBLOX_CFG_GEOFENCE_PIN, pin);
+    result &= addCfgValset8(UBLOX_CFG_GEOFENCE_USE_PIO, 1);
+  }
+  else
+  {
+    result &= addCfgValset8(UBLOX_CFG_GEOFENCE_USE_PIO, 0);
+  }
   result &= addCfgValset8(UBLOX_CFG_GEOFENCE_USE_FENCE1, 1);
   converter32.signed32 = currentGeofenceParams->lats[0];
   result &= addCfgValset32(UBLOX_CFG_GEOFENCE_FENCE1_LAT, converter32.unsigned32);
@@ -6923,7 +6930,7 @@ bool DevUBLOXGNSS::addGeofence(int32_t latitude, int32_t longitude, uint32_t rad
     result &= addCfgValset32(UBLOX_CFG_GEOFENCE_FENCE2_LON, converter32.unsigned32);
     result &= addCfgValset32(UBLOX_CFG_GEOFENCE_FENCE2_RAD, currentGeofenceParams->rads[1]);
   }
-  result &= addCfgValset8(UBLOX_CFG_GEOFENCE_USE_FENCE2, currentGeofenceParams->numFences > 2 ? 1 : 0);
+  result &= addCfgValset8(UBLOX_CFG_GEOFENCE_USE_FENCE3, currentGeofenceParams->numFences > 2 ? 1 : 0);
   if (currentGeofenceParams->numFences > 2)
   {
     converter32.signed32 = currentGeofenceParams->lats[2];
@@ -6932,7 +6939,7 @@ bool DevUBLOXGNSS::addGeofence(int32_t latitude, int32_t longitude, uint32_t rad
     result &= addCfgValset32(UBLOX_CFG_GEOFENCE_FENCE3_LON, converter32.unsigned32);
     result &= addCfgValset32(UBLOX_CFG_GEOFENCE_FENCE3_RAD, currentGeofenceParams->rads[2]);
   }
-  result &= addCfgValset8(UBLOX_CFG_GEOFENCE_USE_FENCE2, currentGeofenceParams->numFences > 3 ? 1 : 0);
+  result &= addCfgValset8(UBLOX_CFG_GEOFENCE_USE_FENCE4, currentGeofenceParams->numFences > 3 ? 1 : 0);
   if (currentGeofenceParams->numFences > 3)
   {
     converter32.signed32 = currentGeofenceParams->lats[3];
