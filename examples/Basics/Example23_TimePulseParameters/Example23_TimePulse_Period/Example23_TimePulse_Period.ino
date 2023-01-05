@@ -1,16 +1,17 @@
 /*
-  Time Pulse Parameters - Frequency
+  Time Pulse Parameters - Period
   By: Paul Clark (PaulZC)
   Date: January 13th, 2021
 
   License: MIT. See license file for more information.
 
   This example shows how to change the time pulse parameters and configure the TIMEPULSE (PPS)
-  pin to produce a 1kHz squarewave
+  pin to produce a 1 second pulse every 30 seconds. What's really cool is that if you run this
+  example on two GNSS boards, the pulses are precisely synchronised!
 
   The SparkFun GPS-RTK-SMA Breakout - ZED-F9P (Qwiic) (https://www.sparkfun.com/products/16481)
   has solder pads which will let you connect an SMA connector to the TIMEPULSE signal. Need an
-  accurate frequency or clock source for your latest project? This is the product for you!
+  accurate timelapse camera shutter signal? This is the product for you!
 
   Feel like supporting open source hardware?
   Buy a board from SparkFun!
@@ -55,22 +56,24 @@ void setup()
   // Here we are configuring TP1, but identical keys exist for TP2 (if your module supports it). See CFG-TP in u-blox_config_keys.h for more details.
   
   // We can configure the time pulse pin to produce a defined frequency or period
-  // Here is how to set the frequency:
+  // Here is how to set the period:
 
   myGNSS.newCfgValset(VAL_LAYER_RAM); // Create a new Configuration Interface VALSET message. Apply the changes in RAM only (not BBR).
 
-  // While the module is _locking_ to GNSS time, make it generate 2kHz
-  myGNSS.addCfgValset32(UBLOX_CFG_TP_FREQ_TP1, 2000); // Set the frequency to 2000Hz
-  myGNSS.addCfgValsetDouble(UBLOX_CFG_TP_DUTY_TP1, 100.0 / 3.0); // Set the pulse ratio / duty to 33.333% to produce 33.333:66.666 mark:space
-
-  // When the module is _locked_ to GNSS time, make it generate 1kHz
-  myGNSS.addCfgValset32(UBLOX_CFG_TP_FREQ_LOCK_TP1, 1000); // Set the frequency to 1000Hz
-  myGNSS.addCfgValsetDouble(UBLOX_CFG_TP_DUTY_LOCK_TP1, 50.0); // Set the pulse ratio / duty to 50% to produce 50:50 mark:space
+  // Let's say that we want our 1 pulse every 30 seconds to be as accurate as possible. So, let's tell the module
+  // to generate no signal while it is _locking_ to GNSS time. We want the signal to start only when the module is
+  // _locked_ to GNSS time.
+  myGNSS.addCfgValset32(UBLOX_CFG_TP_PERIOD_TP1, 0); // Set the period to zero
+  myGNSS.addCfgValset32(UBLOX_CFG_TP_LEN_TP1, 0); // Set the pulse length to zero
+  
+  // When the module is _locked_ to GNSS time, make it generate a 1 second pulse every 30 seconds
+  myGNSS.addCfgValset32(UBLOX_CFG_TP_PERIOD_LOCK_TP1, 30000000); // Set the period to 30,000,000 us
+  myGNSS.addCfgValset32(UBLOX_CFG_TP_LEN_LOCK_TP1, 1000000); // Set the pulse length to 1,000,000 us
 
   myGNSS.addCfgValset8(UBLOX_CFG_TP_TP1_ENA, 1); // Make sure the enable flag is set to enable the time pulse. (Set to 0 to disable.)
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_USE_LOCKED_TP1, 1); // Tell the module to use FREQ while locking and FREQ_LOCK when locked to GNSS time
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_PULSE_DEF, 1); // Tell the module that we want to set the frequency (not the period). PERIOD = 0. FREQ = 1.
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_PULSE_LENGTH_DEF, 0); // Tell the module to set the pulse ratio / duty (not the pulse length). RATIO = 0. LENGTH = 1.
+  myGNSS.addCfgValset8(UBLOX_CFG_TP_USE_LOCKED_TP1, 1); // Tell the module to use PERIOD while locking and PERIOD_LOCK when locked to GNSS time
+  myGNSS.addCfgValset8(UBLOX_CFG_TP_PULSE_DEF, 0); // Tell the module that we want to set the period (not the frequency). PERIOD = 0. FREQ = 1.
+  myGNSS.addCfgValset8(UBLOX_CFG_TP_PULSE_LENGTH_DEF, 1); // Tell the module to set the pulse length (not the pulse ratio / duty). RATIO = 0. LENGTH = 1.
   myGNSS.addCfgValset8(UBLOX_CFG_TP_POL_TP1, 1); // Tell the module that we want the rising edge at the top of second. Falling Edge = 0. Rising Edge = 1.
 
   // Now set the time pulse parameters
