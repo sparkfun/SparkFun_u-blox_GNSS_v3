@@ -383,7 +383,9 @@ public:
   bool resetIMUalignment(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
 
   // Enable/disable esfAutoAlignment
-  // getESFAutoAlignment and setESFAutoAlignment are deprecated. Use config item CFG-SFIMU-AUTO_MNTALG_ENA
+  bool getESFAutoAlignment(bool *enabled, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool getESFAutoAlignment(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Unsafe overload
+  bool setESFAutoAlignment(bool enable, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
 
   // RF Information (including jamming) - ZED-F9 only
   bool getRFinformation(UBX_MON_RF_data_t *data = nullptr, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the RF information using UBX_MON_RF

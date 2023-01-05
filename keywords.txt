@@ -201,6 +201,8 @@ isGNSSenabled	KEYWORD2
 getEnableGNSSConfigKey	KEYWORD2
 
 resetIMUalignment	KEYWORD2
+getESFAutoAlignment	KEYWORD2
+setESFAutoAlignment	KEYWORD2
 
 getRFinformation	KEYWORD2
 

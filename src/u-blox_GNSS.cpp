@@ -7215,6 +7215,22 @@ bool DevUBLOXGNSS::resetIMUalignment(uint16_t maxWait)
   return (sendCommand(&packetCfg, maxWait, true) == SFE_UBLOX_STATUS_DATA_SENT); // We are only expecting an ACK
 }
 
+// Enable/disable esfAutoAlignment
+bool DevUBLOXGNSS::getESFAutoAlignment(bool *enabled, uint8_t layer, uint16_t maxWait)
+{
+  return getVal8(UBLOX_CFG_SFIMU_AUTO_MNTALG_ENA, (uint8_t *)enabled, layer, maxWait);
+}
+bool DevUBLOXGNSS::getESFAutoAlignment(uint8_t layer, uint16_t maxWait) // Unsafe overload
+{
+  uint8_t result;
+  getVal8(UBLOX_CFG_SFIMU_AUTO_MNTALG_ENA, &result, layer, maxWait);
+  return (bool)result;
+}
+bool DevUBLOXGNSS::setESFAutoAlignment(bool enable, uint8_t layer, uint16_t maxWait)
+{
+  return setVal8(UBLOX_CFG_SFIMU_AUTO_MNTALG_ENA, (uint8_t)enable, layer, maxWait);
+}
+
 // Get the RF information using UBX_MON_RF
 bool DevUBLOXGNSS::getRFinformation(UBX_MON_RF_data_t *data, uint16_t maxWait)
 {
