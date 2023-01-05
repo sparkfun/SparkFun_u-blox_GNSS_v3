@@ -67,20 +67,21 @@ namespace SparkFun_UBLOX_GNSS
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // I2C init()
   //
-  // Methods to init/setup this device. The caller can provide a Wire Port, or this class
-  // will use the default
-
+  // Methods to init/setup this device.
+  // The caller can provide a Wire Port, or this class will use the default.
+  // Always update the address in case the user has changed the I2C address - see Example9
   bool QwI2C::init(TwoWire &wirePort, uint8_t address, bool bInit)
   {
     // if we don't have a wire port already
     if (!_i2cPort)
     {
       _i2cPort = &wirePort;
-      _address = address;
 
       if (bInit)
         _i2cPort->begin();
     }
+
+    _address = address;
 
     return true;
   }
@@ -88,14 +89,11 @@ namespace SparkFun_UBLOX_GNSS
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // I2C init()
   //
-  // Methods to init/setup this device. The caller can provide a Wire Port, or this class
-  // will use the default
+  // Methods to init/setup this device.
+  // The caller can provide a Wire Port, or this class will use the default.
   bool QwI2C::init(uint8_t address)
   {
-    if (!_i2cPort)
-      return init(Wire, address);
-    else
-      return false;
+    return init(Wire, address);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
