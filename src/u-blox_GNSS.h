@@ -1239,6 +1239,7 @@ protected:
   // Send the current CFG_VALSET message when packetCfg has less than this many bytes available
   size_t _autoSendAtSpaceRemaining = 0;
 
+public:
   typedef union
   {
     uint32_t unsigned32;
