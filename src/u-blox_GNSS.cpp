@@ -7292,6 +7292,12 @@ bool DevUBLOXGNSS::getHWstatus(UBX_MON_HW_data_t *data, uint16_t maxWait)
   if (sendCommand(&packetCfg, maxWait) != SFE_UBLOX_STATUS_DATA_RECEIVED) // We are expecting data and an ACK
     return (false);
 
+  // Check the length:
+  //   The length should be 60 bytes
+  //   MAX-M10S SPG 5.00 returns 56 bytes of reserved data
+  if (packetCfg.len != UBX_MON_HW_LEN)
+    return (false);
+
   // Extract the data
   data->pinSel = extractLong(&packetCfg, 0);
   data->pinBank = extractLong(&packetCfg, 4);
