@@ -7,11 +7,11 @@
 
   This example shows how to obtain SPARTN correction data from a NEO-D9S L-Band receiver and push it over I2C to a ZED-F9x.
 
+  This is a proof of concept to show how the UBX-RXM-PMP corrections control the accuracy.
+
   If you are using the SparkFun Combo Board (SPX-20167), the correction data is transferred from the NEO to the ZED via UART2.
   You don't need to push it over I2C. Doing so just gives the ZED twice as many correction messages.
   Uncomment the "#define noPush" below to disable the I2C push.
-
-  This is a proof of concept to show how the UBX-RXM-PMP corrections control the accuracy.
 
   You will need a Thingstream PointPerfect account to be able to access the SPARTN Credentials (L-Band or L-Band + IP Dynamic Keys).
   Copy and paste the Current Key and Next Key into secrets.h.
@@ -253,21 +253,23 @@ void setup()
   }
   Serial.println(F("u-blox NEO-D9S connected"));
 
-          ok = myLBand.setVal32(UBLOX_CFG_PMP_CENTER_FREQUENCY,   myLBandFreq); // Default 1539812500 Hz
-  if (ok) ok = myLBand.setVal16(UBLOX_CFG_PMP_SEARCH_WINDOW,      2200);        // Default 2200 Hz
-  if (ok) ok = myLBand.setVal8(UBLOX_CFG_PMP_USE_SERVICE_ID,      0);           // Default 1 
-  if (ok) ok = myLBand.setVal16(UBLOX_CFG_PMP_SERVICE_ID,         21845);       // Default 50821
-  if (ok) ok = myLBand.setVal16(UBLOX_CFG_PMP_DATA_RATE,          2400);        // Default 2400 bps
-  if (ok) ok = myLBand.setVal8(UBLOX_CFG_PMP_USE_DESCRAMBLER,     1);           // Default 1
-  if (ok) ok = myLBand.setVal16(UBLOX_CFG_PMP_DESCRAMBLER_INIT,   26969);       // Default 23560
-  if (ok) ok = myLBand.setVal8(UBLOX_CFG_PMP_USE_PRESCRAMBLING,   0);           // Default 0
-  if (ok) ok = myLBand.setVal64(UBLOX_CFG_PMP_UNIQUE_WORD,        16238547128276412563ull); 
-  if (ok) ok = myLBand.setVal8(UBLOX_CFG_MSGOUT_UBX_RXM_PMP_I2C,   1); // Ensure UBX-RXM-PMP is enabled on the I2C port 
-  if (ok) ok = myLBand.setVal8(UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART1, 1); // Output UBX-RXM-PMP on UART1
-  if (ok) ok = myLBand.setVal8(UBLOX_CFG_UART2OUTPROT_UBX, 1);         // Enable UBX output on UART2
-  if (ok) ok = myLBand.setVal8(UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART2, 1); // Output UBX-RXM-PMP on UART2
-  if (ok) ok = myLBand.setVal32(UBLOX_CFG_UART1_BAUDRATE,         38400); // match baudrate with ZED default
-  if (ok) ok = myLBand.setVal32(UBLOX_CFG_UART2_BAUDRATE,         38400); // match baudrate with ZED default
+  myLBand.newCfgValset(); // Create a new Configuration Interface message - this defaults to VAL_LAYER_RAM_BBR (change in RAM and BBR)
+  myLBand.addCfgValset32(UBLOX_CFG_PMP_CENTER_FREQUENCY,   myLBandFreq); // Default 1539812500 Hz
+  myLBand.addCfgValset16(UBLOX_CFG_PMP_SEARCH_WINDOW,      2200);        // Default 2200 Hz
+  myLBand.addCfgValset8(UBLOX_CFG_PMP_USE_SERVICE_ID,      0);           // Default 1 
+  myLBand.addCfgValset16(UBLOX_CFG_PMP_SERVICE_ID,         21845);       // Default 50821
+  myLBand.addCfgValset16(UBLOX_CFG_PMP_DATA_RATE,          2400);        // Default 2400 bps
+  myLBand.addCfgValset8(UBLOX_CFG_PMP_USE_DESCRAMBLER,     1);           // Default 1
+  myLBand.addCfgValset16(UBLOX_CFG_PMP_DESCRAMBLER_INIT,   26969);       // Default 23560
+  myLBand.addCfgValset8(UBLOX_CFG_PMP_USE_PRESCRAMBLING,   0);           // Default 0
+  myLBand.addCfgValset64(UBLOX_CFG_PMP_UNIQUE_WORD,        16238547128276412563ull); 
+  myLBand.addCfgValset8(UBLOX_CFG_MSGOUT_UBX_RXM_PMP_I2C,   1); // Ensure UBX-RXM-PMP is enabled on the I2C port 
+  myLBand.addCfgValset8(UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART1, 1); // Output UBX-RXM-PMP on UART1
+  myLBand.addCfgValset8(UBLOX_CFG_UART2OUTPROT_UBX, 1);         // Enable UBX output on UART2
+  myLBand.addCfgValset8(UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART2, 1); // Output UBX-RXM-PMP on UART2
+  myLBand.addCfgValset32(UBLOX_CFG_UART1_BAUDRATE,         38400); // match baudrate with ZED default
+  myLBand.addCfgValset32(UBLOX_CFG_UART2_BAUDRATE,         38400); // match baudrate with ZED default
+  ok = myLBand.sendCfgValset(); // Apply the settings
   
   Serial.print(F("L-Band: configuration "));
   Serial.println(OK(ok));
