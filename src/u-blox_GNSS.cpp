@@ -7962,7 +7962,15 @@ bool DevUBLOXGNSS::addCfgValset8(uint32_t key, uint8_t value)
 bool DevUBLOXGNSS::addCfgValsetFloat(uint32_t key, float value)
 {
   if (sizeof(float) != 4)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+    {
+      _debugSerial.println(F("addCfgValsetFloat not supported!"));
+    }
+#endif
     return false;
+  }
 
   // Define a union to convert from float to uint32_t
   union
@@ -7983,7 +7991,15 @@ bool DevUBLOXGNSS::addCfgValsetFloat(uint32_t key, float value)
 bool DevUBLOXGNSS::addCfgValsetDouble(uint32_t key, double value)
 {
   if (sizeof(double) != 8)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+    {
+      _debugSerial.println(F("addCfgValsetDouble not supported!"));
+    }
+#endif
     return false;
+  }
 
   // Define a union to convert from double to uint64_t
   union
@@ -8094,6 +8110,12 @@ bool DevUBLOXGNSS::newCfgValget(ubxPacket *pkt, uint8_t layer) // Create a new, 
   if (pkt == &packetCfg)
   {
     memset(payloadCfg, 0, packetCfgPayloadSize);
+  }
+  else
+  {
+    // Custom packet: we don't know how large payload is, so only clear the two skip keys bytes
+    pkt->payload[2] = 0; // Set the skip keys bytes to zero
+    pkt->payload[3] = 0;
   }
 
   // VALGET uses different memory layer definitions to VALSET
@@ -8209,7 +8231,7 @@ bool DevUBLOXGNSS::sendCfgValget(ubxPacket *pkt, uint16_t maxWait) // Send the C
     return true; // Nothing to send...
 
   // Send VALSET command with this key and value
-  bool success = sendCommand(pkt, maxWait) == SFE_UBLOX_STATUS_DATA_SENT; // We are only expecting an ACK
+  bool success = sendCommand(pkt, maxWait) == SFE_UBLOX_STATUS_DATA_RECEIVED; // We are expecting data and an ACK
 
   if (success)
     _numGetCfgKeys = 0;
