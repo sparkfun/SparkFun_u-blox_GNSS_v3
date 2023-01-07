@@ -27,7 +27,12 @@
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
 SFE_UBLOX_GNSS myGNSS;
 
-//#define USE_SERIAL1 // Uncomment this line to push the RTCM data from Serial1 to the module via I2C
+//#define USE_RTCM_SERIAL // Uncomment this line to push the RTCM data from Serial to the module via I2C
+
+#ifdef USE_RTCM_SERIAL
+  // If our board supports it, we can receive the RTCM data on Serial and push to I2C
+  #define rtcmSerial Serial1
+#endif
 
 // Callback: printRELPOSNEDdata will be called when new NAV RELPOSNED data arrives
 // See u-blox_structs.h for the full definition of UBX_NAV_RELPOSNED_data_t
@@ -101,9 +106,9 @@ void setup()
   Serial.begin(115200);
   Serial.println("u-blox Base station example");
 
-#ifdef USE_SERIAL1
-  // If our board supports it, we can receive the RTCM data on Serial1
-  Serial1.begin(115200);
+#ifdef USE_RTCM_SERIAL
+  // If our board supports it, we can receive the RTCM data on Serial
+  rtcmSerial.begin(115200);
 #endif
 
   Wire.begin();
@@ -117,7 +122,7 @@ void setup()
   // Uncomment the next line if you want to reset your module back to the default settings with 1Hz navigation rate
   //myGNSS.factoryDefault(); delay(5000);
 
-#ifdef USE_SERIAL1
+#ifdef USE_RTCM_SERIAL
   Serial.print(F("Enabling UBX and RTCM input on I2C. Result: "));
   Serial.print(myGNSS.setI2CInput(COM_TYPE_UBX | COM_TYPE_RTCM3, VAL_LAYER_RAM_BBR)); //Enable UBX and RTCM input on I2C. Save in RAM and BBR
 #endif
@@ -130,15 +135,15 @@ void loop()
   myGNSS.checkUblox(); // Check for new RELPOSNED data
   myGNSS.checkCallbacks();
   
-#ifdef USE_SERIAL1
+#ifdef USE_RTCM_SERIAL
   // Buffer and push the RTCM data to the module
   
   static uint8_t store[256];
-  static uint16_t numBytes = 0; // Record the number of bytes received from Serial1
+  static uint16_t numBytes = 0; // Record the number of bytes received from rtcmSerial
   
-  while ((Serial1.available()) && (numBytes < 256)) // Check if data has been received
+  while ((rtcmSerial.available()) && (numBytes < 256)) // Check if data has been received
   {
-    store[numBytes++] = Serial1.read(); // Read a byte from Serial1 and store it
+    store[numBytes++] = rtcmSerial.read(); // Read a byte from rtcmSerial and store it
   }
   
   if (numBytes > 0) // Check if data was received
