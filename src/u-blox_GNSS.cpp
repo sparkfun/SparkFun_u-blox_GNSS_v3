@@ -6786,11 +6786,11 @@ bool DevUBLOXGNSS::setStaticPosition(int32_t ecefXOrLat, int8_t ecefXOrLatHP, in
   converter32.signed32 = ecefZOrAlt;
   result &= addCfgValset32(latLong ? UBLOX_CFG_TMODE_HEIGHT : UBLOX_CFG_TMODE_ECEF_Z, converter32.unsigned32);
   converter8.signed8 = ecefXOrLatHP;
-  result &= addCfgValset32(latLong ? UBLOX_CFG_TMODE_LAT_HP : UBLOX_CFG_TMODE_ECEF_X_HP, converter8.unsigned8);
+  result &= addCfgValset8(latLong ? UBLOX_CFG_TMODE_LAT_HP : UBLOX_CFG_TMODE_ECEF_X_HP, converter8.unsigned8);
   converter8.signed8 = ecefYOrLonHP;
-  result &= addCfgValset32(latLong ? UBLOX_CFG_TMODE_LON_HP : UBLOX_CFG_TMODE_ECEF_Y_HP, converter8.unsigned8);
+  result &= addCfgValset8(latLong ? UBLOX_CFG_TMODE_LON_HP : UBLOX_CFG_TMODE_ECEF_Y_HP, converter8.unsigned8);
   converter8.signed8 = ecefZOrAltHP;
-  result &= addCfgValset32(latLong ? UBLOX_CFG_TMODE_HEIGHT_HP : UBLOX_CFG_TMODE_ECEF_Z_HP, converter8.unsigned8);
+  result &= addCfgValset8(latLong ? UBLOX_CFG_TMODE_HEIGHT_HP : UBLOX_CFG_TMODE_ECEF_Z_HP, converter8.unsigned8);
   result &= sendCfgValset(maxWait);
 
   return result;
