@@ -160,6 +160,8 @@ setUSBInput	KEYWORD2
 setSPIInput	KEYWORD2
 
 setNMEAOutputPort	KEYWORD2
+setRTCMOutputPort	KEYWORD2
+setUBXOutputPort	KEYWORD2
 setOutputPort	KEYWORD2
 
 factoryReset	KEYWORD2

@@ -244,8 +244,7 @@ namespace SparkFun_UBLOX_GNSS
         _serialPort->println(c, f);
     }
 
-  private:
-    Stream *_serialPort;
+    Stream *_serialPort; // friend doesn't seem to work... Leave this public
   };
 
 };

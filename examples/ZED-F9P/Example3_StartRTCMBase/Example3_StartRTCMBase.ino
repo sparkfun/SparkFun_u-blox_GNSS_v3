@@ -1,8 +1,8 @@
 /*
   Send UBX binary commands to enable RTCM sentences on u-blox ZED-F9P module
-  By: Nathan Seidle
+  By: Nathan Seidle & Paul Clark
   SparkFun Electronics
-  Date: January 9th, 2019
+  Date: January 7th, 2023
   License: MIT. See license file for more information.
 
   This example does all steps to configure and enable a ZED-F9P as a base station:
@@ -29,7 +29,7 @@
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
 SFE_UBLOX_GNSS myGNSS;
 
-//#define USE_SERIAL1 // Uncomment this line to push the RTCM data to Serial1
+//#define SERIAL_OUTPUT // Uncomment this line to push the RTCM data to a Serial port
 
 void setup()
 {
@@ -39,9 +39,10 @@ void setup()
   while (!Serial); //Wait for user to open terminal
   Serial.println(F("u-blox Base Station example"));
 
-#ifdef USE_SERIAL1
-  // If our board supports it, we can output the RTCM data on Serial1
+#ifdef SERIAL_OUTPUT
+  // If our board supports it, we can output the RTCM data automatically on (e.g.) Serial1
   Serial1.begin(115200);
+  myGNSS.setRTCMOutputPort(Serial1);
 #endif
 
   Wire.begin();
@@ -192,11 +193,6 @@ void loop()
 //Useful for passing the RTCM correction data to a radio, Ntrip broadcaster, etc.
 void DevUBLOXGNSS::processRTCM(uint8_t incoming)
 {
-#ifdef USE_SERIAL1
-  //Push the RTCM data to Serial1
-  Serial1.write(incoming);
-#endif
-
   static uint16_t byteCounter = 0;
 
   //Pretty-print the HEX values to Serial

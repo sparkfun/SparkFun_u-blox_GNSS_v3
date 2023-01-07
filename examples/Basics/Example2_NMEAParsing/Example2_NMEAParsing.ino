@@ -34,10 +34,18 @@ SFE_UBLOX_GNSS myGNSS;
 char nmeaBuffer[100];
 MicroNMEA nmea(nmeaBuffer, sizeof(nmeaBuffer));
 
+//#define SERIAL_OUTPUT // Uncomment this line to push the NMEA data automatically to a Serial port
+
 void setup()
 {
   Serial.begin(115200);
   Serial.println("SparkFun u-blox Example");
+
+#ifdef SERIAL_OUTPUT
+  // If our board supports it, we can output the NMEA data automatically on (e.g.) Serial1
+  Serial1.begin(115200);
+  myGNSS.setNMEAOutputPort(Serial1);
+#endif
 
   Wire.begin();
 

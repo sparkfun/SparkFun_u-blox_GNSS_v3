@@ -317,8 +317,10 @@ public:
   bool setUSBInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure USB port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
   bool setSPIInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure SPI port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
 
-  void setNMEAOutputPort(Stream &nmeaOutputPort); // Sets the internal variable for the port to direct NMEA characters to
-  void setOutputPort(Stream &outputPort);         // Sets the internal variable for the port to direct ALL characters to
+  void setNMEAOutputPort(Stream &outputPort); // Sets the internal variable for the port to direct only NMEA characters to
+  void setRTCMOutputPort(Stream &outputPort); // Sets the internal variable for the port to direct only RTCM characters to
+  void setUBXOutputPort(Stream &outputPort);  // Sets the internal variable for the port to direct only UBX characters to
+  void setOutputPort(Stream &outputPort);     // Sets the internal variable for the port to direct ALL characters to
 
   // Reset to defaults
 
@@ -1133,10 +1135,12 @@ protected:
   SparkFun_UBLOX_GNSS::GNSSDeviceBus *_sfeBus;
 
   SparkFun_UBLOX_GNSS::SfeStream _nmeaOutputPort; // The user can assign an output port to print NMEA sentences if they wish
+  SparkFun_UBLOX_GNSS::SfeStream _rtcmOutputPort; // The user can assign an output port to print RTCM sentences if they wish
+  SparkFun_UBLOX_GNSS::SfeStream _ubxOutputPort;  // The user can assign an output port to print UBX sentences if they wish
+  SparkFun_UBLOX_GNSS::SfeStream _outputPort;     // The user can assign an output port to print ALL characters to if they wish
   SparkFun_UBLOX_GNSS::SfeStream _debugSerial;    // The stream to send debug messages to if enabled
-  SparkFun_UBLOX_GNSS::SfeStream _outputPort;
-  bool _printDebug = false;        // Flag to print the serial commands we are sending to the Serial port for debug
-  bool _printLimitedDebug = false; // Flag to print limited debug messages. Useful for I2C debugging or high navigation rates
+  bool _printDebug = false;                       // Flag to print the serial commands we are sending to the Serial port for debug
+  bool _printLimitedDebug = false;                // Flag to print limited debug messages. Useful for I2C debugging or high navigation rates
 
   sfe_ublox_nmea_filtering_t _logNMEA;     // Flags to indicate which NMEA messages should be added to the file buffer for logging
   sfe_ublox_nmea_filtering_t _processNMEA; // Flags to indicate which NMEA messages should be passed to processNMEA
