@@ -107,11 +107,12 @@ namespace SparkFun_UBLOX_GNSS
 
     uint8_t writeBytes(uint8_t *data, uint8_t length);
 
-    uint8_t writeReadBytes(const uint8_t *data, uint8_t *readData, uint8_t length) { return 0; }
+    uint8_t writeReadBytes(const uint8_t *data, uint8_t *readData, uint8_t length)
+    { (void)data; (void)readData; (void)length; return 0; }
 
     void startWriteReadByte(){};
-    void writeReadByte(const uint8_t *data, uint8_t *readData){};
-    void writeReadByte(const uint8_t data, uint8_t *readData){};
+    void writeReadByte(const uint8_t *data, uint8_t *readData){ (void)data; (void)readData; };
+    void writeReadByte(const uint8_t data, uint8_t *readData){ (void)data; (void)readData; };
     void endWriteReadByte(){};
 
     uint8_t readBytes(uint8_t *data, uint8_t length);
@@ -172,11 +173,12 @@ namespace SparkFun_UBLOX_GNSS
 
     uint8_t writeBytes(uint8_t *data, uint8_t length);
 
-    uint8_t writeReadBytes(const uint8_t *data, uint8_t *readData, uint8_t length) { return 0; }
+    uint8_t writeReadBytes(const uint8_t *data, uint8_t *readData, uint8_t length)
+    { (void)data; (void)readData; (void)length; return 0; }
 
     void startWriteReadByte(){};
-    void writeReadByte(const uint8_t *data, uint8_t *readData){};
-    void writeReadByte(const uint8_t data, uint8_t *readData){};
+    void writeReadByte(const uint8_t *data, uint8_t *readData){ (void)data; (void)readData; };
+    void writeReadByte(const uint8_t data, uint8_t *readData){ (void)data; (void)readData; };
     void endWriteReadByte(){};
 
     uint8_t readBytes(uint8_t *data, uint8_t length);
