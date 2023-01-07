@@ -250,7 +250,7 @@ MqttClient mqttClient(wifiClient);
 void mqttMessageHandler(int messageSize)
 {
   const uint16_t mqttLimit = 512;
-  uint8_t *mqttData = new uint8_t[mqttLimit]; // Allocate memory to hold the MQTT data
+  static uint8_t mqttData[mqttLimit]; // Allocate memory to hold the MQTT data
   if (mqttData == NULL)
   {
     Serial.println(F("Memory allocation for mqttData failed!"));
@@ -278,12 +278,10 @@ void mqttMessageHandler(int messageSize)
     if (mqttCount > 0)
     {
       //Push KEYS or SPARTN data to GNSS module over I2C
-      myGNSS.pushRawData(mqttData, mqttCount, false);
+      myGNSS.pushRawData(mqttData, mqttCount);
       lastReceived_ms = millis();
     }
   }
-
-  delete[] mqttData;
 }
 
 //Connect to STARTN MQTT broker, receive RTCM, and push to ZED module over I2C
