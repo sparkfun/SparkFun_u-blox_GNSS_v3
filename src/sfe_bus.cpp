@@ -60,7 +60,7 @@
 namespace SparkFun_UBLOX_GNSS
 {
 
-  QwI2C::QwI2C(void) : _i2cPort{nullptr}, _address{0}
+  SfeI2C::SfeI2C(void) : _i2cPort{nullptr}, _address{0}
   {
   }
 
@@ -70,7 +70,7 @@ namespace SparkFun_UBLOX_GNSS
   // Methods to init/setup this device.
   // The caller can provide a Wire Port, or this class will use the default.
   // Always update the address in case the user has changed the I2C address - see Example9
-  bool QwI2C::init(TwoWire &wirePort, uint8_t address, bool bInit)
+  bool SfeI2C::init(TwoWire &wirePort, uint8_t address, bool bInit)
   {
     // if we don't have a wire port already
     if (!_i2cPort)
@@ -91,7 +91,7 @@ namespace SparkFun_UBLOX_GNSS
   //
   // Methods to init/setup this device.
   // The caller can provide a Wire Port, or this class will use the default.
-  bool QwI2C::init(uint8_t address)
+  bool SfeI2C::init(uint8_t address)
   {
     return init(Wire, address);
   }
@@ -100,7 +100,7 @@ namespace SparkFun_UBLOX_GNSS
   // ping()
   //
   // Is a device connected?
-  bool QwI2C::ping()
+  bool SfeI2C::ping()
   {
 
     if (!_i2cPort)
@@ -124,7 +124,7 @@ namespace SparkFun_UBLOX_GNSS
   //  is already pointing at register 0xFF, the highest addressable register, in which case it remains
   //  unaltered."
 
-  uint16_t QwI2C::available()
+  uint16_t SfeI2C::available()
   {
 
     if (!_i2cPort)
@@ -159,7 +159,7 @@ namespace SparkFun_UBLOX_GNSS
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // writeBytes()
 
-  uint8_t QwI2C::writeBytes(uint8_t *dataToWrite, uint8_t length)
+  uint8_t SfeI2C::writeBytes(uint8_t *dataToWrite, uint8_t length)
   {
     if (!_i2cPort)
       return 0;
@@ -178,7 +178,7 @@ namespace SparkFun_UBLOX_GNSS
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // readBytes()
 
-  uint8_t QwI2C::readBytes(uint8_t *data, uint8_t length)
+  uint8_t SfeI2C::readBytes(uint8_t *data, uint8_t length)
   {
     if (!_i2cPort)
       return 0;

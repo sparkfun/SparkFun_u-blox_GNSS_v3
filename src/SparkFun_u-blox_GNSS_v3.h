@@ -115,7 +115,7 @@ public:
 
 private:
   // I2C bus class
-  SparkFun_UBLOX_GNSS::QwI2C _i2cBus;
+  SparkFun_UBLOX_GNSS::SfeI2C _i2cBus;
 };
 
 class SFE_UBLOX_GNSS_SPI : public DevUBLOXGNSS

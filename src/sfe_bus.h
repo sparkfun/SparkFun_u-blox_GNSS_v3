@@ -90,12 +90,12 @@ namespace SparkFun_UBLOX_GNSS
     virtual uint8_t readBytes(uint8_t *data, uint8_t length) = 0;
   };
 
-  // The QwI2C device defines behavior for I2C implementation based around the TwoWire class (Wire).
+  // The SfeI2C device defines behavior for I2C implementation based around the TwoWire class (Wire).
   // This is Arduino specific.
-  class QwI2C : public GNSSDeviceBus
+  class SfeI2C : public GNSSDeviceBus
   {
   public:
-    QwI2C(void);
+    SfeI2C(void);
 
     bool init(uint8_t address);
 
@@ -111,8 +111,8 @@ namespace SparkFun_UBLOX_GNSS
     { (void)data; (void)readData; (void)length; return 0; }
 
     void startWriteReadByte(){};
-    void writeReadByte(const uint8_t *data, uint8_t *readData){ (void)data; (void)readData; };
-    void writeReadByte(const uint8_t data, uint8_t *readData){ (void)data; (void)readData; };
+    void writeReadByte(const uint8_t *data, uint8_t *readData){ (void)data; (void)readData; }
+    void writeReadByte(const uint8_t data, uint8_t *readData){ (void)data; (void)readData; }
     void endWriteReadByte(){};
 
     uint8_t readBytes(uint8_t *data, uint8_t length);
@@ -177,8 +177,8 @@ namespace SparkFun_UBLOX_GNSS
     { (void)data; (void)readData; (void)length; return 0; }
 
     void startWriteReadByte(){};
-    void writeReadByte(const uint8_t *data, uint8_t *readData){ (void)data; (void)readData; };
-    void writeReadByte(const uint8_t data, uint8_t *readData){ (void)data; (void)readData; };
+    void writeReadByte(const uint8_t *data, uint8_t *readData){ (void)data; (void)readData; }
+    void writeReadByte(const uint8_t data, uint8_t *readData){ (void)data; (void)readData; }
     void endWriteReadByte(){};
 
     uint8_t readBytes(uint8_t *data, uint8_t length);
