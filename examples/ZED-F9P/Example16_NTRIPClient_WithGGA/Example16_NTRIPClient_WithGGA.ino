@@ -278,7 +278,7 @@ void beginClient()
         lastReceivedRTCM_ms = millis();
 
         //Push RTCM to GNSS module over I2C
-        myGNSS.pushRawData(rtcmData, rtcmCount, false);
+        myGNSS.pushRawData(rtcmData, rtcmCount);
         Serial.print(F("RTCM pushed to ZED: "));
         Serial.println(rtcmCount);
       }
@@ -297,51 +297,6 @@ void beginClient()
       ntripClient.print("\r\n");
 
       ggaTransmitComplete = true;
-
-      //Wait for response
-      unsigned long timeout = millis();
-      while (ntripClient.available() == 0)
-      {
-        if (millis() - timeout > 5000)
-        {
-          Serial.println(F("Caster timed out!"));
-          ntripClient.stop();
-          return;
-        }
-        delay(10);
-      }
-
-      //Check reply
-      bool connectionSuccess = false;
-      char response[512];
-      int responseSpot = 0;
-      while (ntripClient.available())
-      {
-        if (responseSpot == sizeof(response) - 1)
-          break;
-
-        response[responseSpot++] = ntripClient.read();
-        if (strstr(response, "200") != nullptr) //Look for '200 OK'
-          connectionSuccess = true;
-        if (strstr(response, "401") != nullptr) //Look for '401 Unauthorized'
-        {
-          Serial.println(F("Hey - your credentials look bad! Check you caster username and password."));
-          connectionSuccess = false;
-        }
-      }
-      response[responseSpot] = '\0';
-
-      if (connectionSuccess == false)
-      {
-        Serial.print(F("Failed to connect to "));
-        Serial.println(casterHost);
-        return;
-      }
-      else
-      {
-        Serial.print(F("Caster responded with: "));
-        Serial.println(response);
-      }
     }
 
     //Close socket if we don't have new data for 10s
