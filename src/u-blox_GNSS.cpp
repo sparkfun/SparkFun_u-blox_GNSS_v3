@@ -112,6 +112,12 @@ void DevUBLOXGNSS::end(void)
     fileBufferMaxAvail = 0;
   }
 
+  if (cfgValgetValueSizes != nullptr)
+  {
+    delete[] cfgValgetValueSizes;
+    cfgValgetValueSizes = nullptr;
+  }
+
   if (moduleSWVersion != nullptr)
   {
     delete moduleSWVersion; // Created with new moduleSWVersion_t
@@ -7702,6 +7708,7 @@ sfe_ublox_status_e DevUBLOXGNSS::getVal(uint32_t key, uint8_t layer, uint16_t ma
   payloadCfg[1] = getLayer; // Layer
 
   // Load key into outgoing payload
+  key &= ~UBX_CFG_SIZE_MASK; // Mask off the size identifer bits
   payloadCfg[4] = key >> 8 * 0; // Key LSB
   payloadCfg[5] = key >> 8 * 1;
   payloadCfg[6] = key >> 8 * 2;
@@ -7792,7 +7799,7 @@ uint64_t DevUBLOXGNSS::getVal64(uint32_t key, uint8_t layer, uint16_t maxWait) /
   return result;
 }
 
-// Given a key, set a N-bit value
+// Given a key, set a N-byte value
 // This function takes a full 32-bit key
 // Default layer is all: RAM+BBR+Flash
 // Configuration of modern u-blox modules is now done via getVal/setVal/delVal, ie protocol v27 and above found on ZED-F9P
@@ -7800,7 +7807,7 @@ bool DevUBLOXGNSS::setValN(uint32_t key, uint8_t *value, uint8_t N, uint8_t laye
 {
   packetCfg.cls = UBX_CLASS_CFG;
   packetCfg.id = UBX_CFG_VALSET;
-  packetCfg.len = 4 + 4 + (N / 8); // 4 byte header, 4 byte key ID, N/8 bytes of value
+  packetCfg.len = 4 + 4 + N; // 4 byte header, 4 byte key ID, N bytes of value
   packetCfg.startingSpot = 0;
 
   // Clear packet payload
@@ -7810,11 +7817,12 @@ bool DevUBLOXGNSS::setValN(uint32_t key, uint8_t *value, uint8_t N, uint8_t laye
   payloadCfg[1] = layer; // By default we ask for the BBR layer
 
   // Load key into outgoing payload
+  key &= ~UBX_CFG_SIZE_MASK; // Mask off the size identifer bits
   for (uint8_t i = 0; i < 4; i++)
     payloadCfg[i + 4] = key >> (8 * i); // Key
 
   // Load user's value
-  for (uint8_t i = 0; i < (N / 8); i++)
+  for (uint8_t i = 0; i < N; i++)
     payloadCfg[i + 8] = *value++;
 
   // Send VALSET command with this key and value
@@ -7828,7 +7836,7 @@ bool DevUBLOXGNSS::setValN(uint32_t key, uint8_t *value, uint8_t N, uint8_t laye
 bool DevUBLOXGNSS::setVal8(uint32_t key, uint8_t value, uint8_t layer, uint16_t maxWait)
 {
   uint8_t val[1] = {value};
-  return (setValN(key, val, 8, layer, maxWait));
+  return (setValN(key, val, 1, layer, maxWait));
 }
 
 // Given a key, set a 16-bit value
@@ -7838,7 +7846,7 @@ bool DevUBLOXGNSS::setVal8(uint32_t key, uint8_t value, uint8_t layer, uint16_t 
 bool DevUBLOXGNSS::setVal16(uint32_t key, uint16_t value, uint8_t layer, uint16_t maxWait)
 {
   uint8_t val[2] = {(uint8_t)(value >> 0), (uint8_t)(value >> 8)};
-  return (setValN(key, val, 16, layer, maxWait));
+  return (setValN(key, val, 2, layer, maxWait));
 }
 
 // Given a key, set a 32-bit value
@@ -7848,7 +7856,7 @@ bool DevUBLOXGNSS::setVal16(uint32_t key, uint16_t value, uint8_t layer, uint16_
 bool DevUBLOXGNSS::setVal32(uint32_t key, uint32_t value, uint8_t layer, uint16_t maxWait)
 {
   uint8_t val[4] = {(uint8_t)(value >> 0), (uint8_t)(value >> 8), (uint8_t)(value >> 16), (uint8_t)(value >> 24)};
-  return (setValN(key, val, 32, layer, maxWait));
+  return (setValN(key, val, 4, layer, maxWait));
 }
 
 // Given a key, set a 64-bit value
@@ -7863,7 +7871,7 @@ bool DevUBLOXGNSS::setVal64(uint32_t key, uint64_t value, uint8_t layer, uint16_
   for (uint8_t i = 0; i < 8; i++)
     val[i] = (uint8_t)(value >> (8 * i)); // Value
 
-  return (setValN(key, val, 64, layer, maxWait));
+  return (setValN(key, val, 8, layer, maxWait));
 }
 
 // Start defining a new (empty) UBX-CFG-VALSET ubxPacket
@@ -7888,7 +7896,7 @@ bool DevUBLOXGNSS::newCfgValset(uint8_t layer)
 }
 
 // Add another key and value to an existing UBX-CFG-VALSET ubxPacket
-// This function takes a full 32-bit key and N-bit value
+// This function takes a full 32-bit key and N-byte value
 bool DevUBLOXGNSS::addCfgValsetN(uint32_t key, uint8_t *value, uint8_t N)
 {
   if ((_autoSendAtSpaceRemaining > 0) && (packetCfg.len >= (packetCfgPayloadSize - _autoSendAtSpaceRemaining)))
@@ -7904,7 +7912,7 @@ bool DevUBLOXGNSS::addCfgValsetN(uint32_t key, uint8_t *value, uint8_t N)
     memset(&payloadCfg[4], 0, packetCfgPayloadSize - 4);
   }
 
-  if (packetCfg.len >= (packetCfgPayloadSize - (4 + (N / 8))))
+  if (packetCfg.len >= (packetCfgPayloadSize - (4 + N)))
   {
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
     if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
@@ -7923,15 +7931,16 @@ bool DevUBLOXGNSS::addCfgValsetN(uint32_t key, uint8_t *value, uint8_t N)
   }
 
   // Load key into outgoing payload
+  key &= ~UBX_CFG_SIZE_MASK; // Mask off the size identifer bits
   for (uint8_t i = 0; i < 4; i++)
     payloadCfg[packetCfg.len + i] = key >> (8 * i); // Key
 
   // Load user's value
-  for (uint8_t i = 0; i < (N / 8); i++)
+  for (uint8_t i = 0; i < N; i++)
     payloadCfg[packetCfg.len + i + 4] = *value++; // Value
 
   // Update packet length: 4 byte key ID, 8 bytes of value
-  packetCfg.len = packetCfg.len + 4 + (N / 8);
+  packetCfg.len = packetCfg.len + 4 + N;
 
   _numCfgKeys++;
 
@@ -7949,7 +7958,7 @@ bool DevUBLOXGNSS::addCfgValset64(uint32_t key, uint64_t value)
   for (uint8_t i = 0; i < 8; i++)
     val[i] = (uint8_t)(value >> (8 * i)); // Value
 
-  return (addCfgValsetN(key, val, 64));
+  return (addCfgValsetN(key, val, 8));
 }
 
 // Add another key and value to an existing UBX-CFG-VALSET ubxPacket
@@ -7957,7 +7966,7 @@ bool DevUBLOXGNSS::addCfgValset64(uint32_t key, uint64_t value)
 bool DevUBLOXGNSS::addCfgValset32(uint32_t key, uint32_t value)
 {
   uint8_t val[4] = {(uint8_t)(value >> 0), (uint8_t)(value >> 8), (uint8_t)(value >> 16), (uint8_t)(value >> 24)};
-  return (addCfgValsetN(key, val, 32));
+  return (addCfgValsetN(key, val, 4));
 }
 
 // Add another key and value to an existing UBX-CFG-VALSET ubxPacket
@@ -7965,7 +7974,7 @@ bool DevUBLOXGNSS::addCfgValset32(uint32_t key, uint32_t value)
 bool DevUBLOXGNSS::addCfgValset16(uint32_t key, uint16_t value)
 {
   uint8_t val[2] = {(uint8_t)(value >> 0), (uint8_t)(value >> 8)};
-  return (addCfgValsetN(key, val, 16));
+  return (addCfgValsetN(key, val, 2));
 }
 
 // Add another key and value to an existing UBX-CFG-VALSET ubxPacket
@@ -7973,7 +7982,7 @@ bool DevUBLOXGNSS::addCfgValset16(uint32_t key, uint16_t value)
 bool DevUBLOXGNSS::addCfgValset8(uint32_t key, uint8_t value)
 {
   uint8_t val[1] = {value};
-  return (addCfgValsetN(key, val, 8));
+  return (addCfgValsetN(key, val, 1));
 }
 
 // Add another key and value to an existing UBX-CFG-VALSET ubxPacket
@@ -8107,6 +8116,11 @@ bool DevUBLOXGNSS::newCfgValget(uint8_t layer) // Create a new, empty UBX-CFG-VA
 
 bool DevUBLOXGNSS::newCfgValget(ubxPacket *pkt, uint8_t layer) // Create a new, empty UBX-CFG-VALGET. Add entries with addCfgValget8/16/32/64
 {
+  if (cfgValgetValueSizes == nullptr) // Check if RAM has been allocated for cfgValgetValueSizes
+  {
+    cfgValgetValueSizes = new uint8_t[CFG_VALSET_MAX_KEYS];
+  }
+  
   pkt->cls = UBX_CLASS_CFG;
   pkt->id = UBX_CFG_VALGET;
   pkt->len = 4; // 4 byte header
@@ -8153,23 +8167,24 @@ bool DevUBLOXGNSS::newCfgValget(ubxPacket *pkt, uint8_t layer) // Create a new, 
   return (true);
 }
 
-bool DevUBLOXGNSS::addCfgValgetN(uint32_t key, uint8_t N) // Add a new key to an existing UBX-CFG-VALGET ubxPacket
+bool DevUBLOXGNSS::addCfgValget(uint32_t key) // Add a new key to an existing UBX-CFG-VALGET ubxPacket
 {
-  return (addCfgValgetN(&packetCfg, key, N));
+  return (addCfgValget(&packetCfg, key));
 }
 
-bool DevUBLOXGNSS::addCfgValgetN(ubxPacket *pkt, uint32_t key, uint8_t N) // Add a new key to an existing UBX-CFG-VALGET ubxPacket
+bool DevUBLOXGNSS::addCfgValget(ubxPacket *pkt, uint32_t key) // Add a new key to an existing UBX-CFG-VALGET ubxPacket
 {
+  // Extract the value size
+  uint8_t valueSizeBytes = getCfgValueSizeBytes(key);
+
   if (pkt == &packetCfg) // The user will need to do this manually for a custom packet
   {
-    if (_lenCfgValGetResponse >= (packetCfgPayloadSize - (4 + (N / 8))))
+    if (_lenCfgValGetResponse >= (packetCfgPayloadSize - (4 + (valueSizeBytes))))
     {
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
       if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
       {
-        _debugSerial.print(F("addCfgValget"));
-        _debugSerial.print(N);
-        _debugSerial.println(F(": packetCfgPayloadSize reached!"));
+        _debugSerial.println(F("addCfgValget: packetCfgPayloadSize reached!"));
       }
 #endif
       return false;
@@ -8181,18 +8196,23 @@ bool DevUBLOXGNSS::addCfgValgetN(ubxPacket *pkt, uint32_t key, uint8_t N) // Add
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
     if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
     {
-      _debugSerial.print(F("addCfgValget"));
-      _debugSerial.print(N);
-      _debugSerial.println(F(": key limit reached!"));
+      _debugSerial.println(F("addCfgValget: key limit reached!"));
     }
 #endif
     return false;
+  }
+
+  // Store the value size in cfgValgetValueSizes
+  if (cfgValgetValueSizes != nullptr)
+  {
+    cfgValgetValueSizes[_numGetCfgKeys] = valueSizeBytes;
   }
 
   // Load key into outgoing payload
   uint8_t *ptr;
   ptr = pkt->payload;
   ptr += pkt->len;
+  key &= ~UBX_CFG_SIZE_MASK; // Mask off the size identifer bits
   for (uint8_t i = 0; i < 4; i++)
   {
     *ptr = key >> (8 * i); // Key
@@ -8203,30 +8223,10 @@ bool DevUBLOXGNSS::addCfgValgetN(ubxPacket *pkt, uint32_t key, uint8_t N) // Add
   pkt->len += 4;
 
   _numGetCfgKeys++;
-  _lenCfgValGetResponse += 4 + (N / 8); // 4 byte key ID, N byte value
+  _lenCfgValGetResponse += 4 + (valueSizeBytes); // 4 byte key ID, N byte value
 
   // All done
   return (true);
-}
-
-bool DevUBLOXGNSS::addCfgValget8(ubxPacket *pkt, uint32_t key) // Add a new key to an existing UBX-CFG-VALGET ubxPacket
-{
-  return (addCfgValgetN(pkt, key, 8));
-}
-
-bool DevUBLOXGNSS::addCfgValget16(ubxPacket *pkt, uint32_t key) // Add a new key to an existing UBX-CFG-VALGET ubxPacket
-{
-  return (addCfgValgetN(pkt, key, 16));
-}
-
-bool DevUBLOXGNSS::addCfgValget32(ubxPacket *pkt, uint32_t key) // Add a new key to an existing UBX-CFG-VALGET ubxPacket
-{
-  return (addCfgValgetN(pkt, key, 32));
-}
-
-bool DevUBLOXGNSS::addCfgValget64(ubxPacket *pkt, uint32_t key) // Add a new key to an existing UBX-CFG-VALGET ubxPacket
-{
-  return (addCfgValgetN(pkt, key, 64));
 }
 
 bool DevUBLOXGNSS::sendCfgValget(uint16_t maxWait) // Send the CfgValget (UBX-CFG-VALGET) construct
@@ -8246,6 +8246,43 @@ bool DevUBLOXGNSS::sendCfgValget(ubxPacket *pkt, uint16_t maxWait) // Send the C
     _numGetCfgKeys = 0;
 
   return success;
+}
+
+uint8_t DevUBLOXGNSS::getCfgValueSizeBytes(const uint32_t key)
+{
+  switch (key & UBX_CFG_SIZE_MASK)
+  {
+    case UBX_CFG_L:
+    case UBX_CFG_U1:
+    case UBX_CFG_I1:
+    case UBX_CFG_E1:
+    case UBX_CFG_X1:
+      return 1;
+      break;
+    case UBX_CFG_U2:
+    case UBX_CFG_I2:
+    case UBX_CFG_E2:
+    case UBX_CFG_X2:
+      return 2;
+      break;
+    case UBX_CFG_U4:
+    case UBX_CFG_I4:
+    case UBX_CFG_E4:
+    case UBX_CFG_X4:
+    case UBX_CFG_R4:
+      return 4;
+      break;
+    case UBX_CFG_U8:
+    case UBX_CFG_I8:
+    case UBX_CFG_X8:
+    case UBX_CFG_R8:
+      return 8;
+      break;
+    default:
+      return 0; // Error
+      break;
+  }
+  return 0;
 }
 
 //=-=-=-=-=-=-=-= "Automatic" Messages =-=-=-=-=-=-=-==-=-=-=-=-=-=-=
@@ -15837,25 +15874,16 @@ float DevUBLOXGNSS::getHNRheading(uint16_t maxWait) // Returned as degrees
 // Given a spot in the payload array, extract eight bytes and build a uint64_t
 uint64_t DevUBLOXGNSS::extractLongLong(ubxPacket *msg, uint16_t spotToStart)
 {
-  uint64_t val = (uint64_t)msg->payload[spotToStart + 0] << 8 * 0;
-  val |= (uint64_t)msg->payload[spotToStart + 1] << 8 * 1;
-  val |= (uint64_t)msg->payload[spotToStart + 2] << 8 * 2;
-  val |= (uint64_t)msg->payload[spotToStart + 3] << 8 * 3;
-  val |= (uint64_t)msg->payload[spotToStart + 4] << 8 * 4;
-  val |= (uint64_t)msg->payload[spotToStart + 5] << 8 * 5;
-  val |= (uint64_t)msg->payload[spotToStart + 6] << 8 * 6;
-  val |= (uint64_t)msg->payload[spotToStart + 7] << 8 * 7;
+  uint64_t val = 0;
+  for (uint8_t i = 0; i < 8; i++)
+    val |= (uint64_t)msg->payload[spotToStart + i] << (8 * i);
   return (val);
 }
 
 // Given a spot in the payload array, extract eight bytes and build a int64_t
 int64_t DevUBLOXGNSS::extractSignedLongLong(ubxPacket *msg, uint16_t spotToStart)
 {
-  union
-  {
-    uint64_t unsigned64;
-    int64_t signed64;
-  } converter64;
+  unsignedSigned64 converter64;
 
   converter64.unsigned64 = extractLongLong(msg, spotToStart);
   return (converter64.signed64);
@@ -15864,10 +15892,9 @@ int64_t DevUBLOXGNSS::extractSignedLongLong(ubxPacket *msg, uint16_t spotToStart
 // Given a spot in the payload array, extract four bytes and build a long
 uint32_t DevUBLOXGNSS::extractLong(ubxPacket *msg, uint16_t spotToStart)
 {
-  uint32_t val = (uint32_t)msg->payload[spotToStart + 0] << 8 * 0;
-  val |= (uint32_t)msg->payload[spotToStart + 1] << 8 * 1;
-  val |= (uint32_t)msg->payload[spotToStart + 2] << 8 * 2;
-  val |= (uint32_t)msg->payload[spotToStart + 3] << 8 * 3;
+  uint32_t val = 0;
+  for (uint8_t i = 0; i < 4; i++)
+    val |= (uint32_t)msg->payload[spotToStart + i] << (8 * i);
   return (val);
 }
 

@@ -227,14 +227,12 @@ getVal32	KEYWORD2
 getVal64	KEYWORD2
 
 newCfgValget	KEYWORD2
-addCfgValgetN	KEYWORD2
-addCfgValget8	KEYWORD2
-addCfgValget16	KEYWORD2
-addCfgValget32	KEYWORD2
-addCfgValget64	KEYWORD2
+addCfgValget	KEYWORD2
 sendCfgValget	KEYWORD2
 getNumGetCfgKeys	KEYWORD2
 getLenCfgValGetResponse	KEYWORD2
+getCfgValueSizeBytes	KEYWORD2
+extractConfigValueByKey	KEYWORD2
 
 setValN	KEYWORD2
 setVal8	KEYWORD2

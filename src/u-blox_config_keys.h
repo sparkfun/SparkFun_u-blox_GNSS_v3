@@ -92,28 +92,25 @@ const uint8_t VAL_ID_I2C_ADDRESS = 0x01;
 // The following enum allows automatic identification of the Configuration Item data type.
 // These are OR'd into the reserved bits in each Config Key ID.
 // Based on an idea by Michael Ammann. Thank you @mazgch
-typedef enum
-{
-  UBX_CFG_L = 0x01001000,        // bool
-  UBX_CFG_U1 = 0x01002000,       // uint8_t
-  UBX_CFG_U2 = 0x01003000,       // uint16_t
-  UBX_CFG_U4 = 0x01004000,       // uint32_t
-  UBX_CFG_U8 = 0x01005000,       // uint64_t
-  UBX_CFG_I1 = 0x01006000,       // int8_t
-  UBX_CFG_I2 = 0x01007000,       // int16_t
-  UBX_CFG_I4 = 0x01008000,       // int32_t
-  UBX_CFG_I8 = 0x01009000,       // int64_t
-  UBX_CFG_R4 = 0x0100A000,       // float (32-bit)
-  UBX_CFG_R8 = 0x0100B000,       // double (64-bit)
-  UBX_CFG_E1 = 0x0100C000,       // 8-bit enum == uint8_t
-  UBX_CFG_E2 = 0x0100D000,       // 16-bit enum == uint16_t
-  UBX_CFG_E4 = 0x0100E000,       // 32-bit enum == uint32_t
-  UBX_CFG_X1 = 0x0100F000,       // 8-bit bitfield / string == uint8_t
-  UBX_CFG_X2 = 0x02001000,       // 16-bit bitfield / string == uint16_t
-  UBX_CFG_X4 = 0x02002000,       // 32-bit bitfield / string == uint32_t
-  UBX_CFG_X8 = 0x02003000,       // 64-bit bitfield / string == uint64_t
-  UBX_CFG_SIZE_MASK = 0x0F00F000 // Bit mask
-} ublox_config_size_id_e;
+const uint32_t UBX_CFG_L = 0x01001000;        // bool
+const uint32_t UBX_CFG_U1 = 0x01002000;       // uint8_t
+const uint32_t UBX_CFG_U2 = 0x01003000;       // uint16_t
+const uint32_t UBX_CFG_U4 = 0x01004000;       // uint32_t
+const uint32_t UBX_CFG_U8 = 0x01005000;       // uint64_t
+const uint32_t UBX_CFG_I1 = 0x01006000;       // int8_t
+const uint32_t UBX_CFG_I2 = 0x01007000;       // int16_t
+const uint32_t UBX_CFG_I4 = 0x01008000;       // int32_t
+const uint32_t UBX_CFG_I8 = 0x01009000;       // int64_t
+const uint32_t UBX_CFG_R4 = 0x0100A000;       // float (32-bit)
+const uint32_t UBX_CFG_R8 = 0x0100B000;       // double (64-bit)
+const uint32_t UBX_CFG_E1 = 0x0100C000;       // 8-bit enum == uint8_t
+const uint32_t UBX_CFG_E2 = 0x0100D000;       // 16-bit enum == uint16_t
+const uint32_t UBX_CFG_E4 = 0x0100E000;       // 32-bit enum == uint32_t
+const uint32_t UBX_CFG_X1 = 0x0100F000;       // 8-bit bitfield / string == uint8_t
+const uint32_t UBX_CFG_X2 = 0x02001000;       // 16-bit bitfield / string == uint16_t
+const uint32_t UBX_CFG_X4 = 0x02002000;       // 32-bit bitfield / string == uint32_t
+const uint32_t UBX_CFG_X8 = 0x02003000;       // 64-bit bitfield / string == uint64_t
+const uint32_t UBX_CFG_SIZE_MASK = 0x0F00F000; // Bit mask
 
 // Below are the key values for a given configuration setting
 
