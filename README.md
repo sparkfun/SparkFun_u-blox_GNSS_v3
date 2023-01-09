@@ -54,8 +54,8 @@ Migrating to v3 is easy. There are two small changes all users will need to make
 v3 is _mostly_ backward-compatible with v2, but there have been some important changes. If in doubt, please look at the updated [examples](./examples).
 They have all been updated and tested with v3.
 
-Because all module configuration is preformed using the Configuration Interface, you will find that the **VAL_LAYER** has been added as
-a parameter in many methods. The methods default to using ```VAL_LAYER_RAM_BBR``` - i.e. the configuration will be changed and stored in both
+Because all module configuration is performed using the Configuration Interface, you will find that the **VAL_LAYER** has been added as
+a parameter in many methods. The set methods default to using ```VAL_LAYER_RAM_BBR``` - i.e. the configuration will be changed and stored in both
 RAM and Battery-Backed RAM. Options are: ```VAL_LAYER_RAM```, ```VAL_LAYER_BBR```, ```VAL_LAYER_FLASH``` (if your module has flash memory attached),
 ```VAL_LAYER_RAM_BBR``` and ```VAL_LAYER_ALL``` (all three).
 
@@ -86,7 +86,6 @@ Please check your code. If you are using ```maxWait```, you will need to specify
 Likewise, when reading (getting) the configuration, you can specify ```VAL_LAYER_RAM``` or ```VAL_LAYER_DEFAULT```. The methods default to ```VAL_LAYER_RAM```.
 
 v3 provides a new way of reading (getting) values from the Configuration Interface: ```newCfgValget```, ```addCfgValget``` and ```sendCfgValget```.
-v3 also uses C++ Templates to make it easier to get and set the configuration without knowing the value data type.
 Please see the [VALSET and VALGET examples](./examples/VALGET_and_VALSET/) for more details.
 
 ```setPortOutput```, ```setPortInput``` and ```getPortSettings``` have been deleted.
