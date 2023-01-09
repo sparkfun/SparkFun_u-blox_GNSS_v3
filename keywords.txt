@@ -687,12 +687,17 @@ setNMEAGPZDAcallbackPtr	KEYWORD2
 getLatestNMEAGNZDA	KEYWORD2
 setNMEAGNZDAcallbackPtr	KEYWORD2
 
+extractLongLong	KEYWORD2
+extractSignedLongLong	KEYWORD2
 extractLong	KEYWORD2
 extractSignedLong	KEYWORD2
 extractInt	KEYWORD2
 extractSignedInt	KEYWORD2
 extractByte	KEYWORD2
 extractSignedChar	KEYWORD2
+extractFloat	KEYWORD2
+extractDouble	KEYWORD2
+
 
 #######################################
 # Constants (LITERAL1)

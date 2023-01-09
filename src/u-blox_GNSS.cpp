@@ -1560,7 +1560,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
       // Check if it should be passed to processNMEA
       if (processThisNMEA())
       {
-        for(uint8_t i = 0; i < 6; i++)
+        for (uint8_t i = 0; i < 6; i++)
         {
           processNMEA(nmeaAddressField[i]); // Process the start character and address field
           // If user has assigned an output port then pipe the characters there,
@@ -7992,12 +7992,7 @@ bool DevUBLOXGNSS::addCfgValsetFloat(uint32_t key, float value)
   }
 
   // Define a union to convert from float to uint32_t
-  union
-  {
-    float flt;
-    uint32_t unsigned32;
-    //uint8_t bytes[4]; // Could be useful for endian byte reversal?
-  } convert32;
+  unsigned32float convert32;
 
   convert32.flt = value;
 
@@ -8021,12 +8016,7 @@ bool DevUBLOXGNSS::addCfgValsetDouble(uint32_t key, double value)
   }
 
   // Define a union to convert from double to uint64_t
-  union
-  {
-    double dbl;
-    uint64_t unsigned64;
-    //uint8_t bytes[8]; // Could be useful for endian byte reversal?
-  } convert64;
+  unsigned64double convert64;
 
   convert64.dbl = value;
 
@@ -15858,6 +15848,19 @@ uint64_t DevUBLOXGNSS::extractLongLong(ubxPacket *msg, uint16_t spotToStart)
   return (val);
 }
 
+// Given a spot in the payload array, extract eight bytes and build a int64_t
+int64_t DevUBLOXGNSS::extractSignedLongLong(ubxPacket *msg, uint16_t spotToStart)
+{
+  union
+  {
+    uint64_t unsigned64;
+    int64_t signed64;
+  } converter64;
+
+  converter64.unsigned64 = extractLongLong(msg, spotToStart);
+  return (converter64.signed64);
+}
+
 // Given a spot in the payload array, extract four bytes and build a long
 uint32_t DevUBLOXGNSS::extractLong(ubxPacket *msg, uint16_t spotToStart)
 {
@@ -15904,4 +15907,20 @@ int8_t DevUBLOXGNSS::extractSignedChar(ubxPacket *msg, uint16_t spotToStart)
   unsignedSigned8 converter;
   converter.unsigned8 = extractByte(msg, spotToStart);
   return (converter.signed8);
+}
+
+// Given a spot, extract a signed 32-bit float from the payload
+float DevUBLOXGNSS::extractFloat(ubxPacket *msg, uint16_t spotToStart)
+{
+  unsigned32float converter;
+  converter.unsigned32 = extractLong(msg, spotToStart);
+  return (converter.flt);
+}
+
+// Given a spot, extract a signed 32-bit float from the payload
+double DevUBLOXGNSS::extractDouble(ubxPacket *msg, uint16_t spotToStart)
+{
+  unsigned64double converter;
+  converter.unsigned64 = extractLongLong(msg, spotToStart);
+  return (converter.dbl);
 }

@@ -989,12 +989,15 @@ public:
   // Functions to extract signed and unsigned 8/16/32-bit data from a ubxPacket
   // From v2.0: These are public. The user can call these to extract data from custom packets
   uint64_t extractLongLong(ubxPacket *msg, uint16_t spotToStart);  // Combine eight bytes from payload into uint64_t
+  int64_t extractSignedLongLong(ubxPacket *msg, uint16_t spotToStart);  // Combine eight bytes from payload into uint64_t
   uint32_t extractLong(ubxPacket *msg, uint16_t spotToStart);      // Combine four bytes from payload into long
   int32_t extractSignedLong(ubxPacket *msg, uint16_t spotToStart); // Combine four bytes from payload into signed long (avoiding any ambiguity caused by casting)
   uint16_t extractInt(ubxPacket *msg, uint16_t spotToStart);       // Combine two bytes from payload into int
   int16_t extractSignedInt(ubxPacket *msg, uint16_t spotToStart);
   uint8_t extractByte(ubxPacket *msg, uint16_t spotToStart);      // Get byte from payload
   int8_t extractSignedChar(ubxPacket *msg, uint16_t spotToStart); // Get signed 8-bit value from payload
+  float extractFloat(ubxPacket *msg, uint16_t spotToStart);       // Get signed 32-bit float (R4) from payload
+  double extractDouble(ubxPacket *msg, uint16_t spotToStart);     // Get signed 64-bit double (R8) from payload
 
   // Pointers to storage for the "automatic" messages
   // RAM is allocated for these if/when required.
@@ -1261,4 +1264,16 @@ public:
     uint8_t unsigned8;
     int8_t signed8;
   } unsignedSigned8;
+
+  typedef union
+  {
+    uint32_t unsigned32;
+    float flt;
+  } unsigned32float;
+
+  typedef union
+  {
+    uint64_t unsigned64;
+    double dbl;
+  } unsigned64double;
 };
