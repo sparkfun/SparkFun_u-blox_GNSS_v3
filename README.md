@@ -51,6 +51,62 @@ Migrating to v3 is easy. There are two small changes all users will need to make
   * ```SFE_UBLOX_GNSS_SPI``` provides support for SPI _only_
   * If you are using Serial or SPI, you will need to change your code to: ```SFE_UBLOX_GNSS_SERIAL myGNSS;``` or ```SFE_UBLOX_GNSS_SPI myGNSS;```
 
+v3 is _mostly_ backward-compatible with v2, but there have been some important changes. If in doubt, please look at the updated [examples](./examples).
+They have all been updated and tested with v3.
+
+Because all module configuration is preformed using the Configuration Interface, you will find that the **VAL_LAYER** has been added as
+a parameter in many methods. The methods default to using ```VAL_LAYER_RAM_BBR``` - i.e. the configuration will be changed and stored in both
+RAM and Battery-Backed RAM. Options are: ```VAL_LAYER_RAM```, ```VAL_LAYER_BBR```, ```VAL_LAYER_FLASH``` (if your module has flash memory attached),
+```VAL_LAYER_RAM_BBR``` and ```VAL_LAYER_ALL``` (all three).
+
+Please check your code. If you are using ```maxWait```, you will need to specify the LAYER too. E.g.:
+
+* v2:
+
+```
+  bool setAutoPVT(bool enabled, bool implicitUpdate, uint16_t maxWait = defaultMaxWait);
+  bool setAutoPVTrate(uint8_t rate, bool implicitUpdate = true, uint16_t maxWait = defaultMaxWait);
+  bool setAutoPVTcallback(void (*callbackPointer)(UBX_NAV_PVT_data_t), uint16_t maxWait = defaultMaxWait);
+
+  bool setSurveyMode(uint8_t mode, uint16_t observationTime, float requiredAccuracy, uint16_t maxWait = defaultMaxWait);
+  bool addGeofence(int32_t latitude, int32_t longitude, uint32_t radius, byte confidence = 0, byte pinPolarity = 0, byte pin = 0, uint16_t maxWait = defaultMaxWait);
+```
+
+* v3
+
+```
+  bool setAutoPVT(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool setAutoPVTrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool setAutoPVTcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_PVT_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+
+  bool setSurveyMode(uint8_t mode, uint16_t observationTime, float requiredAccuracy, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool addGeofence(int32_t latitude, int32_t longitude, uint32_t radius, uint8_t confidence = 0, bool pinPolarity = 0, uint8_t pin = 0, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+```
+
+Likewise, when reading (getting) the configuration, you can specify ```VAL_LAYER_RAM``` or ```VAL_LAYER_DEFAULT```. The methods default to ```VAL_LAYER_RAM```.
+
+v3 provides a new way of reading (getting) values from the Configuration Interface: ```newCfgValget```, ```addCfgValget``` and ```sendCfgValget```.
+v3 also uses C++ Templates to make it easier to get and set the configuration without knowing the value data type.
+Please see the [VALSET and VALGET examples](./examples/VALGET_and_VALSET/) for more details.
+
+```setPortOutput```, ```setPortInput``` and ```getPortSettings``` have been deleted.
+To get (read) the port configuration, please use ```getVal``` with keys like ```UBLOX_CFG_I2CINPROT_UBX``` and ```UBLOX_CFG_UART1OUTPROT_NMEA```.
+To configure the ports, please use the methods:
+
+```
+  bool setI2COutput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool setUART1Output(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool setUART2Output(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool setUSBOutput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool setSPIOutput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+
+  bool setI2CInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool setUART1Input(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool setUART2Input(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool setUSBInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+  bool setSPIInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
+```
+
 ## Compatibility
 
 v3 of the library provides support for generation F9 and M10 u-blox GNSS modules.
