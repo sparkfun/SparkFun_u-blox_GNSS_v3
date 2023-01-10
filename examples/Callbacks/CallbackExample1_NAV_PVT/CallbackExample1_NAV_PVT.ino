@@ -3,17 +3,18 @@
   By: Paul Clark
   SparkFun Electronics
   Date: December 30th, 2020
-  License: MIT. See license file for more information but you can
-  basically do whatever you want with this code.
+  License: MIT. See license file for more information.
 
   This example shows how to configure the u-blox GNSS to send navigation reports automatically
   and access the data via a callback. No more polling!
 
   Feel like supporting open source hardware?
   Buy a board from SparkFun!
-  ZED-F9P RTK2: https://www.sparkfun.com/products/15136
-  NEO-M8P RTK: https://www.sparkfun.com/products/15005
-  SAM-M8Q: https://www.sparkfun.com/products/15106
+  SparkFun GPS-RTK2 - ZED-F9P (GPS-15136)    https://www.sparkfun.com/products/15136
+  SparkFun GPS-RTK-SMA - ZED-F9P (GPS-16481) https://www.sparkfun.com/products/16481
+  SparkFun MAX-M10S Breakout (GPS-18037)     https://www.sparkfun.com/products/18037
+  SparkFun ZED-F9K Breakout (GPS-18719)      https://www.sparkfun.com/products/18719
+  SparkFun ZED-F9R Breakout (GPS-16344)      https://www.sparkfun.com/products/16344
 
   Hardware Connections:
   Plug a Qwiic cable into the GPS and a BlackBoard

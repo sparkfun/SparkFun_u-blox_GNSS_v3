@@ -54,9 +54,11 @@ Migrating to v3 is easy. There are two small changes all users will need to make
 v3 is _mostly_ backward-compatible with v2, but there have been some important changes. If in doubt, please look at the updated [examples](./examples).
 They have all been updated and tested with v3.
 
+### VAL_LAYER
+
 Because all module configuration is performed using the Configuration Interface, you will find that the **VAL_LAYER** has been added as
 a parameter in many methods. The set methods default to using ```VAL_LAYER_RAM_BBR``` - i.e. the configuration will be changed and stored in both
-RAM and Battery-Backed RAM. Options are: ```VAL_LAYER_RAM```, ```VAL_LAYER_BBR```, ```VAL_LAYER_FLASH``` (if your module has flash memory attached),
+RAM and Battery-Backed RAM but not flash. Options are: ```VAL_LAYER_RAM```, ```VAL_LAYER_BBR```, ```VAL_LAYER_FLASH``` (if your module has flash memory attached),
 ```VAL_LAYER_RAM_BBR``` and ```VAL_LAYER_ALL``` (all three).
 
 Please check your code. If you are using ```maxWait```, you will need to specify the LAYER too. E.g.:
@@ -84,6 +86,9 @@ Please check your code. If you are using ```maxWait```, you will need to specify
 ```
 
 Likewise, when reading (getting) the configuration, you can specify ```VAL_LAYER_RAM``` or ```VAL_LAYER_DEFAULT```. The methods default to ```VAL_LAYER_RAM```.
+(```VAL_LAYER_BBR``` and ```VAL_LAYER_FLASH``` are also supported - but earlier ZED-F9P's NACK'd reading those layers.)
+
+### VALSET and VALGET
 
 v3 provides a new way of reading (getting) values from the Configuration Interface: ```newCfgValget```, ```addCfgValget``` and ```sendCfgValget```.
 Please see the [VALSET and VALGET examples](./examples/VALGET_and_VALSET/) for more details.
@@ -105,6 +110,28 @@ To configure the ports, please use the methods:
   bool setUSBInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
   bool setSPIInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
 ```
+
+### Template VALSET and VALGET
+
+Please also note that as of Jan 10th 2023 the u-blox Config Keys defined in [u-blox_config_keys.h](./src/u-blox_config_keys.h) now have their size encoded into them.
+We OR extra data into the unused bits in each key to define the size. This allows set and get template methods to cope with the different sizes. E.g.:
+
+```
+// CFG-ANA: AssistNow Autonomous and Offline configuration
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+const uint32_t UBLOX_CFG_ANA_USE_ANA = UBX_CFG_L | 0x10230001;    // Use AssistNow Autonomous
+const uint32_t UBLOX_CFG_ANA_ORBMAXERR = UBX_CFG_U2 | 0x30230002; // Maximum acceptable (modeled) orbit error in m. Range is from 5 to 1000.
+```
+
+```UBX_CFG_L``` is a logical boolean single bit, stored as 8-bit U1 (uint8_t). ```UBX_CFG_U2``` is 2-byte (16-bit) unsigned (uint16_t). Etc..
+
+If you are using the keys in your own code, you can restore the original key value by ANDing with the inverse of ```UBX_CFG_SIZE_MASK``` :
+
+```
+key &= ~UBX_CFG_SIZE_MASK; // Mask off the size identifer bits
+```
+
+The get and set template methods are based on an idea by Michael Ammann. Thank you @mazgch
 
 ## Compatibility
 

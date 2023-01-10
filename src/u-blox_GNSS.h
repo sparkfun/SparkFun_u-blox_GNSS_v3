@@ -421,52 +421,257 @@ public:
 
   // General configuration (used only on protocol v27 and higher - ie, ZED-F9P)
 
-protected:
-  sfe_ublox_status_e getVal(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Load payload with response
-public:
-  bool getVal8(uint32_t key, uint8_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Returns the value at a given key location
-  uint8_t getVal8(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);              // Unsafe overload
-  bool getVal16(uint32_t key, uint16_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the value at a given key location
-  uint16_t getVal16(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);            // Unsafe overload
-  bool getVal32(uint32_t key, uint32_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the value at a given key location
-  uint32_t getVal32(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);            // Unsafe overload
-  bool getVal64(uint32_t key, uint64_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the value at a given key location
-  uint64_t getVal64(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);            // Unsafe overload
+  // VALGET
 
 protected:                                                         // These use packetCfg - which is protected from the user
-  bool newCfgValget(uint8_t layer = VAL_LAYER_RAM);                // Create a new, empty UBX-CFG-VALGET. Add entries with addCfgValget8/16/32/64
-  bool addCfgValgetN(uint32_t key, uint8_t N);                     // Add a new key and N-bit value to an existing UBX-CFG-VALGET ubxPacket
+  bool newCfgValget(uint8_t layer = VAL_LAYER_RAM);                // Create a new, empty UBX-CFG-VALGET. Add entries with addCfgValget
+  bool addCfgValget(uint32_t key);                                 // Add a new key to an existing UBX-CFG-VALGET ubxPacket - deduce the value size automatically
   bool sendCfgValget(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Send the CfgValget (UBX-CFG-VALGET) construct
 
 public:
-  bool newCfgValget(ubxPacket *pkt, uint8_t layer = VAL_LAYER_RAM);                // Create a new, empty UBX-CFG-VALGET. Add entries with addCfgValget8/16/32/64
-  bool addCfgValgetN(ubxPacket *pkt, uint32_t key, uint8_t N);                     // Add a new key and N-bit value to an existing UBX-CFG-VALGET ubxPacket
-  bool addCfgValget8(ubxPacket *pkt, uint32_t key);                                // Add a new key and 8-bit value to an existing UBX-CFG-VALGET ubxPacket
-  bool addCfgValget16(ubxPacket *pkt, uint32_t key);                               // Add a new key and 16-bit value to an existing UBX-CFG-VALGET ubxPacket
-  bool addCfgValget32(ubxPacket *pkt, uint32_t key);                               // Add a new key and 32-bit value to an existing UBX-CFG-VALGET ubxPacket
-  bool addCfgValget64(ubxPacket *pkt, uint32_t key);                               // Add a new key and 64-bit value to an existing UBX-CFG-VALGET ubxPacket
-  bool sendCfgValget(ubxPacket *pkt, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Send the CfgValget (UBX-CFG-VALGET) construct
-  uint8_t getNumGetCfgKeys() { return _numGetCfgKeys; }                            // Return the number of keys in the VALGET packet
-  uint16_t getLenCfgValGetResponse() { return _lenCfgValGetResponse; }             // Return the expected length of the VALGET response
+  bool newCfgValget(ubxPacket *pkt, uint16_t maxPayload, uint8_t layer = VAL_LAYER_RAM); // Create a new, empty UBX-CFG-VALGET. Add entries with addCfgValget8/16/32/64
+  bool addCfgValget(ubxPacket *pkt, uint32_t key);                                       // Add a new key to an existing UBX-CFG-VALGET ubxPacket - deduce the value size automatically
+  bool sendCfgValget(ubxPacket *pkt, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);       // Send the CfgValget (UBX-CFG-VALGET) construct
+  uint8_t getNumGetCfgKeys() { return _numGetCfgKeys; }                                  // Return the number of keys in the VALGET packet
+  uint16_t getLenCfgValGetResponse() { return _lenCfgValGetResponse; }                   // Return the expected length of the VALGET response
+  uint8_t getCfgValueSizeBytes(const uint32_t key);                                      // Returns the value size in bytes for the given key
 
-  bool setValN(uint32_t key, uint8_t *value, uint8_t N, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Sets the N-bit value at a given group/id/size location
+  template <typename T>
+  bool extractConfigValueByKey(ubxPacket *pkt, const uint32_t key, T value, size_t maxWidth) // Extract the config value by its key. maxWidth prevents writing beyond the end of value
+  {
+    if (cfgValgetValueSizes == nullptr) // Check the size list exists
+      return false;
+    uint8_t sizePtr = 0;
+
+    if (pkt->len < 4)
+      return false;
+
+    uint32_t k1 = key & ~UBX_CFG_SIZE_MASK; // Convert key back into an actual key
+
+    uint16_t ptr = 4;
+    while (ptr < pkt->len)
+    {
+      uint32_t k2 = extractLong(pkt, ptr);
+      if (k1 == k2)
+      {
+        ptr += 4; // Point to the value
+        switch (key & UBX_CFG_SIZE_MASK)
+        {
+        case UBX_CFG_L:
+          if (maxWidth < sizeof(bool))
+            return false;
+          *value = (bool)extractByte(pkt, ptr);
+          return (true);
+          break;
+        case UBX_CFG_U1:
+        case UBX_CFG_E1:
+        case UBX_CFG_X1:
+          if (maxWidth < sizeof(uint8_t))
+            return false;
+          *value = (uint8_t)extractByte(pkt, ptr);
+          return (true);
+          break;
+        case UBX_CFG_I1:
+          if (maxWidth < sizeof(int8_t))
+            return false;
+          *value = (int8_t)extractSignedChar(pkt, ptr);
+          break;
+        case UBX_CFG_U2:
+        case UBX_CFG_E2:
+        case UBX_CFG_X2:
+          if (maxWidth < sizeof(uint16_t))
+            return false;
+          *value = (uint16_t)extractInt(pkt, ptr);
+          return (true);
+          break;
+        case UBX_CFG_I2:
+          if (maxWidth < sizeof(int16_t))
+            return false;
+          *value = (int16_t)extractSignedInt(pkt, ptr);
+          return (true);
+          break;
+        case UBX_CFG_U4:
+        case UBX_CFG_E4:
+        case UBX_CFG_X4:
+          if (maxWidth < sizeof(uint32_t))
+            return false;
+          *value = (uint32_t)extractLong(pkt, ptr);
+          return (true);
+          break;
+        case UBX_CFG_I4:
+          if (maxWidth < sizeof(int32_t))
+            return false;
+          *value = (int32_t)extractSignedLong(pkt, ptr);
+          return (true);
+          break;
+        case UBX_CFG_R4:
+          if (maxWidth < sizeof(float))
+            return false;
+          *value = (float)extractFloat(pkt, ptr);
+          return (true);
+          break;
+        case UBX_CFG_U8:
+        case UBX_CFG_X8:
+          if (maxWidth < sizeof(uint64_t))
+            return false;
+          *value = (uint64_t)extractLongLong(pkt, ptr);
+          return (true);
+          break;
+        case UBX_CFG_I8:
+          if (maxWidth < sizeof(int64_t))
+            return false;
+          *value = (int64_t)extractSignedLongLong(pkt, ptr);
+          return (true);
+          break;
+        case UBX_CFG_R8:
+          if (maxWidth < sizeof(double))
+            return false;
+          *value = (double)extractDouble(pkt, ptr);
+          return (true);
+          break;
+        default:
+          return false;
+          break;
+        }
+      }
+      ptr += 4; // Update ptr
+      ptr += cfgValgetValueSizes[sizePtr++];
+    }
+    return false;
+  }
+
+protected:
+  sfe_ublox_status_e getVal(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Load payload with response
+public:
+  bool getVal8(uint32_t key, uint8_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);        // Returns the value at a given key location
+  uint8_t getVal8(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                   // Unsafe overload - for backward compatibility only
+  bool getVal16(uint32_t key, uint16_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Returns the value at a given key location
+  uint16_t getVal16(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                 // Unsafe overload - for backward compatibility only
+  bool getVal32(uint32_t key, uint32_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Returns the value at a given key location
+  uint32_t getVal32(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                 // Unsafe overload - for backward compatibility only
+  bool getVal64(uint32_t key, uint64_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Returns the value at a given key location
+  uint64_t getVal64(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                 // Unsafe overload - for backward compatibility only
+  bool getValSigned8(uint32_t key, int8_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Returns the value at a given key location
+  bool getValSigned16(uint32_t key, int16_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the value at a given key location
+  bool getValSigned32(uint32_t key, int32_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the value at a given key location
+  bool getValSigned64(uint32_t key, int64_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the value at a given key location
+  bool getValFloat(uint32_t key, float *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Returns the value at a given key location
+  bool getValDouble(uint32_t key, double *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);    // Returns the value at a given key location
+
+  // VALSET
+
+  bool setValN(uint32_t key, uint8_t *value, uint8_t N, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Sets the N-byte value at a given group/id/size location
   bool setVal8(uint32_t key, uint8_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);             // Sets the 8-bit value at a given group/id/size location
   bool setVal16(uint32_t key, uint16_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 16-bit value at a given group/id/size location
   bool setVal32(uint32_t key, uint32_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 32-bit value at a given group/id/size location
   bool setVal64(uint32_t key, uint64_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 64-bit value at a given group/id/size location
+  bool setValSigned8(uint32_t key, int8_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);        // Sets the 8-bit value at a given group/id/size location
+  bool setValSigned16(uint32_t key, int16_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Sets the 16-bit value at a given group/id/size location
+  bool setValSigned32(uint32_t key, int32_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Sets the 32-bit value at a given group/id/size location
+  bool setValSigned64(uint32_t key, int64_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Sets the 64-bit value at a given group/id/size location
+  bool setValFloat(uint32_t key, float value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 32-bit value at a given group/id/size location
+  bool setValDouble(uint32_t key, double value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);         // Sets the 64-bit value at a given group/id/size location
 
   bool newCfgValset(uint8_t layer = VAL_LAYER_RAM_BBR);                                                         // Create a new, empty UBX-CFG-VALSET. Add entries with addCfgValset8/16/32/64
-  bool addCfgValsetN(uint32_t key, uint8_t *value, uint8_t N);                                                  // Add a new key and N-bit value to an existing UBX-CFG-VALSET ubxPacket
-  bool addCfgValset8(uint32_t key, uint8_t value);                                                              // Add a new key and 8-bit value to an existing UBX-CFG-VALSET ubxPacket
-  bool addCfgValset16(uint32_t key, uint16_t value);                                                            // Add a new key and 16-bit value to an existing UBX-CFG-VALSET ubxPacket
-  bool addCfgValset32(uint32_t key, uint32_t value);                                                            // Add a new key and 32-bit value to an existing UBX-CFG-VALSET ubxPacket
-  bool addCfgValset64(uint32_t key, uint64_t value);                                                            // Add a new key and 64-bit value to an existing UBX-CFG-VALSET ubxPacket
-  bool addCfgValsetFloat(uint32_t key, float value);                                                            // Add a new key and 32-bit float (R4) to an existing UBX-CFG-VALSET ubxPacket
-  bool addCfgValsetDouble(uint32_t key, double value);                                                          // Add a new key and 64-bit double (R8) to an existing UBX-CFG-VALSET ubxPacket
+  bool addCfgValsetN(uint32_t key, uint8_t *value, uint8_t N);                                                  // Add a new key and N-byte value to an existing UBX-CFG-VALSET ubxPacket
   bool sendCfgValset(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                              // Send the CfgValset (UBX-CFG-VALSET) construct
   uint8_t getCfgValsetLen();                                                                                    // Returns the length of the current CfgValset construct as number-of-keys
   size_t getCfgValsetSpaceRemaining();                                                                          // Returns the number of free bytes remaining in packetCfg
   void autoSendCfgValsetAtSpaceRemaining(size_t spaceRemaining) { _autoSendAtSpaceRemaining = spaceRemaining; } // Cause CFG_VALSET packets to be sent automatically when packetCfg has less than this many bytes available
+
+  template <typename T>
+  bool addCfgValset(uint32_t key, T value) // Add a new key and value to an existing UBX-CFG-VALSET ubxPacket
+  {
+    uint8_t val[8];
+
+    uint32_t k1 = key & ~UBX_CFG_SIZE_MASK; // Convert key back into an actual key
+
+    switch (key & UBX_CFG_SIZE_MASK)
+    {
+    case UBX_CFG_L:
+      val[0] = (bool)value;
+      return (addCfgValsetN(k1, val, 1));
+      break;
+    case UBX_CFG_U1:
+    case UBX_CFG_E1:
+    case UBX_CFG_X1:
+      val[0] = (uint8_t)value;
+      return (addCfgValsetN(k1, val, 1));
+      break;
+    case UBX_CFG_I1:
+      unsignedSigned8 usVal8;
+      usVal8.signed8 = (int8_t)value;
+      return (addCfgValsetN(k1, &usVal8.unsigned8, 1));
+      break;
+    case UBX_CFG_U2:
+    case UBX_CFG_E2:
+    case UBX_CFG_X2:
+      for (uint8_t i = 0; i < 2; i++)
+        val[i] = (uint8_t)(((uint16_t)value) >> (8 * i)); // Value
+      return (addCfgValsetN(k1, val, 2));
+      break;
+    case UBX_CFG_I2:
+      unsignedSigned16 usVal16;
+      usVal16.signed16 = (int16_t)value;
+      for (uint8_t i = 0; i < 2; i++)
+        val[i] = (uint8_t)(usVal16.unsigned16 >> (8 * i)); // Value
+      return (addCfgValsetN(k1, val, 2));
+      break;
+    case UBX_CFG_U4:
+    case UBX_CFG_E4:
+    case UBX_CFG_X4:
+      for (uint8_t i = 0; i < 4; i++)
+        val[i] = (uint8_t)(((uint32_t)value) >> (8 * i)); // Value
+      return (addCfgValsetN(k1, val, 4));
+      break;
+    case UBX_CFG_I4:
+      unsignedSigned32 usVal32;
+      usVal32.signed32 = (int32_t)value;
+      for (uint8_t i = 0; i < 4; i++)
+        val[i] = (uint8_t)(usVal32.unsigned32 >> (8 * i)); // Value
+      return (addCfgValsetN(k1, val, 4));
+      break;
+    case UBX_CFG_R4:
+      unsigned32float us32flt;
+      us32flt.flt = (float)value;
+      for (uint8_t i = 0; i < 4; i++)
+        val[i] = (uint8_t)(us32flt.unsigned32 >> (8 * i)); // Value
+      return (addCfgValsetN(k1, val, 4));
+      break;
+    case UBX_CFG_U8:
+    case UBX_CFG_X8:
+      for (uint8_t i = 0; i < 8; i++)
+        val[i] = (uint8_t)(((uint64_t)value) >> (8 * i)); // Value
+      return (addCfgValsetN(k1, val, 8));
+      break;
+    case UBX_CFG_I8:
+      unsignedSigned64 usVal64;
+      usVal64.signed64 = (int64_t)value;
+      for (uint8_t i = 0; i < 8; i++)
+        val[i] = (uint8_t)(usVal64.unsigned64 >> (8 * i)); // Value
+      return (addCfgValsetN(k1, val, 8));
+      break;
+    case UBX_CFG_R8:
+      unsigned64double us64dbl;
+      us64dbl.dbl = (float)value;
+      for (uint8_t i = 0; i < 8; i++)
+        val[i] = (uint8_t)(us64dbl.unsigned64 >> (8 * i)); // Value
+      return (addCfgValsetN(k1, val, 8));
+      break;
+    default:
+      return false;
+      break;
+    }
+    return false;
+  }
+
+  // Deprecated - use the template method addCfgValset to auto-deduce the data size
+  bool addCfgValset8(uint32_t key, uint8_t value);     // Add a new key and 8-bit value to an existing UBX-CFG-VALSET ubxPacket
+  bool addCfgValset16(uint32_t key, uint16_t value);   // Add a new key and 16-bit value to an existing UBX-CFG-VALSET ubxPacket
+  bool addCfgValset32(uint32_t key, uint32_t value);   // Add a new key and 32-bit value to an existing UBX-CFG-VALSET ubxPacket
+  bool addCfgValset64(uint32_t key, uint64_t value);   // Add a new key and 64-bit value to an existing UBX-CFG-VALSET ubxPacket
+  bool addCfgValsetFloat(uint32_t key, float value);   // Add a new key and 32-bit float (R4) to an existing UBX-CFG-VALSET ubxPacket
+  bool addCfgValsetDouble(uint32_t key, double value); // Add a new key and 64-bit double (R8) to an existing UBX-CFG-VALSET ubxPacket
 
   // Deprecated - only included for backward-compatibility. Use newCfgValset and sendCfgValset
   bool newCfgValset8(uint32_t key, uint8_t value, uint8_t layer = VAL_LAYER_RAM_BBR);              // Define a new UBX-CFG-VALSET with the given key and 8-bit value
@@ -988,11 +1193,11 @@ public:
 
   // Functions to extract signed and unsigned 8/16/32-bit data from a ubxPacket
   // From v2.0: These are public. The user can call these to extract data from custom packets
-  uint64_t extractLongLong(ubxPacket *msg, uint16_t spotToStart);  // Combine eight bytes from payload into uint64_t
-  int64_t extractSignedLongLong(ubxPacket *msg, uint16_t spotToStart);  // Combine eight bytes from payload into uint64_t
-  uint32_t extractLong(ubxPacket *msg, uint16_t spotToStart);      // Combine four bytes from payload into long
-  int32_t extractSignedLong(ubxPacket *msg, uint16_t spotToStart); // Combine four bytes from payload into signed long (avoiding any ambiguity caused by casting)
-  uint16_t extractInt(ubxPacket *msg, uint16_t spotToStart);       // Combine two bytes from payload into int
+  uint64_t extractLongLong(ubxPacket *msg, uint16_t spotToStart);      // Combine eight bytes from payload into uint64_t
+  int64_t extractSignedLongLong(ubxPacket *msg, uint16_t spotToStart); // Combine eight bytes from payload into uint64_t
+  uint32_t extractLong(ubxPacket *msg, uint16_t spotToStart);          // Combine four bytes from payload into long
+  int32_t extractSignedLong(ubxPacket *msg, uint16_t spotToStart);     // Combine four bytes from payload into signed long (avoiding any ambiguity caused by casting)
+  uint16_t extractInt(ubxPacket *msg, uint16_t spotToStart);           // Combine two bytes from payload into int
   int16_t extractSignedInt(ubxPacket *msg, uint16_t spotToStart);
   uint8_t extractByte(ubxPacket *msg, uint16_t spotToStart);      // Get byte from payload
   int8_t extractSignedChar(ubxPacket *msg, uint16_t spotToStart); // Get signed 8-bit value from payload
@@ -1242,11 +1447,19 @@ protected:
   // Keep track of how many keys have been added to CfgValget and what size the response will be
   uint8_t _numGetCfgKeys = 0;
   uint16_t _lenCfgValGetResponse = 0;
+  uint8_t *cfgValgetValueSizes = nullptr; // A pointer to a list of the value sizes for each key in the cfgValget
+  uint16_t _cfgValgetMaxPayload = 0;
 
   // Send the current CFG_VALSET message when packetCfg has less than this many bytes available
   size_t _autoSendAtSpaceRemaining = 0;
 
 public:
+  typedef union
+  {
+    uint64_t unsigned64;
+    int64_t signed64;
+  } unsignedSigned64;
+
   typedef union
   {
     uint32_t unsigned32;

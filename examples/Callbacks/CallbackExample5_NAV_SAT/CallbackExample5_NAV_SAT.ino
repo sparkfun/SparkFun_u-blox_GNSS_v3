@@ -3,8 +3,7 @@
   By: Paul Clark
   SparkFun Electronics
   Date: December 1st, 2021
-  License: MIT. See license file for more information but you can
-  basically do whatever you want with this code.
+  License: MIT. See license file for more information.
 
   This example shows how to configure the u-blox GNSS to send NAV SAT reports automatically
   and access the data via a callback. No more polling!
