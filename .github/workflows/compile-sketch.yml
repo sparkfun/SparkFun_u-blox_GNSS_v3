@@ -100,6 +100,7 @@ jobs:
             - source-path: ./
           sketch-paths: |
             - examples/Example1_PositionVelocityTime
+            - examples/VALGET_and_VALSET/Example6_multiSetVal_and_GetVal_Templates
           enable-warnings-report: true
           enable-deltas-report: true
           # verbose: true
