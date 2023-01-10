@@ -421,17 +421,7 @@ public:
 
   // General configuration (used only on protocol v27 and higher - ie, ZED-F9P)
 
-protected:
-  sfe_ublox_status_e getVal(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Load payload with response
-public:
-  bool getVal8(uint32_t key, uint8_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Returns the value at a given key location
-  uint8_t getVal8(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);              // Unsafe overload
-  bool getVal16(uint32_t key, uint16_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the value at a given key location
-  uint16_t getVal16(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);            // Unsafe overload
-  bool getVal32(uint32_t key, uint32_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the value at a given key location
-  uint32_t getVal32(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);            // Unsafe overload
-  bool getVal64(uint32_t key, uint64_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the value at a given key location
-  uint64_t getVal64(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);            // Unsafe overload
+  // VALGET
 
 protected:                                                         // These use packetCfg - which is protected from the user
   bool newCfgValget(uint8_t layer = VAL_LAYER_RAM);                // Create a new, empty UBX-CFG-VALGET. Add entries with addCfgValget
@@ -439,12 +429,12 @@ protected:                                                         // These use 
   bool sendCfgValget(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Send the CfgValget (UBX-CFG-VALGET) construct
 
 public:
-  bool newCfgValget(ubxPacket *pkt, uint8_t layer = VAL_LAYER_RAM);                // Create a new, empty UBX-CFG-VALGET. Add entries with addCfgValget8/16/32/64
-  bool addCfgValget(ubxPacket *pkt, uint32_t key);                                 // Add a new key to an existing UBX-CFG-VALGET ubxPacket - deduce the value size automatically
-  bool sendCfgValget(ubxPacket *pkt, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Send the CfgValget (UBX-CFG-VALGET) construct
-  uint8_t getNumGetCfgKeys() { return _numGetCfgKeys; }                            // Return the number of keys in the VALGET packet
-  uint16_t getLenCfgValGetResponse() { return _lenCfgValGetResponse; }             // Return the expected length of the VALGET response
-  uint8_t getCfgValueSizeBytes(const uint32_t key);                                // Returns the value size in bytes for the given key
+  bool newCfgValget(ubxPacket *pkt, uint16_t maxPayload, uint8_t layer = VAL_LAYER_RAM); // Create a new, empty UBX-CFG-VALGET. Add entries with addCfgValget8/16/32/64
+  bool addCfgValget(ubxPacket *pkt, uint32_t key);                                       // Add a new key to an existing UBX-CFG-VALGET ubxPacket - deduce the value size automatically
+  bool sendCfgValget(ubxPacket *pkt, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);       // Send the CfgValget (UBX-CFG-VALGET) construct
+  uint8_t getNumGetCfgKeys() { return _numGetCfgKeys; }                                  // Return the number of keys in the VALGET packet
+  uint16_t getLenCfgValGetResponse() { return _lenCfgValGetResponse; }                   // Return the expected length of the VALGET response
+  uint8_t getCfgValueSizeBytes(const uint32_t key);                                      // Returns the value size in bytes for the given key
 
   template <typename T>
   bool extractConfigValueByKey(ubxPacket *pkt, const uint32_t key, T value, size_t maxWidth) // Extract the config value by its key. maxWidth prevents writing beyond the end of value
@@ -550,11 +540,37 @@ public:
     return false;
   }
 
+protected:
+  sfe_ublox_status_e getVal(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Load payload with response
+public:
+  bool getVal8(uint32_t key, uint8_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);        // Returns the value at a given key location
+  uint8_t getVal8(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                   // Unsafe overload - for backward compatibility only
+  bool getVal16(uint32_t key, uint16_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Returns the value at a given key location
+  uint16_t getVal16(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                 // Unsafe overload - for backward compatibility only
+  bool getVal32(uint32_t key, uint32_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Returns the value at a given key location
+  uint32_t getVal32(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                 // Unsafe overload - for backward compatibility only
+  bool getVal64(uint32_t key, uint64_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Returns the value at a given key location
+  uint64_t getVal64(uint32_t key, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                 // Unsafe overload - for backward compatibility only
+  bool getValSigned8(uint32_t key, int8_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Returns the value at a given key location
+  bool getValSigned16(uint32_t key, int16_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the value at a given key location
+  bool getValSigned32(uint32_t key, int32_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the value at a given key location
+  bool getValSigned64(uint32_t key, int64_t *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the value at a given key location
+  bool getValFloat(uint32_t key, float *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Returns the value at a given key location
+  bool getValDouble(uint32_t key, double *val, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);    // Returns the value at a given key location
+
+  // VALSET
+
   bool setValN(uint32_t key, uint8_t *value, uint8_t N, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Sets the N-byte value at a given group/id/size location
   bool setVal8(uint32_t key, uint8_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);             // Sets the 8-bit value at a given group/id/size location
   bool setVal16(uint32_t key, uint16_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 16-bit value at a given group/id/size location
   bool setVal32(uint32_t key, uint32_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 32-bit value at a given group/id/size location
   bool setVal64(uint32_t key, uint64_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 64-bit value at a given group/id/size location
+  bool setValSigned8(uint32_t key, int8_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);        // Sets the 8-bit value at a given group/id/size location
+  bool setValSigned16(uint32_t key, int16_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Sets the 16-bit value at a given group/id/size location
+  bool setValSigned32(uint32_t key, int32_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Sets the 32-bit value at a given group/id/size location
+  bool setValSigned64(uint32_t key, int64_t value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Sets the 64-bit value at a given group/id/size location
+  bool setValFloat(uint32_t key, float value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Sets the 32-bit value at a given group/id/size location
+  bool setValDouble(uint32_t key, double value, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);         // Sets the 64-bit value at a given group/id/size location
 
   bool newCfgValset(uint8_t layer = VAL_LAYER_RAM_BBR);                                                         // Create a new, empty UBX-CFG-VALSET. Add entries with addCfgValset8/16/32/64
   bool addCfgValsetN(uint32_t key, uint8_t *value, uint8_t N);                                                  // Add a new key and N-byte value to an existing UBX-CFG-VALSET ubxPacket
@@ -649,7 +665,7 @@ public:
     return false;
   }
 
-  // Deprecated - use newCfgValset, addCfgValset and sendCfgValset
+  // Deprecated - use the template method addCfgValset to auto-deduce the data size
   bool addCfgValset8(uint32_t key, uint8_t value);     // Add a new key and 8-bit value to an existing UBX-CFG-VALSET ubxPacket
   bool addCfgValset16(uint32_t key, uint16_t value);   // Add a new key and 16-bit value to an existing UBX-CFG-VALSET ubxPacket
   bool addCfgValset32(uint32_t key, uint32_t value);   // Add a new key and 32-bit value to an existing UBX-CFG-VALSET ubxPacket
@@ -1432,6 +1448,7 @@ protected:
   uint8_t _numGetCfgKeys = 0;
   uint16_t _lenCfgValGetResponse = 0;
   uint8_t *cfgValgetValueSizes = nullptr; // A pointer to a list of the value sizes for each key in the cfgValget
+  uint16_t _cfgValgetMaxPayload = 0;
 
   // Send the current CFG_VALSET message when packetCfg has less than this many bytes available
   size_t _autoSendAtSpaceRemaining = 0;
