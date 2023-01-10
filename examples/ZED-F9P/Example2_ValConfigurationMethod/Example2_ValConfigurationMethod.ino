@@ -91,9 +91,9 @@ void setup()
   // sfe_ublox_packet_validity_e valid            : Goes from NOT_DEFINED to VALID or NOT_VALID when checksum is checked
   // sfe_ublox_packet_validity_e classAndIDmatch  : Goes from NOT_DEFINED to VALID or NOT_VALID when the Class and ID match the requestedClass and requestedID
 
-  myGNSS.newCfgValget(&customCfg, VAL_LAYER_RAM); // Create a new VALGET construct
-  myGNSS.addCfgValget8(&customCfg, UBLOX_CFG_I2C_ADDRESS); // Get the I2C address (see u-blox_config_keys.h for details)
-  myGNSS.addCfgValget8(&customCfg, UBLOX_CFG_I2COUTPROT_NMEA); // Get the flag indicating is NMEA should be output on I2C
+  myGNSS.newCfgValget(&customCfg, MAX_PAYLOAD_SIZE, VAL_LAYER_RAM); // Create a new VALGET construct
+  myGNSS.addCfgValget(&customCfg, UBLOX_CFG_I2C_ADDRESS); // Get the I2C address (see u-blox_config_keys.h for details)
+  myGNSS.addCfgValget(&customCfg, UBLOX_CFG_I2COUTPROT_NMEA); // Get the flag indicating is NMEA should be output on I2C
   if (myGNSS.sendCfgValget(&customCfg)) // Send the VALGET
   {
     Serial.print(F("I2C Address: 0x"));
@@ -123,6 +123,30 @@ void setup()
     Serial.println(myGNSS.extractByte(&customCfg, 8) >> 1, HEX); //We have to shift by 1 to get the common '7-bit' I2C address format
     Serial.print(F("Output NMEA over I2C port: 0x"));
     Serial.println(myGNSS.extractByte(&customCfg, 13), HEX);
+
+    // New in v3: we can use a template method to extract the value for us
+    
+    uint8_t i2cAddress; // We still need to know the type...
+    if (myGNSS.extractConfigValueByKey(&customCfg, UBLOX_CFG_I2C_ADDRESS, &i2cAddress, sizeof(i2cAddress))) // Get the I2C address - using the key
+    {
+      Serial.print(F("I2C Address: 0x"));
+      Serial.println(i2cAddress >> 1, HEX); //We have to shift by 1 to get the common '7-bit' I2C address format
+    }
+    else
+    {
+      Serial.println(F("extractConfigValueByKey failed!"));      
+    }
+
+    bool nmeaI2c; // We still need to know the type...
+    if (myGNSS.extractConfigValueByKey(&customCfg, UBLOX_CFG_I2COUTPROT_NMEA, &nmeaI2c, sizeof(nmeaI2c))) // Get the I2COUTPROT_NMEA flag - using the key
+    {
+      Serial.print(F("Output NMEA over I2C port: 0x"));
+      Serial.println(nmeaI2c, HEX);
+    }
+    else
+    {
+      Serial.println(F("extractConfigValueByKey failed!"));      
+    }
   }
   else
   {

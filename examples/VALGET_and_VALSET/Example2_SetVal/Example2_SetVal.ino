@@ -57,7 +57,7 @@ void setup()
   //You can obtain them from the ZED-F9P interface description doc
   //or from u-center's Messages->CFG->VALSET window. Keys must be 32-bit.
   
-  setValueSuccess &= myGNSS.setVal8(UBLOX_CFG_NMEA_HIGHPREC, 0); //Enable high precision NMEA. UBLOX_CFG_NMEA_HIGHPREC is L (bool) but we use 8-bits (uint8_t)
+  setValueSuccess &= myGNSS.setVal8(UBLOX_CFG_NMEA_HIGHPREC, 1); //Enable high precision NMEA. UBLOX_CFG_NMEA_HIGHPREC is L (bool) but we use 8-bits (uint8_t)
   
   //setValueSuccess &= myGNSS.setVal16(UBLOX_CFG_RATE_MEAS, 100); //Set measurement rate to 100ms (10Hz update rate). UBLOX_CFG_RATE_MEAS is 16-bit U2 (uint16_t)
   setValueSuccess &= myGNSS.setVal16(UBLOX_CFG_RATE_MEAS, 1000); //Set measurement rate to 1000ms (1Hz update rate). UBLOX_CFG_RATE_MEAS is 16-bit U2 (uint16_t)

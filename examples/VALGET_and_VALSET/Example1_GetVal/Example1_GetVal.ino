@@ -105,9 +105,9 @@ void setup()
   // The next line creates and initialises the packet information which wraps around the payload
   ubxPacket customCfg = {0, 0, 0, 0, 0, customPayload, 0, 0, SFE_UBLOX_PACKET_VALIDITY_NOT_DEFINED, SFE_UBLOX_PACKET_VALIDITY_NOT_DEFINED};
 
-  myGNSS.newCfgValget(&customCfg, VAL_LAYER_RAM); // Create a new VALGET construct. Read the data from the RAM layer.
+  myGNSS.newCfgValget(&customCfg, 9, VAL_LAYER_RAM); // Create a new VALGET construct. Read the data from the RAM layer.
   
-  myGNSS.addCfgValget8(&customCfg, UBLOX_CFG_I2C_ADDRESS); // Get the I2C address (see u-blox_config_keys.h for details)
+  myGNSS.addCfgValget(&customCfg, UBLOX_CFG_I2C_ADDRESS); // Get the I2C address (see u-blox_config_keys.h for details)
   
   if (myGNSS.sendCfgValget(&customCfg) == true) // Send the VALGET
   {
@@ -121,17 +121,33 @@ void setup()
 
     // We can also use the "extract" helper functions to read the data - useful for 16, 32 and 64-bit values
     // The full list is:
-    //   uint64_t extractLongLong(ubxPacket *msg, uint16_t spotToStart);  // Combine eight bytes from payload into uint64_t
-    //   uint32_t extractLong(ubxPacket *msg, uint16_t spotToStart);      // Combine four bytes from payload into long
-    //   int32_t extractSignedLong(ubxPacket *msg, uint16_t spotToStart); // Combine four bytes from payload into signed long (avoiding any ambiguity caused by casting)
-    //   uint16_t extractInt(ubxPacket *msg, uint16_t spotToStart);       // Combine two bytes from payload into int
+    //   uint64_t extractLongLong(ubxPacket *msg, uint16_t spotToStart);       // Combine eight bytes from payload into uint64_t
+    //   uint64_t extractSignedLongLong(ubxPacket *msg, uint16_t spotToStart); // Combine eight bytes from payload into int64_t
+    //   uint32_t extractLong(ubxPacket *msg, uint16_t spotToStart);           // Combine four bytes from payload into long
+    //   int32_t extractSignedLong(ubxPacket *msg, uint16_t spotToStart);      // Combine four bytes from payload into signed long (avoiding any ambiguity caused by casting)
+    //   uint16_t extractInt(ubxPacket *msg, uint16_t spotToStart);            // Combine two bytes from payload into int
     //   int16_t extractSignedInt(ubxPacket *msg, uint16_t spotToStart);
-    //   uint8_t extractByte(ubxPacket *msg, uint16_t spotToStart);      // Get byte from payload
-    //   int8_t extractSignedChar(ubxPacket *msg, uint16_t spotToStart); // Get signed 8-bit value from payload
+    //   uint8_t extractByte(ubxPacket *msg, uint16_t spotToStart);            // Get byte from payload
+    //   int8_t extractSignedChar(ubxPacket *msg, uint16_t spotToStart);       // Get signed 8-bit value from payload
+    //   float extractFloat(ubxPacket *msg, uint16_t spotToStart);             // Get 32-bit float from payload
+    //   double extractDouble(ubxPacket *msg, uint16_t spotToStart);           // Get 64-bit double from payload
 
     Serial.print("6: Current I2C address (should be 0x42): 0x");
     currentI2Caddress = myGNSS.extractByte(&customCfg, 8);
     Serial.println(currentI2Caddress >> 1, HEX); //u-blox module returns a shifted 8-bit address. Make it 7-bit unshifted.
+
+    // New in v3: we can use a template method to extract the value for us
+    
+    uint8_t i2cAddress; // We still need to know the type...
+    if (myGNSS.extractConfigValueByKey(&customCfg, UBLOX_CFG_I2C_ADDRESS, &i2cAddress, sizeof(i2cAddress))) // Get the I2C address - using the key
+    {
+      Serial.print(F("7: Current I2C address (should be 0x42): 0x"));
+      Serial.println(i2cAddress >> 1, HEX); //We have to shift by 1 to get the common '7-bit' I2C address format
+    }
+    else
+    {
+      Serial.println(F("extractConfigValueByKey failed!"));      
+    }
   }
   else
   {

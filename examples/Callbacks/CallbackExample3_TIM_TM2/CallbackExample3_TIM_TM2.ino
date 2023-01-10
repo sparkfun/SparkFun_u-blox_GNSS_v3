@@ -3,8 +3,7 @@
   By: Paul Clark
   SparkFun Electronics
   Date: December 30th, 2020
-  License: MIT. See license file for more information but you can
-  basically do whatever you want with this code.
+  License: MIT. See license file for more information.
 
   This example shows how to configure the u-blox GNSS to send TIM TM2 reports automatically
   and display the data via a callback. No more polling!

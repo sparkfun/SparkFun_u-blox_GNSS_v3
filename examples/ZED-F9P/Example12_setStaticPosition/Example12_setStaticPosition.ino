@@ -79,25 +79,28 @@ void setup()
   ubxPacket customCfg = {0, 0, 0, 0, 0, customPayload, 0, 0, SFE_UBLOX_PACKET_VALIDITY_NOT_DEFINED, SFE_UBLOX_PACKET_VALIDITY_NOT_DEFINED};
 
   // Create a new VALGET construct. Read data from the RAM layer (not DEFAULT)
-  myGNSS.newCfgValget(&customCfg, VAL_LAYER_RAM);
-  myGNSS.addCfgValget8(&customCfg, UBLOX_CFG_TMODE_POS_TYPE); // Get the position type 
-  myGNSS.addCfgValget32(&customCfg, UBLOX_CFG_TMODE_LAT);
-  myGNSS.addCfgValget32(&customCfg, UBLOX_CFG_TMODE_LON);
-  myGNSS.addCfgValget32(&customCfg, UBLOX_CFG_TMODE_HEIGHT);
-  myGNSS.addCfgValget32(&customCfg, UBLOX_CFG_TMODE_ECEF_X);
-  myGNSS.addCfgValget32(&customCfg, UBLOX_CFG_TMODE_ECEF_Y);
-  myGNSS.addCfgValget32(&customCfg, UBLOX_CFG_TMODE_ECEF_Z);
+  myGNSS.newCfgValget(&customCfg, MAX_PAYLOAD_SIZE, VAL_LAYER_RAM);
+  myGNSS.addCfgValget(&customCfg, UBLOX_CFG_TMODE_POS_TYPE); // Get the position type 
+  myGNSS.addCfgValget(&customCfg, UBLOX_CFG_TMODE_LAT);
+  myGNSS.addCfgValget(&customCfg, UBLOX_CFG_TMODE_LON);
+  myGNSS.addCfgValget(&customCfg, UBLOX_CFG_TMODE_HEIGHT);
+  myGNSS.addCfgValget(&customCfg, UBLOX_CFG_TMODE_ECEF_X);
+  myGNSS.addCfgValget(&customCfg, UBLOX_CFG_TMODE_ECEF_Y);
+  myGNSS.addCfgValget(&customCfg, UBLOX_CFG_TMODE_ECEF_Z);
   if (myGNSS.sendCfgValget(&customCfg)) // Send the VALGET
   {
-    // We can use the "extract" helper functions to read the data - useful for 16, 32 and 64-bit values
+    // We can also use the "extract" helper functions to read the data - useful for 16, 32 and 64-bit values
     // The full list is:
-    //   uint64_t extractLongLong(ubxPacket *msg, uint16_t spotToStart);  // Combine eight bytes from payload into uint64_t
-    //   uint32_t extractLong(ubxPacket *msg, uint16_t spotToStart);      // Combine four bytes from payload into long
-    //   int32_t extractSignedLong(ubxPacket *msg, uint16_t spotToStart); // Combine four bytes from payload into signed long (avoiding any ambiguity caused by casting)
-    //   uint16_t extractInt(ubxPacket *msg, uint16_t spotToStart);       // Combine two bytes from payload into int
+    //   uint64_t extractLongLong(ubxPacket *msg, uint16_t spotToStart);       // Combine eight bytes from payload into uint64_t
+    //   uint64_t extractSignedLongLong(ubxPacket *msg, uint16_t spotToStart); // Combine eight bytes from payload into int64_t
+    //   uint32_t extractLong(ubxPacket *msg, uint16_t spotToStart);           // Combine four bytes from payload into long
+    //   int32_t extractSignedLong(ubxPacket *msg, uint16_t spotToStart);      // Combine four bytes from payload into signed long (avoiding any ambiguity caused by casting)
+    //   uint16_t extractInt(ubxPacket *msg, uint16_t spotToStart);            // Combine two bytes from payload into int
     //   int16_t extractSignedInt(ubxPacket *msg, uint16_t spotToStart);
-    //   uint8_t extractByte(ubxPacket *msg, uint16_t spotToStart);      // Get byte from payload
-    //   int8_t extractSignedChar(ubxPacket *msg, uint16_t spotToStart); // Get signed 8-bit value from payload
+    //   uint8_t extractByte(ubxPacket *msg, uint16_t spotToStart);            // Get byte from payload
+    //   int8_t extractSignedChar(ubxPacket *msg, uint16_t spotToStart);       // Get signed 8-bit value from payload
+    //   float extractFloat(ubxPacket *msg, uint16_t spotToStart);             // Get 32-bit float from payload
+    //   double extractDouble(ubxPacket *msg, uint16_t spotToStart);           // Get 64-bit double from payload
 
     Serial.print(F("Position type: "));
     uint8_t posType = myGNSS.extractByte(&customCfg, 8); // Position type is in Byte 8
@@ -134,6 +137,54 @@ void setup()
       Serial.print(F("   HEIGHT (m): "));
       llh = (double)myGNSS.extractSignedLong(&customCfg, 29) / 100; // HEIGHT is in Byte 29. Convert to m
       Serial.println(llh);
+    }
+
+    // New in v3 : we can also use a template method to extract the data automatically
+    
+    Serial.print(F("Position type: "));
+    // We still need to know the type / size of each key value...
+    myGNSS.extractConfigValueByKey(&customCfg, UBLOX_CFG_TMODE_POS_TYPE, &posType, sizeof(posType));
+    Serial.print(posType);
+    if (posType == 0)
+      Serial.println(F(" (ECEF)"));
+    else
+      Serial.println(F(" (LLH)"));
+
+    if (posType == 0)
+    {
+      Serial.print(F("X (m): "));
+      int32_t xyz; // We still need to know the type / size of each key value...
+      myGNSS.extractConfigValueByKey(&customCfg, UBLOX_CFG_TMODE_ECEF_X, &xyz, sizeof(xyz));
+      double xyz_d = (double)xyz / 100; // Convert from cm to m
+      Serial.print(xyz_d);
+
+      Serial.print(F("   Y (m): "));
+      myGNSS.extractConfigValueByKey(&customCfg, UBLOX_CFG_TMODE_ECEF_Y, &xyz, sizeof(xyz));
+      xyz_d = (double)xyz / 100; // Convert from cm to m
+      Serial.print(xyz_d);
+      
+      Serial.print(F("   Z (m): "));
+      myGNSS.extractConfigValueByKey(&customCfg, UBLOX_CFG_TMODE_ECEF_Z, &xyz, sizeof(xyz));
+      xyz_d = (double)xyz / 100; // Convert from cm to m
+      Serial.println(xyz_d);
+    }
+    else
+    {
+      Serial.print(F("LAT (Deg): "));
+      int32_t llh; // We still need to know the type / size of each key value...
+      myGNSS.extractConfigValueByKey(&customCfg, UBLOX_CFG_TMODE_LAT, &llh, sizeof(llh));
+      double llh_d = (double)llh / 10000000; // Convert to Degrees
+      Serial.print(llh_d, 7);
+
+      Serial.print(F("   LON (Deg): "));
+      myGNSS.extractConfigValueByKey(&customCfg, UBLOX_CFG_TMODE_LON, &llh, sizeof(llh));
+      llh_d = (double)llh / 10000000; // Convert to Degrees
+      Serial.print(llh_d, 7);
+
+      Serial.print(F("   HEIGHT (m): "));
+      myGNSS.extractConfigValueByKey(&customCfg, UBLOX_CFG_TMODE_HEIGHT, &llh, sizeof(llh));
+      llh_d = (double)llh / 100; // Convert from cm to m
+      Serial.println(llh_d);
     }
   }
   else

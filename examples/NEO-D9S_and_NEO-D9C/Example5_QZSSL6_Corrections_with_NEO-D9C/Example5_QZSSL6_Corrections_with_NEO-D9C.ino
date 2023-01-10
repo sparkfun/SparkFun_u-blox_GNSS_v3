@@ -3,8 +3,7 @@
   By: SparkFun Electronics / Paul Clark
   Based on original code by: u-blox AG / Michael Ammann
   Date: September 23rd, 2022
-  License: MIT. See license file for more information but you can
-  basically do whatever you want with this code.
+  License: MIT. See license file for more information.
 
   This example shows how to configure a NEO-D9C QZSS-L6 receiver and have it send coorection data to a ZED-F9x via Serial (UART).
 

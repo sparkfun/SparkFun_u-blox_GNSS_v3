@@ -42,7 +42,7 @@ void setup()
 
   Wire.begin();
 
-  myGNSS.enableDebugging(); // Uncomment this line to enable debug messages on Serial
+  //myGNSS.enableDebugging(); // Uncomment this line to enable debug messages on Serial
 
   if (myGNSS.begin() == false) //Connect to the u-blox module using Wire port
   {
@@ -70,7 +70,7 @@ void setup()
   // The next line creates and initialises the packet information which wraps around the payload
   ubxPacket customCfg = {0, 0, 0, 0, 0, customPayload, 0, 0, SFE_UBLOX_PACKET_VALIDITY_NOT_DEFINED, SFE_UBLOX_PACKET_VALIDITY_NOT_DEFINED};
 
-  myGNSS.newCfgValget(&customCfg, VAL_LAYER_RAM); // Create a new VALGET construct
+  myGNSS.newCfgValget(&customCfg, MAX_PAYLOAD_SIZE, VAL_LAYER_RAM); // Create a new VALGET construct
   myGNSS.addCfgValget(&customCfg, UBLOX_CFG_I2C_ADDRESS); // Get the I2C address (see u-blox_config_keys.h for details)
   myGNSS.addCfgValget(&customCfg, UBLOX_CFG_I2COUTPROT_NMEA); // Get the flag indicating is NMEA should be output on I2C
   myGNSS.addCfgValget(&customCfg, UBLOX_CFG_UART1_BAUDRATE); // Get the UART1 baud rate 
