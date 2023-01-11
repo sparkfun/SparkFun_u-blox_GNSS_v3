@@ -37,6 +37,7 @@ This library is the new and improved version of the very popular SparkFun u-blox
 * The hardware interface has been abstracted:
   * All hardware communication is performed through ```class GNSSDeviceBus```
   * This makes it _much_ easier to re-use this library on other hardware platforms. Only ```sfe_bus.h``` and ```sfe_bus.cpp``` need to be updated
+* Template methods simplify multiple-VALGET and multiple-VALSET configuration
 
 ## Migrating to v3
 
@@ -132,6 +133,87 @@ key &= ~UBX_CFG_SIZE_MASK; // Mask off the size identifer bits
 ```
 
 The get and set template methods are based on an idea by Michael Ammann. Thank you @mazgch
+
+#### Multiple-VALGET
+
+Start by creating a custom ```ubxPacket``` :
+
+```
+  const uint16_t maxPayloadSize = 100; // Make this large enough to hold all keys and values
+  uint8_t customPayload[maxPayloadSize]; // This array holds the payload data bytes
+  ubxPacket customCfg = {0, 0, 0, 0, 0, customPayload, 0, 0, SFE_UBLOX_PACKET_VALIDITY_NOT_DEFINED, SFE_UBLOX_PACKET_VALIDITY_NOT_DEFINED}; // Create and initialise the custom packet
+  myGNSS.newCfgValget(&customCfg, maxPayloadSize, VAL_LAYER_RAM); // Create a new VALGET construct inside the custom packet
+```
+
+Add the Keys you want to get using ```addCfgValget``` :
+
+```
+  myGNSS.addCfgValget(&customCfg, UBLOX_CFG_I2C_ADDRESS); // Get the I2C address (see u-blox_config_keys.h for details)
+  myGNSS.addCfgValget(&customCfg, UBLOX_CFG_I2COUTPROT_NMEA); // Get the flag indicating is NMEA should be output on I2C
+  myGNSS.addCfgValget(&customCfg, UBLOX_CFG_UART1_BAUDRATE); // Get the UART1 baud rate
+```
+
+Perform the VALGET by calling ```sendCfgValget(&customCfg)```. The method returns true if the VALGET was successful.
+
+Extract the Key Values using the template method ```extractConfigValueByKey```.
+
+**Note:** you do still need to know the data type to extract the data correctly.
+
+Consult the u-blox Interface Description or [u-blox_config_keys.h](./src/u-blox_config_keys.h) to see the data type (size) for each Key ID.
+* L : bool
+* U1/E1/X1 : uint8_t
+* I1 : int8_t
+* U2/E2/X2 : uint16_t
+* I2 : int16_t
+* U4/E4/X4 : uint32_t
+* I4 : int32_t
+* U8/X8 : uint64_t
+* I8 : int64_t
+* R4 : float (32-bit)
+* R8 : double (64-bit)
+
+Pass a pointer to, or the address of, your variable plus its size (in bytes) to ```extractConfigValueByKey``` to extract the value.
+The method returns true if the extraction was successful.
+
+```
+  uint32_t baud; // U4
+  myGNSS.extractConfigValueByKey(&customCfg, UBLOX_CFG_UART1_BAUDRATE, &baud, sizeof(baud)); // Get the baud rate - using the key and the address of and sizeof baud
+```
+
+Please see [VALGET_and_VALSET/Example6](./examples/VALGET_and_VALSET/Example6_multiSetVal_and_GetVal_Templates/) for more details.
+
+#### Multiple-VALSET
+
+In v2 of the library, you had to specify the key value size when calling ```addCfgValset```. v3 uses a template method to deduce the size automatically
+using the size encoded into the key itself.
+
+Start by creating a new VALSET:
+
+```
+  myGNSS.newCfgValset(VAL_LAYER_RAM); // Create a new VALSET construct (internally in packetCfg)
+```
+
+Add each key and value that you wish to set. The type / size is deduced automatically if required. The method returns true if the add is successful.
+
+```
+  myGNSS.addCfgValset(UBLOX_CFG_UART1_BAUDRATE, 38400); // U4 - deduced automatically
+  myGNSS.addCfgValset(UBLOX_CFG_TP_DUTY_LOCK_TP1, 50.0); // R8 - deduced automatically
+  uint32_t freq = 1000; // U4
+  myGNSS.addCfgValset(UBLOX_CFG_TP_FREQ_LOCK_TP1, freq);
+```
+
+Finally, send the VALSET by calling ```sendCfgValset();```. The method returns true if the VALSET was successful.
+
+Please see [VALGET_and_VALSET/Example6](./examples/VALGET_and_VALSET/Example6_multiSetVal_and_GetVal_Templates/) for more details.
+
+If you are setting many configuration items, such that the number of keys and values could overflow ```packetCfg```, you can use the
+method ```autoSendCfgValsetAtSpaceRemaining``` to send a VALSET automatically when packetCfg is almost full. E.g.:
+
+```
+  myGNSS.autoSendCfgValsetAtSpaceRemaining(16); // Trigger an auto-send when packetCfg has less than 16 bytes are remaining
+```
+
+Please see [VALGET_and_VALSET/Example4](./examples/VALGET_and_VALSET/Example4_multiSetVal/) for more details.
 
 ## Compatibility
 
