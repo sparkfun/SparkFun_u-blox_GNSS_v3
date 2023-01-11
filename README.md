@@ -153,24 +153,27 @@ Add the Keys you want to get using ```addCfgValget``` :
   myGNSS.addCfgValget(&customCfg, UBLOX_CFG_UART1_BAUDRATE); // Get the UART1 baud rate
 ```
 
-Perform the VALGET by calling ```sendCfgValget(&customCfg)```. The method returns true if the VALGET was successful.
+Perform the VALGET by calling ```sendCfgValget(&customCfg);```. The method returns true if the VALGET was successful.
 
 Extract the Key Values using the template method ```extractConfigValueByKey```.
 
 **Note:** you do still need to know the data type to extract the data correctly.
 
 Consult the u-blox Interface Description or [u-blox_config_keys.h](./src/u-blox_config_keys.h) to see the data type (size) for each Key ID.
-* L : bool
-* U1/E1/X1 : uint8_t
-* I1 : int8_t
-* U2/E2/X2 : uint16_t
-* I2 : int16_t
-* U4/E4/X4 : uint32_t
-* I4 : int32_t
-* U8/X8 : uint64_t
-* I8 : int64_t
-* R4 : float (32-bit)
-* R8 : double (64-bit)
+
+| Size | Type |
+|---|---|
+| L | bool |
+| U1/E1/X1 | uint8_t |
+| I1 | int8_t |
+| U2/E2/X2 | uint16_t |
+| I2 | int16_t |
+| U4/E4/X4 | uint32_t |
+| I4 | int32_t |
+| U8/X8 | uint64_t |
+| I8 | int64_t |
+| R4 | float (32-bit) |
+| R8 | double (64-bit) |
 
 Pass a pointer to, or the address of, your variable plus its size (in bytes) to ```extractConfigValueByKey``` to extract the value.
 The method returns true if the extraction was successful.
@@ -180,7 +183,7 @@ The method returns true if the extraction was successful.
   myGNSS.extractConfigValueByKey(&customCfg, UBLOX_CFG_UART1_BAUDRATE, &baud, sizeof(baud)); // Get the baud rate - using the key and the address of and sizeof baud
 ```
 
-Please see [VALGET_and_VALSET/Example6](./examples/VALGET_and_VALSET/Example6_multiSetVal_and_GetVal_Templates/) for more details.
+Please see [VALGET_and_VALSET/Example6](./examples/VALGET_and_VALSET/Example6_multiSetVal_and_GetVal_Templates/Example6_multiSetVal_and_GetVal_Templates.ino) for more details.
 
 #### Multiple-VALSET
 
@@ -204,7 +207,7 @@ Add each key and value that you wish to set. The type / size is deduced automati
 
 Finally, send the VALSET by calling ```sendCfgValset();```. The method returns true if the VALSET was successful.
 
-Please see [VALGET_and_VALSET/Example6](./examples/VALGET_and_VALSET/Example6_multiSetVal_and_GetVal_Templates/) for more details.
+Please see [VALGET_and_VALSET/Example6](./examples/VALGET_and_VALSET/Example6_multiSetVal_and_GetVal_Templates/Example6_multiSetVal_and_GetVal_Templates.ino) for more details.
 
 If you are setting many configuration items, such that the number of keys and values could overflow ```packetCfg```, you can use the
 method ```autoSendCfgValsetAtSpaceRemaining``` to send a VALSET automatically when packetCfg is almost full. E.g.:
@@ -213,7 +216,7 @@ method ```autoSendCfgValsetAtSpaceRemaining``` to send a VALSET automatically wh
   myGNSS.autoSendCfgValsetAtSpaceRemaining(16); // Trigger an auto-send when packetCfg has less than 16 bytes are remaining
 ```
 
-Please see [VALGET_and_VALSET/Example4](./examples/VALGET_and_VALSET/Example4_multiSetVal/) for more details.
+Please see [VALGET_and_VALSET/Example4](./examples/VALGET_and_VALSET/Example4_multiSetVal/Example4_multiSetVal.ino) for more details.
 
 ## Compatibility
 
