@@ -6819,19 +6819,51 @@ bool DevUBLOXGNSS::setDGNSSConfiguration(sfe_ublox_dgnss_mode_e dgnssMode, uint8
 // This is helpful when deciding if we should call the high-precision Lat/Long (HPPOSLLH) or the regular (POSLLH)
 uint8_t DevUBLOXGNSS::getProtocolVersionHigh(uint16_t maxWait)
 {
-  if (moduleSWVersion == nullptr)
-    initModuleSWVersion();        // Check that RAM has been allocated for the SW version
-  if (moduleSWVersion == nullptr) // Bail if the RAM allocation failed
-    return (false);
-
-  if (moduleSWVersion->moduleQueried == false)
-    getProtocolVersion(maxWait);
-  return (moduleSWVersion->versionHigh);
+  if (!prepareModuleInfo(maxWait))
+    return 0;
+  return (moduleSWVersion->protocolVersionHigh);
+}
+uint8_t DevUBLOXGNSS::getProtocolVersionLow(uint16_t maxWait)
+{
+  if (!prepareModuleInfo(maxWait))
+    return 0;
+  return (moduleSWVersion->protocolVersionLow);
 }
 
-// Get the current protocol version of the u-blox module we're communicating with
-// This is helpful when deciding if we should call the high-precision Lat/Long (HPPOSLLH) or the regular (POSLLH)
-uint8_t DevUBLOXGNSS::getProtocolVersionLow(uint16_t maxWait)
+// Get the firmware version of the u-blox module we're communicating with
+uint8_t DevUBLOXGNSS::getFirmwareVersionHigh(uint16_t maxWait)
+{
+  if (!prepareModuleInfo(maxWait))
+    return 0;
+  return (moduleSWVersion->firmwareVersionHigh);
+}
+uint8_t DevUBLOXGNSS::getFirmwareVersionLow(uint16_t maxWait)
+{
+  if (!prepareModuleInfo(maxWait))
+    return 0;
+  return (moduleSWVersion->firmwareVersionLow);
+}
+
+// Get the firmware type
+const char *DevUBLOXGNSS::getFirmwareType(uint16_t maxWait)
+{
+  static const char unknownFirmware[4] = { 'T', 'B', 'D', '\0' };
+  if (!prepareModuleInfo(maxWait))
+    return unknownFirmware;
+  return ((const char *)moduleSWVersion->firmwareType);
+}
+
+// Get the module name
+const char *DevUBLOXGNSS::getModuleName(uint16_t maxWait)
+{
+  static const char unknownModule[4] = { 'T', 'B', 'D', '\0' };
+  if (!prepareModuleInfo(maxWait))
+    return unknownModule;
+  return ((const char *)moduleSWVersion->moduleName);
+}
+
+// PRIVATE: Common code to initialize moduleSWVersion
+bool DevUBLOXGNSS::prepareModuleInfo(uint16_t maxWait)
 {
   if (moduleSWVersion == nullptr)
     initModuleSWVersion();        // Check that RAM has been allocated for the SW version
@@ -6839,13 +6871,19 @@ uint8_t DevUBLOXGNSS::getProtocolVersionLow(uint16_t maxWait)
     return (false);
 
   if (moduleSWVersion->moduleQueried == false)
-    getProtocolVersion(maxWait);
-  return (moduleSWVersion->versionLow);
+    getModuleInfo(maxWait);
+
+  return moduleSWVersion->moduleQueried;
 }
 
 // Get the current protocol version of the u-blox module we're communicating with
 // This is helpful when deciding if we should call the high-precision Lat/Long (HPPOSLLH) or the regular (POSLLH)
-bool DevUBLOXGNSS::getProtocolVersion(uint16_t maxWait)
+bool DevUBLOXGNSS::getProtocolVersion(uint16_t maxWait) // Old name - deprecated
+{
+  return getModuleInfo(maxWait);
+}
+
+bool DevUBLOXGNSS::getModuleInfo(uint16_t maxWait)
 {
   if (moduleSWVersion == nullptr)
     initModuleSWVersion();        // Check that RAM has been allocated for the SW version
@@ -6864,27 +6902,79 @@ bool DevUBLOXGNSS::getProtocolVersion(uint16_t maxWait)
 
   // Payload should now contain ~220 characters (depends on module type)
 
-  // We will step through the payload looking at each extension field of 30 bytes
-  for (uint8_t extensionNumber = 0; extensionNumber < 10; extensionNumber++)
-  {
-    // Now we need to find "PROTVER=18.00" in the incoming byte stream
-    if ((payloadCfg[(30 * extensionNumber) + 0] == 'P') && (payloadCfg[(30 * extensionNumber) + 6] == 'R'))
-    {
-      moduleSWVersion->versionHigh = (payloadCfg[(30 * extensionNumber) + 8] - '0') * 10 + (payloadCfg[(30 * extensionNumber) + 9] - '0');  // Convert '18' to 18
-      moduleSWVersion->versionLow = (payloadCfg[(30 * extensionNumber) + 11] - '0') * 10 + (payloadCfg[(30 * extensionNumber) + 12] - '0'); // Convert '00' to 00
-      moduleSWVersion->moduleQueried = true;                                                                                                // Mark this data as new
+  moduleSWVersion->moduleQueried = true; // Mark this data as new
 
-#ifndef SFE_UBLOX_REDUCED_PROG_MEM
-      if (_printDebug == true)
+  // We will step through the payload looking at each extension field of 30 bytes
+  char *ptr;
+  uint8_t fwProtMod = 0; // Flags to show if we extracted the FWVER, PROTVER and MOD data
+  for (uint8_t extensionNumber = 0; extensionNumber < ((packetCfg.len - 40) / 30); extensionNumber++)
+  {
+    ptr = strstr((const char *)&payloadCfg[(30 * extensionNumber)], "FWVER="); // Check for FWVER (should be in extension 1)
+    if (ptr != nullptr)
+    {
+      ptr += strlen("FWVER="); // Point to the firmware type (HPG etc.)
+      for (int i = 0; i < firmwareTypeLen; i++) // Extract the firmware type (3 chars)
+        moduleSWVersion->firmwareType[i] = *ptr++;
+      moduleSWVersion->firmwareType[firmwareTypeLen] = '\0'; // NULL-terminate
+
+      if (*ptr == ' ')
+        ptr++; // Skip the space
+      int firmwareHi = 0;
+      int firmwareLo = 0;
+      int scanned = sscanf(ptr, "%d.%d", &firmwareHi, &firmwareLo);
+      if (scanned == 2) // Check we extracted the firmware version successfully
       {
-        _debugSerial.print(F("Protocol version: "));
-        _debugSerial.print(moduleSWVersion->versionHigh);
-        _debugSerial.print(F("."));
-        _debugSerial.println(moduleSWVersion->versionLow);
+        moduleSWVersion->firmwareVersionHigh = firmwareHi;
+        moduleSWVersion->firmwareVersionLow = firmwareLo;
+        fwProtMod |= 0x01; // Record that we got the FWVER
       }
-#endif
-      return (true); // Success!
     }
+    ptr = strstr((const char *)&payloadCfg[(30 * extensionNumber)], "PROTVER="); // Check for PROTVER (should be in extension 2)
+    if (ptr != nullptr)
+    {
+      ptr += strlen("PROTVER="); // Point to the protocol version
+      int protHi = 0;
+      int protLo = 0;
+      int scanned = sscanf(ptr, "%d.%d", &protHi, &protLo);
+      if (scanned == 2) // Check we extracted the firmware version successfully
+      {
+        moduleSWVersion->protocolVersionHigh = protHi;
+        moduleSWVersion->protocolVersionLow = protLo;
+        fwProtMod |= 0x02; // Record that we got the PROTVER
+      }
+    }
+    ptr = strstr((const char *)&payloadCfg[(30 * extensionNumber)], "MOD="); // Check for MOD (should be in extension 3)
+    if (ptr != nullptr)
+    {
+      ptr += strlen("MOD="); // Point to the module name
+      int i = 0;
+      while ((i < moduleNameMaxLen) && (*ptr != '\0') && (*ptr != ' ')) // Copy the module name
+      {
+        moduleSWVersion->moduleName[i++] = *ptr++;
+      }
+      moduleSWVersion->moduleName[i] = '\0'; // NULL-terminate
+      fwProtMod |= 0x04; // Record that we got the MOD
+    }
+  }
+
+  if (fwProtMod == 0x07) // Did we extract all three?
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if (_printDebug == true)
+    {
+      _debugSerial.print(F("getModuleInfo: FWVER: "));
+      _debugSerial.print(moduleSWVersion->firmwareVersionHigh);
+      _debugSerial.print(F("."));
+      _debugSerial.println(moduleSWVersion->firmwareVersionLow);
+      _debugSerial.print(F("getModuleInfo: PROTVER: "));
+      _debugSerial.print(moduleSWVersion->protocolVersionHigh);
+      _debugSerial.print(F("."));
+      _debugSerial.println(moduleSWVersion->protocolVersionLow);
+      _debugSerial.print(F("getModuleInfo: MOD: "));
+      _debugSerial.println(moduleSWVersion->moduleName);
+    }
+#endif
+    return (true);
   }
 
   return (false); // We failed
@@ -6902,8 +6992,12 @@ bool DevUBLOXGNSS::initModuleSWVersion()
 #endif
     return (false);
   }
-  moduleSWVersion->versionHigh = 0;
-  moduleSWVersion->versionLow = 0;
+  moduleSWVersion->protocolVersionHigh = 0;
+  moduleSWVersion->protocolVersionLow = 0;
+  moduleSWVersion->firmwareVersionHigh = 0;
+  moduleSWVersion->firmwareVersionLow = 0;
+  moduleSWVersion->firmwareType[0] = 0;
+  moduleSWVersion->moduleName[0] = 0;
   moduleSWVersion->moduleQueried = false;
   return (true);
 }

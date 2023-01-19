@@ -215,10 +215,16 @@ typedef struct
 } geofenceParams_t;
 
 // Struct to hold the module software version
+#define firmwareTypeLen 3
+#define moduleNameMaxLen 10
 typedef struct
 {
-  uint8_t versionLow; // Loaded from getProtocolVersion().
-  uint8_t versionHigh;
+  uint8_t protocolVersionLow; // Loaded from getModuleInfo() / getProtocolVersion()
+  uint8_t protocolVersionHigh;
+  uint8_t firmwareVersionLow;
+  uint8_t firmwareVersionHigh;
+  char firmwareType[firmwareTypeLen + 1]; // Include space for a NULL
+  char moduleName[moduleNameMaxLen + 1]; // Include space for a NULL
   bool moduleQueried;
 } moduleSWVersion_t;
 
