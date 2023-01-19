@@ -108,7 +108,7 @@ protected:
   void setCommunicationBus(SparkFun_UBLOX_GNSS::GNSSDeviceBus &theBus);
   // For I2C, ping the _address
   // Not Applicable for SPI and Serial
-  uint16_t ping();
+  bool ping();
   // For Serial, return Serial.available()
   // For I2C, read registers 0xFD and 0xFE. Return bytes available as uint16_t
   // Not Applicable for SPI
@@ -130,6 +130,8 @@ protected:
   // Flag to indicate if we are connected to UART1 or UART2
   // Needed to select the correct config items when enabling a periodic message
   bool _UART2 = false; // Default to UART1
+  virtual bool lock(void) { return true; }
+  virtual void unlock(void) { }
 public:
   void connectedToUART2(bool connected = true) { _UART2 = connected; }
 
