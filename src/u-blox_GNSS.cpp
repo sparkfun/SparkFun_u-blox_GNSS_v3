@@ -667,7 +667,7 @@ uint16_t DevUBLOXGNSS::available()
 // Not Applicable for SPI and Serial
 bool DevUBLOXGNSS::ping()
 {
-  if (!lock()) return 0;
+  if (!lock()) return false;
   bool ok = _sfeBus->ping();
   unlock();
   return ok;
@@ -1026,7 +1026,7 @@ bool DevUBLOXGNSS::checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requestedC
   else if (_commType == COMM_TYPE_SPI)
     ok = (checkUbloxSpi(incomingUBX, requestedClass, requestedID));
   unlock();
-  return false;
+  return ok;
 }
 
 // Polls I2C for data, passing any new bytes to process()
@@ -5350,7 +5350,7 @@ bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool cal
   if (numDataBytes == 0)
     return false; // Indicate to the user that there was no data to push
 
-  if (!lock()) return SFE_UBLOX_STATUS_FAIL;
+  if (!lock()) return false;
   bool ok = false;
   if (_commType == COMM_TYPE_SERIAL)
   {
