@@ -1022,7 +1022,7 @@ const uint32_t UBLOX_CFG_RINV_BINARY = UBX_CFG_L | 0x10c70002;     // Data is bi
 const uint32_t UBLOX_CFG_RINV_DATA_SIZE = UBX_CFG_U1 | 0x20c70003; // Size of data
 const uint32_t UBLOX_CFG_RINV_CHUNK0 = UBX_CFG_X8 | 0x50c70004;    // Data bytes 1-8 (LSB)
 const uint32_t UBLOX_CFG_RINV_CHUNK1 = UBX_CFG_X8 | 0x50c70005;    // Data bytes 9-16
-const uint32_t UBLOX_CFG_RINV_CHUNK2 = UBX_CFG_X8 | 0x50c70006;    // Data bytes 17-240x44434241.
+const uint32_t UBLOX_CFG_RINV_CHUNK2 = UBX_CFG_X8 | 0x50c70006;    // Data bytes 17-24
 const uint32_t UBLOX_CFG_RINV_CHUNK3 = UBX_CFG_X8 | 0x50c70007;    // Data bytes 25-30 (MSB)
 
 // CFG-RTCM: RTCM protocol configuration
