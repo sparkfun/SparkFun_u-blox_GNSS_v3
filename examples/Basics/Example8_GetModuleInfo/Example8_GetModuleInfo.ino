@@ -51,21 +51,21 @@ void setup()
 
   if (myGNSS.getModuleInfo())
   {
-      Serial.print(F("FWVER: "));
-      Serial.print(myGNSS.getFirmwareVersionHigh());
-      Serial.print(F("."));
-      Serial.println(myGNSS.getFirmwareVersionLow());
-      
-      Serial.print(F("Firmware: "));
-      Serial.println(myGNSS.getFirmwareType());    
+    Serial.print(F("FWVER: "));
+    Serial.print(myGNSS.getFirmwareVersionHigh()); // Returns uint8_t
+    Serial.print(F("."));
+    Serial.println(myGNSS.getFirmwareVersionLow()); // Returns uint8_t
+    
+    Serial.print(F("Firmware: "));
+    Serial.println(myGNSS.getFirmwareType()); // Returns HPG, SPG etc. as (const char *)
 
-      Serial.print(F("PROTVER: "));
-      Serial.print(myGNSS.getProtocolVersionHigh());
-      Serial.print(F("."));
-      Serial.println(myGNSS.getProtocolVersionLow());
-      
-      Serial.print(F("MOD: "));
-      Serial.println(myGNSS.getModuleName());    
+    Serial.print(F("PROTVER: "));
+    Serial.print(myGNSS.getProtocolVersionHigh()); // Returns uint8_t
+    Serial.print(F("."));
+    Serial.println(myGNSS.getProtocolVersionLow()); // Returns uint8_t
+    
+    Serial.print(F("MOD: "));
+    Serial.println(myGNSS.getModuleName()); // Returns ZED-F9P, MAX-M10S etc. as (const char *)
   }
   else
     Serial.println(F("Error: could not read module info!"));

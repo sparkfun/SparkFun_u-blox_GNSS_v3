@@ -6902,8 +6902,6 @@ bool DevUBLOXGNSS::getModuleInfo(uint16_t maxWait)
 
   // Payload should now contain ~220 characters (depends on module type)
 
-  moduleSWVersion->moduleQueried = true; // Mark this data as new
-
   // We will step through the payload looking at each extension field of 30 bytes
   char *ptr;
   uint8_t fwProtMod = 0; // Flags to show if we extracted the FWVER, PROTVER and MOD data
@@ -6913,12 +6911,14 @@ bool DevUBLOXGNSS::getModuleInfo(uint16_t maxWait)
     if (ptr != nullptr)
     {
       ptr += strlen("FWVER="); // Point to the firmware type (HPG etc.)
-      for (int i = 0; i < firmwareTypeLen; i++) // Extract the firmware type (3 chars)
-        moduleSWVersion->firmwareType[i] = *ptr++;
-      moduleSWVersion->firmwareType[firmwareTypeLen] = '\0'; // NULL-terminate
+      int i = 0;
+      while ((i < firmwareTypeLen) && (*ptr != '\0') && (*ptr != ' ')) // Extract the firmware type (3 chars)
+        moduleSWVersion->firmwareType[i++] = *ptr++;
+      moduleSWVersion->firmwareType[i] = '\0'; // NULL-terminate
 
       if (*ptr == ' ')
         ptr++; // Skip the space
+
       int firmwareHi = 0;
       int firmwareLo = 0;
       int scanned = sscanf(ptr, "%d.%d", &firmwareHi, &firmwareLo);
@@ -6949,9 +6949,7 @@ bool DevUBLOXGNSS::getModuleInfo(uint16_t maxWait)
       ptr += strlen("MOD="); // Point to the module name
       int i = 0;
       while ((i < moduleNameMaxLen) && (*ptr != '\0') && (*ptr != ' ')) // Copy the module name
-      {
         moduleSWVersion->moduleName[i++] = *ptr++;
-      }
       moduleSWVersion->moduleName[i] = '\0'; // NULL-terminate
       fwProtMod |= 0x04; // Record that we got the MOD
     }
@@ -6974,6 +6972,9 @@ bool DevUBLOXGNSS::getModuleInfo(uint16_t maxWait)
       _debugSerial.println(moduleSWVersion->moduleName);
     }
 #endif
+
+    moduleSWVersion->moduleQueried = true; // Mark this data as new
+
     return (true);
   }
 
@@ -6992,7 +6993,7 @@ bool DevUBLOXGNSS::initModuleSWVersion()
 #endif
     return (false);
   }
-  moduleSWVersion->protocolVersionHigh = 0;
+  moduleSWVersion->protocolVersionHigh = 0; // Clear the contents
   moduleSWVersion->protocolVersionLow = 0;
   moduleSWVersion->firmwareVersionHigh = 0;
   moduleSWVersion->firmwareVersionLow = 0;
