@@ -9,6 +9,7 @@
 SFE_UBLOX_GNSS	KEYWORD1
 SFE_UBLOX_GNSS_SPI	KEYWORD1
 SFE_UBLOX_GNSS_SERIAL	KEYWORD1
+SFE_UBLOX_GNSS_SUPER	KEYWORD1
 DevUBLOXGNSS	KEYWORD1
 
 ubxPacket	KEYWORD1
@@ -185,7 +186,12 @@ setDGNSSConfiguration	KEYWORD2
 
 getProtocolVersionHigh	KEYWORD2
 getProtocolVersionLow	KEYWORD2
+getFirmwareVersionHigh	KEYWORD2
+getFirmwareVersionLow	KEYWORD2
+getFirmwareType	KEYWORD2
+getModuleName	KEYWORD2
 getProtocolVersion	KEYWORD2
+getModuleInfo	KEYWORD2
 
 addGeofence	KEYWORD2
 clearGeofences	KEYWORD2

@@ -353,8 +353,16 @@ public:
   // Read the module's protocol version
   uint8_t getProtocolVersionHigh(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the PROTVER XX.00 from UBX-MON-VER register
   uint8_t getProtocolVersionLow(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);  // Returns the PROTVER 00.XX from UBX-MON-VER register
-  bool getProtocolVersion(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);        // Queries module, loads low/high bytes
-  moduleSWVersion_t *moduleSWVersion = nullptr;                                // Pointer to struct. RAM will be allocated for this if/when necessary
+  uint8_t getFirmwareVersionHigh(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the FWVER XX.00 from UBX-MON-VER register
+  uint8_t getFirmwareVersionLow(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);  // Returns the FWVER 00.XX from UBX-MON-VER register
+  const char *getFirmwareType(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);    // Returns the firmware type (SPG, HPG, ADR, etc.) from UBX-MON-VER register
+  const char *getModuleName(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Returns the module name (ZED-F9P, ZED-F9R, etc.) from UBX-MON-VER register
+  bool getProtocolVersion(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);        // Deprecated. Use getModuleInfo.
+  bool getModuleInfo(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);             // Queries module, extracts info
+protected:
+  bool prepareModuleInfo(uint16_t maxWait);
+public:
+  moduleSWVersion_t *moduleSWVersion = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
 
   // Support for geofences
   bool addGeofence(int32_t latitude, int32_t longitude, uint32_t radius, uint8_t confidence = 0, bool pinPolarity = 0, uint8_t pin = 0, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Add a new geofence

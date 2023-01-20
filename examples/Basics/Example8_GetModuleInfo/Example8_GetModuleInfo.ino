@@ -1,5 +1,5 @@
 /*
-  Reading the protocol version of a u-blox module
+  Reading the protocol and firmware versions of a u-blox module
   By: Nathan Seidle
   SparkFun Electronics
   Date: January 3rd, 2019
@@ -32,14 +32,16 @@
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
 SFE_UBLOX_GNSS myGNSS;
 
-long lastTime = 0; //Simple local timer. Limits amount if I2C traffic to u-blox module.
-
 void setup()
 {
+  delay(1000);
+  
   Serial.begin(115200);
   Serial.println("SparkFun u-blox Example");
 
   Wire.begin();
+
+  //myGNSS.enableDebugging(Serial); // Uncomment this line to enable debug messages on Serial
 
   if (myGNSS.begin() == false) //Connect to the u-blox module using Wire port
   {
@@ -47,12 +49,26 @@ void setup()
     while (1);
   }
 
-  Serial.print(F("Version: "));
-  byte versionHigh = myGNSS.getProtocolVersionHigh();
-  Serial.print(versionHigh);
-  Serial.print(".");
-  byte versionLow = myGNSS.getProtocolVersionLow();
-  Serial.print(versionLow);
+  if (myGNSS.getModuleInfo())
+  {
+    Serial.print(F("FWVER: "));
+    Serial.print(myGNSS.getFirmwareVersionHigh()); // Returns uint8_t
+    Serial.print(F("."));
+    Serial.println(myGNSS.getFirmwareVersionLow()); // Returns uint8_t
+    
+    Serial.print(F("Firmware: "));
+    Serial.println(myGNSS.getFirmwareType()); // Returns HPG, SPG etc. as (const char *)
+
+    Serial.print(F("PROTVER: "));
+    Serial.print(myGNSS.getProtocolVersionHigh()); // Returns uint8_t
+    Serial.print(F("."));
+    Serial.println(myGNSS.getProtocolVersionLow()); // Returns uint8_t
+    
+    Serial.print(F("MOD: "));
+    Serial.println(myGNSS.getModuleName()); // Returns ZED-F9P, MAX-M10S etc. as (const char *)
+  }
+  else
+    Serial.println(F("Error: could not read module info!"));
 }
 
 void loop()

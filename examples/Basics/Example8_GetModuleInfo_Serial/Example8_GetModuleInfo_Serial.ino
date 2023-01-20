@@ -1,5 +1,5 @@
 /*
-  Reading the protocol version of a u-blox module
+  Reading the protocol and firmware versions of a u-blox module
   By: Nathan Seidle
   SparkFun Electronics
   Date: January 3rd, 2019
@@ -32,21 +32,20 @@
 
 #include <SoftwareSerial.h>
 
-//#define mySerial Serial1 // Uncomment this line to connect via Serial1
+#define mySerial Serial1 // Uncomment this line to connect via Serial1
 // - or -
 //SoftwareSerial mySerial(10, 11); // Uncomment this line to connect via SoftwareSerial(RX, TX). Connect pin 10 to GNSS TX pin.
 // - or -
-#define mySerial Serial // Uncomment this line if you just want to keep using Serial
+//#define mySerial Serial1 // Uncomment this line if you just want to keep using Serial
 
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
 SFE_UBLOX_GNSS_SERIAL myGNSS;
 
-long lastTime = 0; //Simple local timer. Limits amount if I2C traffic to u-blox module.
-
 void setup()
 {
+  delay(1000);
+  
   Serial.begin(115200);
-  while (!Serial); //Wait for user to open terminal
   Serial.println("SparkFun u-blox Example");
 
   Serial.println("Trying 38400 baud");
@@ -70,12 +69,26 @@ void setup()
     }
   }
 
-  Serial.print(F("Version: "));
-  byte versionHigh = myGNSS.getProtocolVersionHigh();
-  Serial.print(versionHigh);
-  Serial.print(".");
-  byte versionLow = myGNSS.getProtocolVersionLow();
-  Serial.print(versionLow);
+  if (myGNSS.getModuleInfo())
+  {
+      Serial.print(F("FWVER: "));
+      Serial.print(myGNSS.getFirmwareVersionHigh());
+      Serial.print(F("."));
+      Serial.println(myGNSS.getFirmwareVersionLow());
+      
+      Serial.print(F("Firmware: "));
+      Serial.println(myGNSS.getFirmwareType());    
+
+      Serial.print(F("PROTVER: "));
+      Serial.print(myGNSS.getProtocolVersionHigh());
+      Serial.print(F("."));
+      Serial.println(myGNSS.getProtocolVersionLow());
+      
+      Serial.print(F("MOD: "));
+      Serial.println(myGNSS.getModuleName());    
+  }
+  else
+    Serial.println(F("Error: could not read module info!"));
 }
 
 void loop()

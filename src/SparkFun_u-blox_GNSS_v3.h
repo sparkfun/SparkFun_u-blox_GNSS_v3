@@ -160,7 +160,7 @@ public:
   }
 
   // Version 2:
-  //  User passes in an SPI object and SPISettings (optional).
+  // User passes in an SPI object and SPISettings (optional).
   bool begin(SPIClass &spiPort, uint8_t cs, SPISettings ismSettings, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait, bool assumeSuccess = false)
   {
     // Setup a SPI object and pass into the superclass
@@ -174,7 +174,7 @@ public:
   }
 
   // Version 3:
-  //  User passes in an SPI object and SPI speed (optional).
+  // User passes in an SPI object and SPI speed (optional).
   bool begin(SPIClass &spiPort, uint8_t cs, uint32_t spiSpeed, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait, bool assumeSuccess = false)
   {
     // Setup a SPI object and pass into the superclass
@@ -228,5 +228,86 @@ public:
 
 private:
   // I2C bus class
+  SparkFun_UBLOX_GNSS::SfeSerial _serialBus;
+};
+
+class SFE_UBLOX_GNSS_SUPER : public DevUBLOXGNSS // A Super Class - all three in one
+{
+public:
+  SFE_UBLOX_GNSS_SUPER(){};
+
+  bool begin(uint8_t deviceAddress = kUBLOXGNSSDefaultAddress, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait, bool assumeSuccess = false)
+  {
+     _commType = COMM_TYPE_I2C;
+
+    // Setup  I2C object and pass into the superclass
+    setCommunicationBus(_i2cBus);
+
+    // Initialize the I2C buss class i.e. setup default Wire port
+    _i2cBus.init(deviceAddress);
+
+    // Initialize the system - return results
+    return this->DevUBLOXGNSS::init(maxWait, assumeSuccess);
+  }
+
+  bool begin(TwoWire &wirePort, uint8_t deviceAddress = kUBLOXGNSSDefaultAddress, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait, bool assumeSuccess = false)
+  {
+     _commType = COMM_TYPE_I2C;
+
+    // Setup  I2C object and pass into the superclass
+    setCommunicationBus(_i2cBus);
+
+    // Give the I2C port provided by the user to the I2C bus class.
+    _i2cBus.init(wirePort, deviceAddress);
+
+    // Initialize the system - return results
+    return this->DevUBLOXGNSS::init(maxWait, assumeSuccess);
+  }
+
+  bool begin(SPIClass &spiPort, uint8_t cs, SPISettings ismSettings, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait, bool assumeSuccess = false)
+  {
+     _commType = COMM_TYPE_SPI;
+
+    // Setup a SPI object and pass into the superclass
+    setCommunicationBus(_spiBus);
+
+    // Initialize the SPI bus class with provided SPI port, SPI setttings, and chip select pin.
+    _spiBus.init(spiPort, ismSettings, cs, true);
+
+    // Initialize the system - return results
+    return this->DevUBLOXGNSS::init(maxWait, assumeSuccess);
+  }
+
+  bool begin(SPIClass &spiPort, uint8_t cs, uint32_t spiSpeed = 4000000, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait, bool assumeSuccess = false)
+  {
+     _commType = COMM_TYPE_SPI;
+
+    // Setup a SPI object and pass into the superclass
+    setCommunicationBus(_spiBus);
+
+    // Initialize the SPI bus class with provided SPI port, SPI setttings, and chip select pin.
+    _spiBus.init(spiPort, spiSpeed, cs, true);
+
+    // Initialize the system - return results
+    return this->DevUBLOXGNSS::init(maxWait, assumeSuccess);
+  }
+
+  bool begin(Stream &serialPort, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait, bool assumeSuccess = false)
+  {
+     _commType = COMM_TYPE_SERIAL;
+
+    // Setup Serial object and pass into the superclass
+    setCommunicationBus(_serialBus);
+
+    // Initialize the Serial bus class
+    _serialBus.init(serialPort);
+
+    // Initialize the system - return results
+    return this->DevUBLOXGNSS::init(maxWait, assumeSuccess);
+  }
+
+private:
+  SparkFun_UBLOX_GNSS::SfeI2C _i2cBus;
+  SparkFun_UBLOX_GNSS::SfeSPI _spiBus;
   SparkFun_UBLOX_GNSS::SfeSerial _serialBus;
 };
