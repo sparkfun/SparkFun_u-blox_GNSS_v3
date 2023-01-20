@@ -108,7 +108,7 @@ protected:
   void setCommunicationBus(SparkFun_UBLOX_GNSS::GNSSDeviceBus &theBus);
   // For I2C, ping the _address
   // Not Applicable for SPI and Serial
-  uint16_t ping();
+  bool ping();
   // For Serial, return Serial.available()
   // For I2C, read registers 0xFD and 0xFE. Return bytes available as uint16_t
   // Not Applicable for SPI

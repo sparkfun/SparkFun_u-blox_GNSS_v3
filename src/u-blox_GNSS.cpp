@@ -665,7 +665,7 @@ uint16_t DevUBLOXGNSS::available()
 }
 // For I2C, ping the _address
 // Not Applicable for SPI and Serial
-uint16_t DevUBLOXGNSS::ping()
+bool DevUBLOXGNSS::ping()
 {
   return _sfeBus->ping();
 }
