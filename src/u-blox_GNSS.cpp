@@ -4168,6 +4168,7 @@ void DevUBLOXGNSS::addToChecksum(uint8_t incoming)
 sfe_ublox_status_e DevUBLOXGNSS::sendCommand(ubxPacket *outgoingUBX, uint16_t maxWait, bool expectACKonly)
 {
   sfe_ublox_status_e retVal = SFE_UBLOX_STATUS_SUCCESS;
+
   calcChecksum(outgoingUBX); // Sets checksum A and B bytes of the packet
 
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
