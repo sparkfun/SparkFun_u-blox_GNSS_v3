@@ -918,7 +918,7 @@ bool DevUBLOXGNSS::isConnected(uint16_t maxWait)
 
 // Enable or disable the printing of sent/response HEX values.
 // Use this in conjunction with 'Transport Logging' from the Universal Reader Assistant to see what they're doing that we're not
-void DevUBLOXGNSS::enableDebugging(Stream &debugPort, bool printLimitedDebug)
+void DevUBLOXGNSS::enableDebugging(Print &debugPort, bool printLimitedDebug)
 {
   _debugSerial.init(debugPort); // Grab which port the user wants us to use for debugging
   if (printLimitedDebug == false)
@@ -1516,7 +1516,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
 
     // If user has assigned an output port then pipe the characters there,
     // but only if the port is different (otherwise we'll output each character twice!)
-    if (_outputPort._serialPort != _ubxOutputPort._serialPort)
+    if (_outputPort != _ubxOutputPort)
       _ubxOutputPort.write(incoming); // Echo this byte to the serial port
 
     // Finally, increment the frame counter
@@ -1577,7 +1577,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
           processNMEA(nmeaAddressField[i]); // Process the start character and address field
           // If user has assigned an output port then pipe the characters there,
           // but only if the port is different (otherwise we'll output each character twice!)
-          if (_outputPort._serialPort != _nmeaOutputPort._serialPort)
+          if (_outputPort != _nmeaOutputPort)
             _nmeaOutputPort.write(nmeaAddressField[i]); // Echo this byte to the serial port
         }
       }
@@ -1612,7 +1612,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
         processNMEA(incoming); // Pass incoming to processNMEA
         // If user has assigned an output port then pipe the characters there,
         // but only if the port is different (otherwise we'll output each character twice!)
-        if (_outputPort._serialPort != _nmeaOutputPort._serialPort)
+        if (_outputPort != _nmeaOutputPort)
           _nmeaOutputPort.write(incoming); // Echo this byte to the serial port
       }
     }
@@ -1712,7 +1712,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
 
     // If user has assigned an output port then pipe the characters there,
     // but only if the port is different (otherwise we'll output each character twice!)
-    if (_outputPort._serialPort != _rtcmOutputPort._serialPort)
+    if (_outputPort != _rtcmOutputPort)
       _rtcmOutputPort.write(incoming); // Echo this byte to the serial port
   }
 }
@@ -6622,24 +6622,24 @@ bool DevUBLOXGNSS::setSPIInput(uint8_t comSettings, uint8_t layer, uint16_t maxW
 }
 
 // Want to see the NMEA messages on the Serial port? Here's how
-void DevUBLOXGNSS::setNMEAOutputPort(Stream &outputPort)
+void DevUBLOXGNSS::setNMEAOutputPort(Print &outputPort)
 {
   _nmeaOutputPort.init(outputPort); // Store the port from user
 }
 
 // Want to see the RTCM messages on the Serial port? Here's how
-void DevUBLOXGNSS::setRTCMOutputPort(Stream &outputPort)
+void DevUBLOXGNSS::setRTCMOutputPort(Print &outputPort)
 {
   _rtcmOutputPort.init(outputPort); // Store the port from user
 }
 
 // Want to see the UBX messages on the Serial port? Here's how
-void DevUBLOXGNSS::setUBXOutputPort(Stream &outputPort)
+void DevUBLOXGNSS::setUBXOutputPort(Print &outputPort)
 {
   _ubxOutputPort.init(outputPort); // Store the port from user
 }
 
-void DevUBLOXGNSS::setOutputPort(Stream &outputPort)
+void DevUBLOXGNSS::setOutputPort(Print &outputPort)
 {
   _outputPort.init(outputPort); // Store the port from user
 }

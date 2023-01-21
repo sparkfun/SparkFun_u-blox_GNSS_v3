@@ -187,66 +187,70 @@ namespace SparkFun_UBLOX_GNSS
     Stream *_serialPort;
   };
 
-  // The sfeStream device defines behavior for Serial diagnostic prints based around the Stream class.
+  // The sfePrint device defines behavior for Serial diagnostic prints based around the Stream class.
   // This is Arduino specific.
-  class SfeStream
+  class SfePrint
   {
   public:
-    SfeStream(void) { _serialPort = nullptr; }
+    SfePrint(void) { _outputPort = nullptr; }
 
-    void init(Stream &serialPort) { _serialPort = &serialPort; }
+    void init(Print &outputPort) { _outputPort = &outputPort; }
+    inline bool operator==(SfePrint const &other) const { return _outputPort == other._outputPort; }
+    inline bool operator!=(SfePrint const &other) const { return !(*this == other); }
+    
     void write(uint8_t c)
     {
-      if (_serialPort != nullptr)
-        _serialPort->write(c);
+      if (_outputPort != nullptr)
+        _outputPort->write(c);
     }
     void print(const char *c)
     {
-      if (_serialPort != nullptr)
-        _serialPort->print(c);
+      if (_outputPort != nullptr)
+        _outputPort->print(c);
     }
     void print(const __FlashStringHelper *c)
     {
-      if (_serialPort != nullptr)
-        _serialPort->print(c);
+      if (_outputPort != nullptr)
+        _outputPort->print(c);
     }
     void print(unsigned int c, int f)
     {
-      if (_serialPort != nullptr)
-        _serialPort->print(c, f);
+      if (_outputPort != nullptr)
+        _outputPort->print(c, f);
     }
     void print(uint16_t c)
     {
-      if (_serialPort != nullptr)
-        _serialPort->print(c);
+      if (_outputPort != nullptr)
+        _outputPort->print(c);
     }
     void println()
     {
-      if (_serialPort != nullptr)
-        _serialPort->println();
+      if (_outputPort != nullptr)
+        _outputPort->println();
     }
     void println(const char *c)
     {
-      if (_serialPort != nullptr)
-        _serialPort->println(c);
+      if (_outputPort != nullptr)
+        _outputPort->println(c);
     }
     void println(const __FlashStringHelper *c)
     {
-      if (_serialPort != nullptr)
-        _serialPort->println(c);
+      if (_outputPort != nullptr)
+        _outputPort->println(c);
     }
     void println(size_t c)
     {
-      if (_serialPort != nullptr)
-        _serialPort->println(c);
+      if (_outputPort != nullptr)
+        _outputPort->println(c);
     }
     void println(uint8_t c, int f)
     {
-      if (_serialPort != nullptr)
-        _serialPort->println(c, f);
+      if (_outputPort != nullptr)
+        _outputPort->println(c, f);
     }
-
-    Stream *_serialPort; // friend doesn't seem to work... Leave this public
+  
+  private: 
+    Print *_outputPort;
   };
 
 };
