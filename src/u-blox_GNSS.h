@@ -130,6 +130,10 @@ protected:
   // Flag to indicate if we are connected to UART1 or UART2
   // Needed to select the correct config items when enabling a periodic message
   bool _UART2 = false; // Default to UART1
+  // the lock / unlock functions can be used if you have multiple tasks writing to the bus. 
+  // the idea is that in a RTOS you override this class and the two functions in which you take and give a mutex.
+  virtual bool lock(void) { return true; }
+  virtual void unlock(void) { }
 public:
   void connectedToUART2(bool connected = true) { _UART2 = connected; }
 
@@ -179,18 +183,18 @@ public:
 #if defined(USB_VID)                                                                   // Is the USB Vendor ID defined?
 #if (USB_VID == 0x1B4F)                                                                // Is this a SparkFun board?
 #if !defined(ARDUINO_SAMD51_THING_PLUS) & !defined(ARDUINO_SAMD51_MICROMOD)            // If it is not a SAMD51 Thing Plus or SAMD51 MicroMod
-  void enableDebugging(Stream &debugPort = SerialUSB, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
+  void enableDebugging(Print &debugPort = SerialUSB, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
 #else
-  void enableDebugging(Stream &debugPort = Serial, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
+  void enableDebugging(Print &debugPort = Serial, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
 #endif
 #else
-  void enableDebugging(Stream &debugPort = Serial, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
+  void enableDebugging(Print &debugPort = Serial, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
 #endif
 #else
-  void enableDebugging(Stream &debugPort = Serial, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
+  void enableDebugging(Print &debugPort = Serial, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
 #endif
 #else
-  void enableDebugging(Stream &debugPort = Serial, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
+  void enableDebugging(Print &debugPort = Serial, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
 #endif
 
   void disableDebugging(void);                       // Turn off debug statements
@@ -317,10 +321,10 @@ public:
   bool setUSBInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure USB port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
   bool setSPIInput(uint8_t comSettings, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure SPI port to output UBX, NMEA, RTCM3, SPARTN or a combination thereof
 
-  void setNMEAOutputPort(Stream &outputPort); // Sets the internal variable for the port to direct only NMEA characters to
-  void setRTCMOutputPort(Stream &outputPort); // Sets the internal variable for the port to direct only RTCM characters to
-  void setUBXOutputPort(Stream &outputPort);  // Sets the internal variable for the port to direct only UBX characters to
-  void setOutputPort(Stream &outputPort);     // Sets the internal variable for the port to direct ALL characters to
+  void setNMEAOutputPort(Print &outputPort); // Sets the internal variable for the port to direct only NMEA characters to
+  void setRTCMOutputPort(Print &outputPort); // Sets the internal variable for the port to direct only RTCM characters to
+  void setUBXOutputPort(Print &outputPort);  // Sets the internal variable for the port to direct only UBX characters to
+  void setOutputPort(Print &outputPort);     // Sets the internal variable for the port to direct ALL characters to
 
   // Reset to defaults
 
@@ -1350,11 +1354,11 @@ protected:
   // Variables
   SparkFun_UBLOX_GNSS::GNSSDeviceBus *_sfeBus;
 
-  SparkFun_UBLOX_GNSS::SfeStream _nmeaOutputPort; // The user can assign an output port to print NMEA sentences if they wish
-  SparkFun_UBLOX_GNSS::SfeStream _rtcmOutputPort; // The user can assign an output port to print RTCM sentences if they wish
-  SparkFun_UBLOX_GNSS::SfeStream _ubxOutputPort;  // The user can assign an output port to print UBX sentences if they wish
-  SparkFun_UBLOX_GNSS::SfeStream _outputPort;     // The user can assign an output port to print ALL characters to if they wish
-  SparkFun_UBLOX_GNSS::SfeStream _debugSerial;    // The stream to send debug messages to if enabled
+  SparkFun_UBLOX_GNSS::SfePrint _nmeaOutputPort; // The user can assign an output port to print NMEA sentences if they wish
+  SparkFun_UBLOX_GNSS::SfePrint _rtcmOutputPort; // The user can assign an output port to print RTCM sentences if they wish
+  SparkFun_UBLOX_GNSS::SfePrint _ubxOutputPort;  // The user can assign an output port to print UBX sentences if they wish
+  SparkFun_UBLOX_GNSS::SfePrint _outputPort;     // The user can assign an output port to print ALL characters to if they wish
+  SparkFun_UBLOX_GNSS::SfePrint _debugSerial;    // The stream to send debug messages to if enabled
   bool _printDebug = false;                       // Flag to print the serial commands we are sending to the Serial port for debug
   bool _printLimitedDebug = false;                // Flag to print limited debug messages. Useful for I2C debugging or high navigation rates
 

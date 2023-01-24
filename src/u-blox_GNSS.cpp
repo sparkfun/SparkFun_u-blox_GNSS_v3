@@ -667,7 +667,10 @@ uint16_t DevUBLOXGNSS::available()
 // Not Applicable for SPI and Serial
 bool DevUBLOXGNSS::ping()
 {
-  return _sfeBus->ping();
+  if (!lock()) return false;
+  bool ok = _sfeBus->ping();
+  unlock();
+  return ok;
 }
 // For Serial, do Serial.write
 // For I2C, push data to register 0xFF. Chunkify if necessary. Prevent single byte writes as these are illegal
@@ -915,7 +918,7 @@ bool DevUBLOXGNSS::isConnected(uint16_t maxWait)
 
 // Enable or disable the printing of sent/response HEX values.
 // Use this in conjunction with 'Transport Logging' from the Universal Reader Assistant to see what they're doing that we're not
-void DevUBLOXGNSS::enableDebugging(Stream &debugPort, bool printLimitedDebug)
+void DevUBLOXGNSS::enableDebugging(Print &debugPort, bool printLimitedDebug)
 {
   _debugSerial.init(debugPort); // Grab which port the user wants us to use for debugging
   if (printLimitedDebug == false)
@@ -1014,13 +1017,16 @@ bool DevUBLOXGNSS::checkUblox(uint8_t requestedClass, uint8_t requestedID)
 // PRIVATE: Called regularly to check for available bytes on the user' specified port
 bool DevUBLOXGNSS::checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
+  if (!lock()) return false;
+  bool ok = false;
   if (_commType == COMM_TYPE_I2C)
-    return (checkUbloxI2C(incomingUBX, requestedClass, requestedID));
+    ok = (checkUbloxI2C(incomingUBX, requestedClass, requestedID));
   else if (_commType == COMM_TYPE_SERIAL)
-    return (checkUbloxSerial(incomingUBX, requestedClass, requestedID));
+    ok = (checkUbloxSerial(incomingUBX, requestedClass, requestedID));
   else if (_commType == COMM_TYPE_SPI)
-    return (checkUbloxSpi(incomingUBX, requestedClass, requestedID));
-  return false;
+    ok = (checkUbloxSpi(incomingUBX, requestedClass, requestedID));
+  unlock();
+  return ok;
 }
 
 // Polls I2C for data, passing any new bytes to process()
@@ -1510,7 +1516,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
 
     // If user has assigned an output port then pipe the characters there,
     // but only if the port is different (otherwise we'll output each character twice!)
-    if (_outputPort._serialPort != _ubxOutputPort._serialPort)
+    if (_outputPort != _ubxOutputPort)
       _ubxOutputPort.write(incoming); // Echo this byte to the serial port
 
     // Finally, increment the frame counter
@@ -1571,7 +1577,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
           processNMEA(nmeaAddressField[i]); // Process the start character and address field
           // If user has assigned an output port then pipe the characters there,
           // but only if the port is different (otherwise we'll output each character twice!)
-          if (_outputPort._serialPort != _nmeaOutputPort._serialPort)
+          if (_outputPort != _nmeaOutputPort)
             _nmeaOutputPort.write(nmeaAddressField[i]); // Echo this byte to the serial port
         }
       }
@@ -1606,7 +1612,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
         processNMEA(incoming); // Pass incoming to processNMEA
         // If user has assigned an output port then pipe the characters there,
         // but only if the port is different (otherwise we'll output each character twice!)
-        if (_outputPort._serialPort != _nmeaOutputPort._serialPort)
+        if (_outputPort != _nmeaOutputPort)
           _nmeaOutputPort.write(incoming); // Echo this byte to the serial port
       }
     }
@@ -1706,7 +1712,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
 
     // If user has assigned an output port then pipe the characters there,
     // but only if the port is different (otherwise we'll output each character twice!)
-    if (_outputPort._serialPort != _rtcmOutputPort._serialPort)
+    if (_outputPort != _rtcmOutputPort)
       _rtcmOutputPort.write(incoming); // Echo this byte to the serial port
   }
 }
@@ -4173,6 +4179,7 @@ sfe_ublox_status_e DevUBLOXGNSS::sendCommand(ubxPacket *outgoingUBX, uint16_t ma
   }
 #endif
 
+  if (!lock()) return SFE_UBLOX_STATUS_FAIL;
   if (_commType == COMM_TYPE_I2C)
   {
     retVal = sendI2cCommand(outgoingUBX);
@@ -4195,7 +4202,8 @@ sfe_ublox_status_e DevUBLOXGNSS::sendCommand(ubxPacket *outgoingUBX, uint16_t ma
   {
     sendSpiCommand(outgoingUBX);
   }
-
+  unlock();
+  
   if (maxWait > 0)
   {
     // Depending on what we just sent, either we need to look for an ACK or not
@@ -5341,12 +5349,14 @@ bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool cal
 {
   // Return now if numDataBytes is zero
   if (numDataBytes == 0)
-    return (false); // Indicate to the user that there was no data to push
+    return false; // Indicate to the user that there was no data to push
 
+  if (!lock()) return false;
+  bool ok = false;
   if (_commType == COMM_TYPE_SERIAL)
   {
     // Serial: write all the bytes in one go
-    return writeBytes(dataBytes, numDataBytes) == numDataBytes;
+    ok = writeBytes(dataBytes, numDataBytes) == numDataBytes;
   }
   else if (_commType == COMM_TYPE_I2C)
   {
@@ -5362,55 +5372,56 @@ bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool cal
     {
       _pushThisSingleByte = *dataBytes;
       _pushSingleByte = true;
-      return (false); // Indicate to the user that their data has not been pushed yet
-    }
+      ok = false; // Indicate to the user that their data has not been pushed yet
+    } else {
 
-    // I2C: split the data up into packets of i2cTransactionSize
-    size_t bytesLeftToWrite = numDataBytes;
-    size_t bytesWrittenTotal = 0;
+      // I2C: split the data up into packets of i2cTransactionSize
+      size_t bytesLeftToWrite = numDataBytes;
+      size_t bytesWrittenTotal = 0;
 
-    if (_pushSingleByte == true) // Increment bytesLeftToWrite if we have a single byte waiting to be pushed
-      bytesLeftToWrite++;
+      if (_pushSingleByte == true) // Increment bytesLeftToWrite if we have a single byte waiting to be pushed
+        bytesLeftToWrite++;
 
-    while (bytesLeftToWrite > 0)
-    {
-      size_t bytesToWrite; // Limit bytesToWrite to i2cTransactionSize
-
-      if (bytesLeftToWrite > i2cTransactionSize)
-        bytesToWrite = i2cTransactionSize;
-      else
-        bytesToWrite = bytesLeftToWrite;
-
-      // If there would be one byte left to be written next time, send one byte less now
-      if ((bytesLeftToWrite - bytesToWrite) == 1)
-        bytesToWrite--;
-
-      size_t bytesWritten = 0;
-
-      if (_pushSingleByte == true)
+      while (bytesLeftToWrite > 0)
       {
-        uint8_t buf[i2cTransactionSize];
+        size_t bytesToWrite; // Limit bytesToWrite to i2cTransactionSize
 
-        buf[0] = _pushThisSingleByte;
+        if (bytesLeftToWrite > i2cTransactionSize)
+          bytesToWrite = i2cTransactionSize;
+        else
+          bytesToWrite = bytesLeftToWrite;
 
-        for (uint16_t x = 1; x < bytesToWrite; x++)
-          buf[x] = dataBytes[x - 1];
+        // If there would be one byte left to be written next time, send one byte less now
+        if ((bytesLeftToWrite - bytesToWrite) == 1)
+          bytesToWrite--;
 
-        bytesWritten += writeBytes(buf, bytesToWrite); // Write the bytes
-        dataBytes += bytesToWrite - 1;                 // Point to fresh data
-        _pushSingleByte = false;                       // Clear the flag
+        size_t bytesWritten = 0;
+
+        if (_pushSingleByte == true)
+        {
+          uint8_t buf[i2cTransactionSize];
+
+          buf[0] = _pushThisSingleByte;
+
+          for (uint16_t x = 1; x < bytesToWrite; x++)
+            buf[x] = dataBytes[x - 1];
+
+          bytesWritten += writeBytes(buf, bytesToWrite); // Write the bytes
+          dataBytes += bytesToWrite - 1;                 // Point to fresh data
+          _pushSingleByte = false;                       // Clear the flag
+        }
+        else
+        {
+          bytesWritten += writeBytes(dataBytes, bytesToWrite); // Write the bytes
+          dataBytes += bytesToWrite;                           // Point to fresh data
+        }
+
+        bytesWrittenTotal += bytesWritten; // Update the totals
+        bytesLeftToWrite -= bytesToWrite;
       }
-      else
-      {
-        bytesWritten += writeBytes(dataBytes, bytesToWrite); // Write the bytes
-        dataBytes += bytesToWrite;                           // Point to fresh data
-      }
 
-      bytesWrittenTotal += bytesWritten; // Update the totals
-      bytesLeftToWrite -= bytesToWrite;
+      ok = (bytesWrittenTotal == numDataBytes); // Return true if the correct number of bytes were written
     }
-
-    return (bytesWrittenTotal == numDataBytes); // Return true if the correct number of bytes were written
   }
   else if (_commType == COMM_TYPE_SPI)
   {
@@ -5446,9 +5457,10 @@ bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool cal
         processSpiBuffer(&packetCfg, 0, 0); // This will hopefully prevent any lost data?
     }
 
-    return (true);
+    ok = true;
   }
-  return false;
+  unlock();
+  return ok;
 }
 
 // Push MGA AssistNow data to the module.
@@ -6610,24 +6622,24 @@ bool DevUBLOXGNSS::setSPIInput(uint8_t comSettings, uint8_t layer, uint16_t maxW
 }
 
 // Want to see the NMEA messages on the Serial port? Here's how
-void DevUBLOXGNSS::setNMEAOutputPort(Stream &outputPort)
+void DevUBLOXGNSS::setNMEAOutputPort(Print &outputPort)
 {
   _nmeaOutputPort.init(outputPort); // Store the port from user
 }
 
 // Want to see the RTCM messages on the Serial port? Here's how
-void DevUBLOXGNSS::setRTCMOutputPort(Stream &outputPort)
+void DevUBLOXGNSS::setRTCMOutputPort(Print &outputPort)
 {
   _rtcmOutputPort.init(outputPort); // Store the port from user
 }
 
 // Want to see the UBX messages on the Serial port? Here's how
-void DevUBLOXGNSS::setUBXOutputPort(Stream &outputPort)
+void DevUBLOXGNSS::setUBXOutputPort(Print &outputPort)
 {
   _ubxOutputPort.init(outputPort); // Store the port from user
 }
 
-void DevUBLOXGNSS::setOutputPort(Stream &outputPort)
+void DevUBLOXGNSS::setOutputPort(Print &outputPort)
 {
   _outputPort.init(outputPort); // Store the port from user
 }
