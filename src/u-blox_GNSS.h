@@ -1203,6 +1203,10 @@ public:
   bool setNMEAGNZDAcallbackPtr(void (*callbackPointerPtr)(NMEA_ZDA_data_t *)); // Enable a callback on the arrival of a GNZDA message
 #endif
 
+  // Helper functions for RTCM logging
+  void setRTCMLoggingMask(uint32_t messages = SFE_UBLOX_FILTER_RTCM_ALL); // Add selected RTCM messages to file buffer - if enabled. Default to adding ALL messages to the file buffer
+  uint32_t getRTCMLoggingMask();                                          // Return which RTCM messages are selected for logging to the file buffer - if enabled
+
   // Functions to extract signed and unsigned 8/16/32-bit data from a ubxPacket
   // From v2.0: These are public. The user can call these to extract data from custom packets
   uint64_t extractLongLong(ubxPacket *msg, uint16_t spotToStart);      // Combine eight bytes from payload into uint64_t
@@ -1280,6 +1284,8 @@ public:
 #endif
 
   uint16_t rtcmFrameCounter = 0; // Tracks the type of incoming byte inside RTCM frame
+  RTCM_FRAME_t *storageRTCM = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
+  crc24q(uint8_t incoming, uint32_t *checksum); // Add incoming to checksum as per CRC-24Q
 
 protected:
   // Depending on the ubx binary response class, store binary responses into different places
@@ -1351,6 +1357,8 @@ protected:
   bool initStorageNMEAGPZDA(); // Allocate RAM for incoming NMEA GPZDA messages and initialize it
   bool initStorageNMEAGNZDA(); // Allocate RAM for incoming NMEA GNZDA messages and initialize it
 
+  bool initStorageRTCM(); // Allocate RAM for incoming RTCM messages and initialize it
+
   // Variables
   SparkFun_UBLOX_GNSS::GNSSDeviceBus *_sfeBus;
 
@@ -1364,6 +1372,8 @@ protected:
 
   sfe_ublox_nmea_filtering_t _logNMEA;     // Flags to indicate which NMEA messages should be added to the file buffer for logging
   sfe_ublox_nmea_filtering_t _processNMEA; // Flags to indicate which NMEA messages should be passed to processNMEA
+
+  sfe_ublox_rtcm_filtering_t _logRTCM;     // Flags to indicate which NMEA messages should be added to the file buffer for logging
 
   // The packet buffers
   // These are pointed at from within the ubxPacket
