@@ -56,6 +56,9 @@
 // Uncomment the next line (or add SFE_UBLOX_DISABLE_AUTO_NMEA as a compiler directive) to reduce the amount of program memory used by the library
 // #define SFE_UBLOX_DISABLE_AUTO_NMEA // Uncommenting this line will disable auto-NMEA support to save memory
 
+// Uncomment the next line (or add SFE_UBLOX_DISABLE_RTCM_LOGGING as a compiler directive) to reduce the amount of program memory used by the library
+// #define SFE_UBLOX_DISABLE_RTCM_LOGGING // Uncommenting this line will disable RTCM logging support to save memory
+
 // Uncomment the next line (or add SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT as a compiler directive) to reduce the amount of program memory used by the library
 // #define SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT // Uncommenting this line will disable the RAM-heavy RXM and NAV-SAT support to save memory
 
@@ -72,6 +75,9 @@
 #endif
 #if !defined(SFE_UBLOX_DISABLE_AUTO_NMEA) && defined(ARDUINO_ARCH_AVR) && !defined(ARDUINO_AVR_MEGA2560) && !defined(ARDUINO_AVR_MEGA) && !defined(ARDUINO_AVR_ADK)
 #define SFE_UBLOX_DISABLE_AUTO_NMEA
+#endif
+#if !defined(SFE_UBLOX_DISABLE_RTCM_LOGGING) && defined(ARDUINO_ARCH_AVR) && !defined(ARDUINO_AVR_MEGA2560) && !defined(ARDUINO_AVR_MEGA) && !defined(ARDUINO_AVR_ADK)
+#define SFE_UBLOX_DISABLE_RTCM_LOGGING
 #endif
 #if !defined(SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT) && defined(ARDUINO_ARCH_AVR) && !defined(ARDUINO_AVR_MEGA2560) && !defined(ARDUINO_AVR_MEGA) && !defined(ARDUINO_AVR_ADK)
 #define SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
@@ -1204,8 +1210,10 @@ public:
 #endif
 
   // Helper functions for RTCM logging
-  void setRTCMLoggingMask(uint32_t messages = SFE_UBLOX_FILTER_RTCM_ALL); // Add selected RTCM messages to file buffer - if enabled. Default to adding ALL messages to the file buffer
+#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
+  bool setRTCMLoggingMask(uint32_t messages = SFE_UBLOX_FILTER_RTCM_ALL); // Add selected RTCM messages to file buffer - if enabled. Default to adding ALL messages to the file buffer
   uint32_t getRTCMLoggingMask();                                          // Return which RTCM messages are selected for logging to the file buffer - if enabled
+#endif
 
   // Functions to extract signed and unsigned 8/16/32-bit data from a ubxPacket
   // From v2.0: These are public. The user can call these to extract data from custom packets
@@ -1284,8 +1292,10 @@ public:
 #endif
 
   uint16_t rtcmFrameCounter = 0; // Tracks the type of incoming byte inside RTCM frame
+#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
   RTCM_FRAME_t *storageRTCM = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
-  crc24q(uint8_t incoming, uint32_t *checksum); // Add incoming to checksum as per CRC-24Q
+  void crc24q(uint8_t incoming, uint32_t *checksum); // Add incoming to checksum as per CRC-24Q
+#endif
 
 protected:
   // Depending on the ubx binary response class, store binary responses into different places
