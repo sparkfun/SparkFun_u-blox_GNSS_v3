@@ -2637,3 +2637,15 @@ typedef struct
   void (*callbackPointerPtr)(NMEA_ZDA_data_t *);
   NMEA_ZDA_data_t *callbackCopy; // The callback gets its own preserved copy of the complete copy
 } NMEA_GNZDA_t;
+
+// RTCM-specific structs
+
+// Maximum length of an RTCM message: 1023
+#define SFE_UBLOX_MAX_RTCM_MSG_LEN 1023
+
+typedef struct
+{
+  uint16_t messageLength;
+  uint32_t rollingChecksum;
+  uint8_t dataMessage[3 + SFE_UBLOX_MAX_RTCM_MSG_LEN + 3]; // Add extra bytes to hold the preamble, length and CRC
+} RTCM_FRAME_t;

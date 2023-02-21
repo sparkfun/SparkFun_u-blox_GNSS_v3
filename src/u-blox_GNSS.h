@@ -56,6 +56,9 @@
 // Uncomment the next line (or add SFE_UBLOX_DISABLE_AUTO_NMEA as a compiler directive) to reduce the amount of program memory used by the library
 // #define SFE_UBLOX_DISABLE_AUTO_NMEA // Uncommenting this line will disable auto-NMEA support to save memory
 
+// Uncomment the next line (or add SFE_UBLOX_DISABLE_RTCM_LOGGING as a compiler directive) to reduce the amount of program memory used by the library
+// #define SFE_UBLOX_DISABLE_RTCM_LOGGING // Uncommenting this line will disable RTCM logging support to save memory
+
 // Uncomment the next line (or add SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT as a compiler directive) to reduce the amount of program memory used by the library
 // #define SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT // Uncommenting this line will disable the RAM-heavy RXM and NAV-SAT support to save memory
 
@@ -72,6 +75,9 @@
 #endif
 #if !defined(SFE_UBLOX_DISABLE_AUTO_NMEA) && defined(ARDUINO_ARCH_AVR) && !defined(ARDUINO_AVR_MEGA2560) && !defined(ARDUINO_AVR_MEGA) && !defined(ARDUINO_AVR_ADK)
 #define SFE_UBLOX_DISABLE_AUTO_NMEA
+#endif
+#if !defined(SFE_UBLOX_DISABLE_RTCM_LOGGING) && defined(ARDUINO_ARCH_AVR) && !defined(ARDUINO_AVR_MEGA2560) && !defined(ARDUINO_AVR_MEGA) && !defined(ARDUINO_AVR_ADK)
+#define SFE_UBLOX_DISABLE_RTCM_LOGGING
 #endif
 #if !defined(SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT) && defined(ARDUINO_ARCH_AVR) && !defined(ARDUINO_AVR_MEGA2560) && !defined(ARDUINO_AVR_MEGA) && !defined(ARDUINO_AVR_ADK)
 #define SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
@@ -1203,6 +1209,12 @@ public:
   bool setNMEAGNZDAcallbackPtr(void (*callbackPointerPtr)(NMEA_ZDA_data_t *)); // Enable a callback on the arrival of a GNZDA message
 #endif
 
+  // Helper functions for RTCM logging
+#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
+  bool setRTCMLoggingMask(uint32_t messages = SFE_UBLOX_FILTER_RTCM_ALL); // Add selected RTCM messages to file buffer - if enabled. Default to adding ALL messages to the file buffer
+  uint32_t getRTCMLoggingMask();                                          // Return which RTCM messages are selected for logging to the file buffer - if enabled
+#endif
+
   // Functions to extract signed and unsigned 8/16/32-bit data from a ubxPacket
   // From v2.0: These are public. The user can call these to extract data from custom packets
   uint64_t extractLongLong(ubxPacket *msg, uint16_t spotToStart);      // Combine eight bytes from payload into uint64_t
@@ -1280,6 +1292,10 @@ public:
 #endif
 
   uint16_t rtcmFrameCounter = 0; // Tracks the type of incoming byte inside RTCM frame
+#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
+  RTCM_FRAME_t *storageRTCM = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
+  void crc24q(uint8_t incoming, uint32_t *checksum); // Add incoming to checksum as per CRC-24Q
+#endif
 
 protected:
   // Depending on the ubx binary response class, store binary responses into different places
@@ -1351,6 +1367,8 @@ protected:
   bool initStorageNMEAGPZDA(); // Allocate RAM for incoming NMEA GPZDA messages and initialize it
   bool initStorageNMEAGNZDA(); // Allocate RAM for incoming NMEA GNZDA messages and initialize it
 
+  bool initStorageRTCM(); // Allocate RAM for incoming RTCM messages and initialize it
+
   // Variables
   SparkFun_UBLOX_GNSS::GNSSDeviceBus *_sfeBus;
 
@@ -1364,6 +1382,8 @@ protected:
 
   sfe_ublox_nmea_filtering_t _logNMEA;     // Flags to indicate which NMEA messages should be added to the file buffer for logging
   sfe_ublox_nmea_filtering_t _processNMEA; // Flags to indicate which NMEA messages should be passed to processNMEA
+
+  sfe_ublox_rtcm_filtering_t _logRTCM;     // Flags to indicate which NMEA messages should be added to the file buffer for logging
 
   // The packet buffers
   // These are pointed at from within the ubxPacket

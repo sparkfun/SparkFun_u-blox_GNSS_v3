@@ -1,9 +1,9 @@
 # Checks the integrity of u-blox binary files
 
 # Written by: Paul Clark
-# Last update: October 17th 2021
+# Last update: February 21st, 2023
 
-# Reads a UBX file and checks the integrity of both UBX and NMEA data
+# Reads a UBX file and checks the integrity of UBX, NMEA and RTCM data
 # Will rewind and re-sync if an error is found
 # Will create a repaired file if desired
 
@@ -42,6 +42,23 @@ def csum(byte, sum1, sum2):
     sum2 = sum2 & 0xFF
     return sum1,sum2
 
+# Add byte to CRC-24Q (RTCM) checksum
+def crc24q(byte, sum):
+    crc = sum # Seed is 0
+
+    crc ^= byte << 16 # XOR-in incoming
+
+    for i in range(8):
+        crc <<= 1
+        if (crc & 0x1000000):
+            # CRC-24Q Polynomial:
+            # gi = 1 for i = 0, 1, 3, 4, 5, 6, 7, 10, 11, 14, 17, 18, 23, 24
+            # 0b 1 1000 0110 0100 1100 1111 1011
+            crc ^= 0x1864CFB # CRC-24Q
+
+    return crc & 0xFFFFFF
+
+
 print('UBX Integrity Checker')
 print()
 
@@ -70,6 +87,13 @@ if (response == '') or (response == 'Y') or (response == 'y'):
     containsNMEA = True
 else:
     containsNMEA = False
+
+# Ask user if the data contains RTCM messages
+response = input('Could this file contain any RTCM messages? (Y/n): ') # Get the response
+if (response == '') or (response == 'Y') or (response == 'y'):
+    containsRTCM = True
+else:
+    containsRTCM = False
 
 # Ask user if the file should be repaired
 response = input('Do you want to repair the file? (y/N): ') # Get the response
@@ -105,21 +129,30 @@ messages = {} # The collected message types
 keepGoing = True
 
 # Sync 'state machine'
-looking_for_B5_dollar   = 0 # Looking for either a UBX 0xB5 or an NMEA '$'
-looking_for_62          = 1 # Looking for a UBX 0x62 header byte
-looking_for_class       = 2 # Looking for UBX class byte
-looking_for_ID          = 3 # Looking for UBX ID byte
-looking_for_length_LSB  = 4 # Looking for UBX length bytes
-looking_for_length_MSB  = 5
-processing_payload      = 6 # Processing the payload. Keep going until length bytes have been processed
-looking_for_checksum_A  = 7 # Looking for UBX checksum bytes
-looking_for_checksum_B  = 8
-sync_lost               = 9 # Go into this state if sync is lost (bad checksum etc.)
-looking_for_asterix     = 10 # Looking for NMEA '*'
-looking_for_csum1       = 11 # Looking for NMEA checksum bytes
-looking_for_csum2       = 12
-looking_for_term1       = 13 # Looking for NMEA terminating bytes (CR and LF)
-looking_for_term2       = 14
+looking_for_B5_dollar_D3    = 0 # Looking for either a UBX 0xB5 or an NMEA '$'
+looking_for_62              = 1 # Looking for a UBX 0x62 header byte
+looking_for_class           = 2 # Looking for UBX class byte
+looking_for_ID              = 3 # Looking for UBX ID byte
+looking_for_length_LSB      = 4 # Looking for UBX length bytes
+looking_for_length_MSB      = 5
+processing_payload          = 6 # Processing the payload. Keep going until length bytes have been processed
+looking_for_checksum_A      = 7 # Looking for UBX checksum bytes
+looking_for_checksum_B      = 8
+sync_lost                   = 9 # Go into this state if sync is lost (bad checksum etc.)
+looking_for_asterix         = 10 # Looking for NMEA '*'
+looking_for_csum1           = 11 # Looking for NMEA checksum bytes
+looking_for_csum2           = 12
+looking_for_term1           = 13 # Looking for NMEA terminating bytes (CR and LF)
+looking_for_term2           = 14
+looking_for_RTCM_len1       = 15 # RTCM
+looking_for_RTCM_len2       = 16
+looking_for_RTCM_type1      = 17
+looking_for_RTCM_type2      = 18
+looking_for_RTCM_subtype    = 19
+processing_rtcm_payload     = 20
+looking_for_RTCM_csum1      = 21
+looking_for_RTCM_csum2      = 22
+looking_for_RTCM_csum3      = 23
 
 ubx_nmea_state = sync_lost # Initialize the state machine
 
@@ -148,7 +181,17 @@ nmea_expected_csum1 = 0
 nmea_expected_csum2 = 0
 longest_NMEA = 0 # The length of the longest valid NMEA message
 
+# Storage for RTCM messages
+rtcm_length = 0
+rtcm_type = 0
+rtcm_subtype = 0
+rtcm_expected_csum = 0
+rtcm_actual_csum = 0
+longest_rtcm = 0 # The length of the longest valid RTCM message
+longest_rtcm_candidate = 0 # Candidate for the length of the longest valid RTCM message
+
 max_nmea_len = 128 # Maximum length for an NMEA message: use this to detect if we have lost sync while receiving an NMEA message
+max_rtcm_len = 1023 + 6 # Maximum length for a RTCM message: use this to detect if we have lost sync while receiving a RTCM message
 sync_lost_at = -1 # Record where we lost sync
 rewind_to = -1 # Keep a note of where we should rewind to if sync is lost
 rewind_attempts = 0 # Keep a note of how many rewinds have been attempted
@@ -187,6 +230,7 @@ try:
         # Length: two bytes, little endian
         # Payload: length bytes
         # Checksum: two bytes
+        #
         # For NMEA messages:
         # Starts with a '$'
         # The next five characters indicate the message type (stored in nmea_char_1 to nmea_char_5)
@@ -194,8 +238,17 @@ try:
         # Followed by an '*'
         # Then a two character checksum (the logical exclusive-OR of all characters between the $ and the * as ASCII hex)
         # Ends with CR LF
-        # Only allow a new file to be opened when a complete packet has been processed and ubx_nmea_state has returned to "looking_for_B5_dollar"
+        # Only allow a new file to be opened when a complete packet has been processed and ubx_nmea_state has returned to "looking_for_B5_dollar_D3"
         # Or when a data error is detected (sync_lost)
+        #
+        # For RTCM messages:
+        # Byte0 is 0xD3
+        # Byte1 contains 6 unused bits plus the 2 MS bits of the message length
+        # Byte2 contains the remainder of the message length
+        # Byte3 contains the first 8 bits of the message type
+        # Byte4 contains the last 4 bits of the message type and (optionally) the first 4 bits of the sub type
+        # Byte5 contains (optionally) the last 8 bits of the sub type
+        # Checksum: three bytes CRC-24Q (starting at Byte0 with seed 0)
 
         # RXM_RAWX is class 0x02 ID 0x15
         # RXM_SFRBF is class 0x02 ID 0x13
@@ -204,7 +257,7 @@ try:
         # NAV_PVT is class 0x01 ID 0x07
         # NAV-STATUS is class 0x01 ID 0x03
 
-        if (ubx_nmea_state == looking_for_B5_dollar) or (ubx_nmea_state == sync_lost):
+        if (ubx_nmea_state == looking_for_B5_dollar_D3) or (ubx_nmea_state == sync_lost):
             if (c == 0xB5): # Have we found Sync Char 1 (0xB5) if we were expecting one?
                 if (ubx_nmea_state == sync_lost):
                     print("UBX Sync Char 1 (0xB5) found at byte "+str(processed)+". Checking for Sync Char 2")
@@ -222,10 +275,19 @@ try:
                 nmea_char_4 = 0x30
                 nmea_char_5 = 0x30
                 message_start_byte = processed # Record the message start byte for resync reporting
+            elif (c == 0xD3) and (containsRTCM == True): # Have we found 0xD3 if we were expecting one?
+                if (ubx_nmea_state == sync_lost):
+                    print("RTCM 0xD3 found at byte "+str(processed)+". Attempting to process the message")
+                ubx_nmea_state = looking_for_RTCM_len1 # Now keep going until we receive the checksum
+                rtcm_expected_csum = 0 # Reset the RTCM csum. Update it as each character arrives
+                rtcm_expected_csum = crc24q(c, rtcm_expected_csum)
+                message_start_byte = processed # Record the message start byte for resync reporting
             else:
                 #print("Was expecting Sync Char 0xB5 or an NMEA $ but did not receive one!")
                 if (c == 0x24):
                     print("Warning: * found at byte "+str(processed)+"! Are you sure this file does not contain NMEA messages?")
+                if (c == 0xD3):
+                    print("Warning: 0xD3 found at byte "+str(processed)+"! Are you sure this file does not contain RTCM messages?")
                 sync_lost_at = processed
                 ubx_nmea_state = sync_lost
         elif (ubx_nmea_state == looking_for_62):
@@ -275,7 +337,7 @@ try:
             ubx_nmea_state = looking_for_checksum_B
         elif (ubx_nmea_state == looking_for_checksum_B):
             ubx_checksum_B = c
-            ubx_nmea_state = looking_for_B5_dollar # All bytes received so go back to looking for a new Sync Char 1 unless there is a checksum error
+            ubx_nmea_state = looking_for_B5_dollar_D3 # All bytes received so go back to looking for a new Sync Char 1 unless there is a checksum error
             if ((ubx_expected_checksum_A != ubx_checksum_A) or (ubx_expected_checksum_B != ubx_checksum_B)):
                 print("Panic!! UBX checksum error!")
                 print("Sync lost at byte "+str(processed)+". Attemting to re-sync.")
@@ -397,7 +459,7 @@ try:
                 if (nmea_length > longest_NMEA): # Update the longest NMEA message length
                     longest_NMEA = nmea_length
                 # LF was received so go back to looking for B5 or a $
-                ubx_nmea_state = looking_for_B5_dollar
+                ubx_nmea_state = looking_for_B5_dollar_D3
                 rewind_in_progress = False # Clear rewind_in_progress
                 rewind_to = -1
                 if (resync_in_progress == True): # Check if we are resyncing
@@ -416,6 +478,97 @@ try:
                 else:
                     if (repairFile):
                         rewind_repair_file_to = repaired_file_bytes # Rewind repair file to here if sync is lost
+        
+        # RTCM messages
+        elif (ubx_nmea_state == looking_for_RTCM_len1):
+            rtcm_length = (c & 0x03) << 8 # Extract length
+            rtcm_expected_csum = crc24q(c, rtcm_expected_csum)
+            ubx_nmea_state = looking_for_RTCM_len2
+        elif (ubx_nmea_state == looking_for_RTCM_len2):
+            rtcm_length |= c # Extract length
+            longest_rtcm_candidate = rtcm_length + 6 # Update the longest RTCM message length candidate. Include the header, length and checksum bytes
+            rtcm_expected_csum = crc24q(c, rtcm_expected_csum)
+            if (rtcm_length > 0):
+                ubx_nmea_state = looking_for_RTCM_type1
+            else:
+                ubx_nmea_state = looking_for_RTCM_csum1
+        elif (ubx_nmea_state == looking_for_RTCM_type1):
+            rtcm_type = c << 4 # Extract type
+            rtcm_expected_csum = crc24q(c, rtcm_expected_csum)
+            rtcm_length = rtcm_length - 1 # Decrement length by one
+            if (rtcm_length > 0):
+                ubx_nmea_state = looking_for_RTCM_type2
+            else:
+                ubx_nmea_state = looking_for_RTCM_csum1
+        elif (ubx_nmea_state == looking_for_RTCM_type2):
+            rtcm_type |= c >> 4 # Extract type
+            message_type = '%04d'%(rtcm_type) # Record the message type
+            rtcm_subtype = (c & 0x0F) << 8 # Extract sub-type
+            rtcm_expected_csum = crc24q(c, rtcm_expected_csum)
+            rtcm_length = rtcm_length - 1 # Decrement length by one
+            if (rtcm_length > 0):
+                ubx_nmea_state = looking_for_RTCM_subtype
+            else:
+                ubx_nmea_state = looking_for_RTCM_csum1
+        elif (ubx_nmea_state == looking_for_RTCM_subtype):
+            rtcm_subtype |= c # Extract sub-type
+            if (rtcm_type == 4072): # Record the sub-type but only for 4072 messages
+                message_type = message_type + "_%i"%(rtcm_subtype)
+            rtcm_expected_csum = crc24q(c, rtcm_expected_csum)
+            rtcm_length = rtcm_length - 1 # Decrement length by one
+            if (rtcm_length > 0):
+                ubx_nmea_state = processing_rtcm_payload
+            else:
+                ubx_nmea_state = looking_for_RTCM_csum1
+        elif (ubx_nmea_state == processing_rtcm_payload):
+            rtcm_expected_csum = crc24q(c, rtcm_expected_csum)
+            rtcm_length = rtcm_length - 1 # Decrement length by one
+            if (rtcm_length == 0):
+                ubx_nmea_state = looking_for_RTCM_csum1
+        elif (ubx_nmea_state == looking_for_RTCM_csum1):
+            rtcm_actual_csum = c << 8
+            ubx_nmea_state = looking_for_RTCM_csum2
+        elif (ubx_nmea_state == looking_for_RTCM_csum2):
+            rtcm_actual_csum |= c
+            rtcm_actual_csum <<= 8
+            ubx_nmea_state = looking_for_RTCM_csum3
+        elif (ubx_nmea_state == looking_for_RTCM_csum3):
+            rtcm_actual_csum |= c
+            ubx_nmea_state = looking_for_B5_dollar_D3 # All bytes received so go back to looking for a new Sync Char 1 unless there is a checksum error
+            if (rtcm_expected_csum != rtcm_actual_csum):
+                print("Panic!! RTCM checksum error!")
+                print("Sync lost at byte "+str(processed)+". Attemting to re-sync.")
+                sync_lost_at = processed
+                resync_in_progress = True
+                ubx_nmea_state = sync_lost
+            else:
+                # Valid RTCM message was received. Check if we have seen this message type before
+                if (longest_rtcm_candidate >= 8): # Message must contain at least 2 bytes to include a valid mesage type
+                    if message_type in messages:
+                        messages[message_type] += 1 # if we have, increment its count
+                    else:
+                        messages[message_type] = 1 # if we have not, set its count to 1
+                    if (longest_rtcm_candidate > longest_rtcm): # Update the longest RTCM message length
+                        longest_rtcm = longest_rtcm_candidate
+                rewind_in_progress = False # Clear rewind_in_progress
+                rewind_to = -1
+                if (resync_in_progress == True): # Check if we are resyncing
+                    resync_in_progress = False # Clear the flag now that a valid message has been received
+                    resyncs += 1 # Increment the number of successful resyncs
+                    print("Sync successfully re-established at byte "+str(processed)+". The RTCM message started at byte "+str(message_start_byte))
+                    print()
+                    if (repairFile):
+                        fo.seek(rewind_repair_file_to) # Rewind the repaired file
+                        repaired_file_bytes = rewind_repair_file_to
+                        fi.seek(message_start_byte) # Copy the valid message into the repair file
+                        repaired_bytes_to_write = processed - message_start_byte
+                        fileBytes = fi.read(repaired_bytes_to_write)
+                        fo.write(fileBytes)
+                        repaired_file_bytes = repaired_file_bytes + repaired_bytes_to_write
+                else:
+                    if (repairFile):
+                        rewind_repair_file_to = repaired_file_bytes # Rewind repair file to here if sync is lost
+
 
         # Check if the end of the file has been reached
         if (processed >= filesize - 1): keepGoing = False
@@ -451,6 +604,8 @@ finally:
     print('Longest valid UBX message was %i bytes'%longest_UBX)
     if (containsNMEA == True):
         print('Longest valid NMEA message was %i characters'%longest_NMEA)
+    if (containsRTCM == True):
+        print('Longest valid RTCM message was %i bytes'%longest_rtcm)
     if len(messages) > 0:
         print('Message types and totals were:')
         for key in messages.keys():
