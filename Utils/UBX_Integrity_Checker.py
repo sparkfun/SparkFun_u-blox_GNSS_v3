@@ -260,12 +260,12 @@ try:
         if (ubx_nmea_state == looking_for_B5_dollar_D3) or (ubx_nmea_state == sync_lost):
             if (c == 0xB5): # Have we found Sync Char 1 (0xB5) if we were expecting one?
                 if (ubx_nmea_state == sync_lost):
-                    print("UBX Sync Char 1 (0xB5) found at byte "+str(processed)+". Checking for Sync Char 2")
+                    print("UBX Sync Char 1 (0xB5) found at byte "+str(processed))
                 ubx_nmea_state = looking_for_62 # Now look for Sync Char 2 (0x62)
                 message_start_byte = processed # Record the message start byte for resync reporting
             elif (c == 0x24) and (containsNMEA == True): # Have we found an NMEA '$' if we were expecting one?
                 if (ubx_nmea_state == sync_lost):
-                    print("NMEA $ found at byte "+str(processed)+". Attempting to process the message")
+                    print("NMEA $ found at byte "+str(processed))
                 ubx_nmea_state = looking_for_asterix # Now keep going until we receive an asterix
                 nmea_length = 0 # Reset nmea_length then use it to check for excessive message length
                 nmea_csum = 0 # Reset the nmea_csum. Update it as each character arrives
@@ -277,13 +277,13 @@ try:
                 message_start_byte = processed # Record the message start byte for resync reporting
             elif (c == 0xD3) and (containsRTCM == True): # Have we found 0xD3 if we were expecting one?
                 if (ubx_nmea_state == sync_lost):
-                    print("RTCM 0xD3 found at byte "+str(processed)+". Attempting to process the message")
+                    print("RTCM 0xD3 found at byte "+str(processed))
                 ubx_nmea_state = looking_for_RTCM_len1 # Now keep going until we receive the checksum
-                rtcm_expected_csum = 0 # Reset the RTCM csum. Update it as each character arrives
-                rtcm_expected_csum = crc24q(c, rtcm_expected_csum)
+                rtcm_expected_csum = 0 # Reset the RTCM csum with a seed of 0. Update it as each character arrives
+                rtcm_expected_csum = crc24q(c, rtcm_expected_csum) # Update expected checksum
                 message_start_byte = processed # Record the message start byte for resync reporting
             else:
-                #print("Was expecting Sync Char 0xB5 or an NMEA $ but did not receive one!")
+                #print("Was expecting Sync Char 0xB5, NMEA $ or RTCM 0xD3 but did not receive one!")
                 if (c == 0x24):
                     print("Warning: * found at byte "+str(processed)+"! Are you sure this file does not contain NMEA messages?")
                 if (c == 0xD3):
@@ -482,19 +482,20 @@ try:
         # RTCM messages
         elif (ubx_nmea_state == looking_for_RTCM_len1):
             rtcm_length = (c & 0x03) << 8 # Extract length
-            rtcm_expected_csum = crc24q(c, rtcm_expected_csum)
+            rtcm_expected_csum = crc24q(c, rtcm_expected_csum) # Update expected checksum
+            rewind_to = processed # If we lose sync due to dropped bytes then rewind to here
             ubx_nmea_state = looking_for_RTCM_len2
         elif (ubx_nmea_state == looking_for_RTCM_len2):
             rtcm_length |= c # Extract length
             longest_rtcm_candidate = rtcm_length + 6 # Update the longest RTCM message length candidate. Include the header, length and checksum bytes
-            rtcm_expected_csum = crc24q(c, rtcm_expected_csum)
+            rtcm_expected_csum = crc24q(c, rtcm_expected_csum) # Update expected checksum
             if (rtcm_length > 0):
                 ubx_nmea_state = looking_for_RTCM_type1
             else:
                 ubx_nmea_state = looking_for_RTCM_csum1
         elif (ubx_nmea_state == looking_for_RTCM_type1):
             rtcm_type = c << 4 # Extract type
-            rtcm_expected_csum = crc24q(c, rtcm_expected_csum)
+            rtcm_expected_csum = crc24q(c, rtcm_expected_csum) # Update expected checksum
             rtcm_length = rtcm_length - 1 # Decrement length by one
             if (rtcm_length > 0):
                 ubx_nmea_state = looking_for_RTCM_type2
@@ -502,9 +503,9 @@ try:
                 ubx_nmea_state = looking_for_RTCM_csum1
         elif (ubx_nmea_state == looking_for_RTCM_type2):
             rtcm_type |= c >> 4 # Extract type
-            message_type = '%04d'%(rtcm_type) # Record the message type
+            message_type = '%04d'%rtcm_type # Record the message type
             rtcm_subtype = (c & 0x0F) << 8 # Extract sub-type
-            rtcm_expected_csum = crc24q(c, rtcm_expected_csum)
+            rtcm_expected_csum = crc24q(c, rtcm_expected_csum) # Update expected checksum
             rtcm_length = rtcm_length - 1 # Decrement length by one
             if (rtcm_length > 0):
                 ubx_nmea_state = looking_for_RTCM_subtype
@@ -513,15 +514,15 @@ try:
         elif (ubx_nmea_state == looking_for_RTCM_subtype):
             rtcm_subtype |= c # Extract sub-type
             if (rtcm_type == 4072): # Record the sub-type but only for 4072 messages
-                message_type = message_type + "_%i"%(rtcm_subtype)
-            rtcm_expected_csum = crc24q(c, rtcm_expected_csum)
+                message_type = message_type + '_%i'%rtcm_subtype
+            rtcm_expected_csum = crc24q(c, rtcm_expected_csum) # Update expected checksum
             rtcm_length = rtcm_length - 1 # Decrement length by one
             if (rtcm_length > 0):
                 ubx_nmea_state = processing_rtcm_payload
             else:
                 ubx_nmea_state = looking_for_RTCM_csum1
         elif (ubx_nmea_state == processing_rtcm_payload):
-            rtcm_expected_csum = crc24q(c, rtcm_expected_csum)
+            rtcm_expected_csum = crc24q(c, rtcm_expected_csum) # Update expected checksum
             rtcm_length = rtcm_length - 1 # Decrement length by one
             if (rtcm_length == 0):
                 ubx_nmea_state = looking_for_RTCM_csum1
@@ -543,7 +544,7 @@ try:
                 ubx_nmea_state = sync_lost
             else:
                 # Valid RTCM message was received. Check if we have seen this message type before
-                if (longest_rtcm_candidate >= 8): # Message must contain at least 2 bytes to include a valid mesage type
+                if (longest_rtcm_candidate >= 8): # Message must contain at least 2 (+6) bytes to include a valid mesage type
                     if message_type in messages:
                         messages[message_type] += 1 # if we have, increment its count
                     else:
@@ -609,7 +610,7 @@ finally:
     if len(messages) > 0:
         print('Message types and totals were:')
         for key in messages.keys():
-            print('Message type:',key,'  Total:',messages[key])
+            print('Message type:',key,'\tTotal:',messages[key])
     if (resyncs > 0):
         print('Number of successful resyncs:',resyncs)
     print()
