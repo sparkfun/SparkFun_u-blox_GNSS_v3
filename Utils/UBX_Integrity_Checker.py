@@ -503,7 +503,7 @@ try:
                 ubx_nmea_state = looking_for_RTCM_csum1
         elif (ubx_nmea_state == looking_for_RTCM_type2):
             rtcm_type |= c >> 4 # Extract type
-            message_type = '%04d'%rtcm_type # Record the message type
+            message_type = '%04i'%rtcm_type # Record the message type
             rtcm_subtype = (c & 0x0F) << 8 # Extract sub-type
             rtcm_expected_csum = crc24q(c, rtcm_expected_csum) # Update expected checksum
             rtcm_length = rtcm_length - 1 # Decrement length by one
