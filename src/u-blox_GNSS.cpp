@@ -1820,7 +1820,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
           if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
           {
             _debugSerial.print(F("process: RTCM checksum fail: 0x"));
-            _debugSerial.print(expectedChecksum);
+            _debugSerial.print(expectedChecksum, HEX);
             _debugSerial.print(F(" vs 0x"));
             _debugSerial.println(storageRTCM->rollingChecksum, HEX);
           }
