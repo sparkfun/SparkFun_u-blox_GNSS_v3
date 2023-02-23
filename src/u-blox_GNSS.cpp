@@ -584,6 +584,27 @@ void DevUBLOXGNSS::end(void)
     storageRTCM = nullptr;
   }
 #endif
+
+  if (sfe_ublox_ubx_logging_list_head != nullptr)
+  {
+    while (sfe_ublox_ubx_logging_list_head->next != nullptr)
+    {
+      // Step through the list, find the tail
+      sfe_ublox_ubx_logging_list_t *sfe_ublox_ubx_logging_list_ptr_previous = sfe_ublox_ubx_logging_list_head;
+      sfe_ublox_ubx_logging_list_t *sfe_ublox_ubx_logging_list_ptr = sfe_ublox_ubx_logging_list_head->next;
+      while (sfe_ublox_ubx_logging_list_ptr->next != nullptr)
+      {
+        sfe_ublox_ubx_logging_list_ptr_previous = sfe_ublox_ubx_logging_list_ptr;
+        sfe_ublox_ubx_logging_list_ptr = sfe_ublox_ubx_logging_list_ptr->next;
+      }
+      // Delete the tail
+      delete sfe_ublox_ubx_logging_list_ptr;
+      sfe_ublox_ubx_logging_list_ptr_previous->next = nullptr;
+    }
+    // Finally, delete the head
+    delete sfe_ublox_ubx_logging_list_head;
+    sfe_ublox_ubx_logging_list_head = nullptr;
+  }
 }
 
 // Allow the user to change packetCfgPayloadSize. Handy if you want to process big messages like RAWX
@@ -1270,7 +1291,7 @@ bool DevUBLOXGNSS::autoLookup(uint8_t Class, uint8_t ID, uint16_t *maxSize)
   return false;
 }
 
-// Processes NMEA and UBX binary sentences one byte at a time
+// Processes NMEA, RTCM and UBX binary sentences one byte at a time
 // Take a given byte and file it into the proper array
 void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
@@ -1337,6 +1358,9 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
       // If the packet we are receiving is not an ACK then check for a class and ID match
       if (packetBuf.cls != UBX_CLASS_ACK)
       {
+        bool logBecauseAuto = autoLookup(packetBuf.cls, packetBuf.id, &maxPayload);
+        bool logBecauseEnabled = logThisUBX(packetBuf.cls, packetBuf.id);
+
         // This is not an ACK so check for a class and ID match
         if ((packetBuf.cls == requestedClass) && (packetBuf.id == requestedID))
         {
@@ -1349,13 +1373,13 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
         }
         // This is not an ACK and we do not have a complete class and ID match
         // So let's check if this is an "automatic" message which has its own storage defined
-        else if (autoLookup(packetBuf.cls, packetBuf.id, &maxPayload))
+        else if (logBecauseAuto || logBecauseEnabled)
         {
           // This is not the message we were expecting but it has its own storage and so we should process it anyway.
           // We'll try to use packetAuto to buffer the message (so it can't overwrite anything in packetCfg).
           // We need to allocate memory for the packetAuto payload (payloadAuto) - and delete it once
           // reception is complete.
-          if (maxPayload == 0)
+          if (logBecauseAuto && (maxPayload == 0))
           {
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
             if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
@@ -1379,6 +1403,8 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
             payloadAuto = nullptr;
             packetAuto.payload = payloadAuto;
           }
+          if ((!logBecauseAuto) && (logBecauseEnabled))
+            maxPayload = SFE_UBX_MAX_LENGTH;
           payloadAuto = new uint8_t[maxPayload]; // Allocate RAM for payloadAuto
           packetAuto.payload = payloadAuto;
           if (payloadAuto == nullptr) // Check if the alloc failed
@@ -2658,7 +2684,11 @@ void DevUBLOXGNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t 
     //  when ubxFrameCounter >= 3)
     // if (incomingUBX->counter >= 2)
     //{
-    autoLookup(incomingUBX->cls, incomingUBX->id, &maximum_payload_size);
+
+    bool logBecauseAuto = autoLookup(incomingUBX->cls, incomingUBX->id, &maximum_payload_size);
+    bool logBecauseEnabled = logThisUBX(incomingUBX->cls, incomingUBX->id);
+    if (!logBecauseAuto && logBecauseEnabled)
+      maximum_payload_size = SFE_UBX_MAX_LENGTH;
     if (maximum_payload_size == 0)
     {
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
@@ -2747,7 +2777,7 @@ void DevUBLOXGNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t 
 
       // This is not an ACK and we do not have a complete class and ID match
       // So let's check for an "automatic" message arriving
-      else if (autoLookup(incomingUBX->cls, incomingUBX->id))
+      else if (autoLookup(incomingUBX->cls, incomingUBX->id) || logThisUBX(incomingUBX->cls, incomingUBX->id))
       {
         // This isn't the message we are looking for...
         // Let's say so and leave incomingUBX->classAndIDmatch _unchanged_
@@ -2900,6 +2930,7 @@ void DevUBLOXGNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t 
 // Once a packet has been received and validated, identify this packet's class/id and update internal flags
 void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
 {
+  bool addedToFileBuffer = false;
   switch (msg->cls)
   {
   case UBX_CLASS_NAV:
@@ -2928,7 +2959,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVPOSECEF->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -2959,7 +2990,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVSTATUS->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -2991,7 +3022,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVDOP->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3023,7 +3054,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVATT->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3080,7 +3111,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVPVT->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3109,7 +3140,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVODO->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3138,7 +3169,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVVELECEF->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3171,7 +3202,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVVELNED->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3205,7 +3236,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVHPPOSECEF->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3242,7 +3273,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVHPPOSLLH->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3305,7 +3336,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVPVAT->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3339,7 +3370,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVTIMEUTC->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3368,7 +3399,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVCLOCK->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3425,7 +3456,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVSVIN->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3466,7 +3497,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVSAT->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3534,7 +3565,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVRELPOSNED->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3561,7 +3592,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVAOPSTATUS->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3586,7 +3617,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVEOE->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3733,7 +3764,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXRXMSFRBX->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3789,7 +3820,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXRXMRAWX->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3841,7 +3872,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXRXMMEASX->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3879,7 +3910,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXTIMTM2->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3913,7 +3944,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXESFALG->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3945,7 +3976,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXESFINS->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -3975,7 +4006,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXESFMEAS->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -4002,7 +4033,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXESFRAW->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -4037,7 +4068,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXESFSTATUS->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -4185,7 +4216,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXHNRPVT->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -4217,7 +4248,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXHNRATT->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
@@ -4249,13 +4280,88 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXHNRINS->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          addedToFileBuffer = storePacket(msg);
         }
       }
     }
     break;
 #endif
   }
+
+  // Check if this UBX message should be added to the file buffer - if it has not been added already
+  if (!addedToFileBuffer && logThisUBX(msg->cls, msg->id))
+    storePacket(msg);
+}
+
+// UBX Logging - without needing to have or use "Auto" methods
+void DevUBLOXGNSS::enableUBXlogging(uint8_t UBX_CLASS, uint8_t UBX_ID, bool enable)
+{
+  // If the list is empty
+  if (sfe_ublox_ubx_logging_list_head == nullptr)
+  {
+    // Start the list with this CLASS + ID
+    sfe_ublox_ubx_logging_list_head = new sfe_ublox_ubx_logging_list_t;
+    sfe_ublox_ubx_logging_list_head->UBX_CLASS = UBX_CLASS;
+    sfe_ublox_ubx_logging_list_head->UBX_ID = UBX_ID;
+    sfe_ublox_ubx_logging_list_head->enable = enable;
+    sfe_ublox_ubx_logging_list_head->next = nullptr;
+    return;
+  }
+
+  // Check if this CLASS + ID is already registered in the linked list
+  sfe_ublox_ubx_logging_list_t *sfe_ublox_ubx_logging_list_ptr = sfe_ublox_ubx_logging_list_head;
+
+  // Step through the list, check for CLASS + ID
+  bool keepGoing = true;
+  while (keepGoing)
+  {
+    if ((sfe_ublox_ubx_logging_list_ptr->UBX_CLASS == UBX_CLASS) // Check for a match
+        && (sfe_ublox_ubx_logging_list_ptr->UBX_ID == UBX_ID))
+    {
+      sfe_ublox_ubx_logging_list_ptr->enable = enable; // Update enable
+      return;
+    }
+
+    if (sfe_ublox_ubx_logging_list_ptr->next == nullptr)
+      keepGoing = false;
+    else
+      sfe_ublox_ubx_logging_list_ptr = sfe_ublox_ubx_logging_list_ptr->next;
+  }
+
+  // CLASS + ID not found. Add them.
+  sfe_ublox_ubx_logging_list_ptr->next = new sfe_ublox_ubx_logging_list_t;
+  sfe_ublox_ubx_logging_list_ptr = sfe_ublox_ubx_logging_list_ptr->next;
+  sfe_ublox_ubx_logging_list_ptr->UBX_CLASS = UBX_CLASS;
+  sfe_ublox_ubx_logging_list_ptr->UBX_ID = UBX_ID;
+  sfe_ublox_ubx_logging_list_ptr->enable = enable;
+  sfe_ublox_ubx_logging_list_ptr->next = nullptr;
+}
+
+// PRIVATE: Returns true if this UBX should be added to the logging buffer
+bool DevUBLOXGNSS::logThisUBX(uint8_t UBX_CLASS, uint8_t UBX_ID)
+{
+  // If the list is empty
+  if (sfe_ublox_ubx_logging_list_head == nullptr)
+    return false;
+
+  // Step through the list, check for CLASS + ID
+  sfe_ublox_ubx_logging_list_t *sfe_ublox_ubx_logging_list_ptr = sfe_ublox_ubx_logging_list_head;
+  bool keepGoing = true;
+  while (keepGoing)
+  {
+    if ((sfe_ublox_ubx_logging_list_ptr->UBX_CLASS == UBX_CLASS) // Check for a match
+        && (sfe_ublox_ubx_logging_list_ptr->UBX_ID == UBX_ID))
+    {
+      return sfe_ublox_ubx_logging_list_ptr->enable;
+    }
+
+    if (sfe_ublox_ubx_logging_list_ptr->next == nullptr)
+      keepGoing = false;
+    else
+      sfe_ublox_ubx_logging_list_ptr = sfe_ublox_ubx_logging_list_ptr->next;
+  }
+
+  return false;
 }
 
 // Given a message, calc and store the two byte "8-Bit Fletcher" checksum over the entirety of the message

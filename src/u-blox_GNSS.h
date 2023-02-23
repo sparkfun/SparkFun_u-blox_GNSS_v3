@@ -1215,6 +1215,9 @@ public:
   uint32_t getRTCMLoggingMask();                                          // Return which RTCM messages are selected for logging to the file buffer - if enabled
 #endif
 
+  // UBX Logging - log any UBX message using packetAuto and avoiding having to have and use "Auto" (setAutonnn and lognnn) methods
+  void enableUBXlogging(uint8_t UBX_CLASS, uint8_t UBX_ID, bool enable = true);
+
   // Functions to extract signed and unsigned 8/16/32-bit data from a ubxPacket
   // From v2.0: These are public. The user can call these to extract data from custom packets
   uint64_t extractLongLong(ubxPacket *msg, uint16_t spotToStart);      // Combine eight bytes from payload into uint64_t
@@ -1439,6 +1442,14 @@ protected:
   bool processThisNMEA();      // Return true if we should pass this NMEA message to processNMEA
   bool isNMEAHeaderValid();    // Return true if the six byte NMEA header appears valid. Used to set _signsOfLife
 
+  //Define the maximum possible message length for packetAuto and enableUBXlogging
+  //UBX_NAV_SAT_MAX_LEN is just > UBX_RXM_RAWX_MAX_LEN
+  const uint16_t SFE_UBX_MAX_LENGTH = UBX_NAV_SAT_MAX_LEN;
+
+  // UBX logging
+  sfe_ublox_ubx_logging_list_t *sfe_ublox_ubx_logging_list_head = nullptr; // Linked list of which messages to log
+  bool logThisUBX(uint8_t UBX_CLASS, uint8_t UBX_ID); // Returns true if this UBX should be added to the logging buffer
+
 #ifndef SFE_UBLOX_DISABLE_AUTO_NMEA
   bool isThisNMEAauto();                 // Check if the NMEA message (in nmeaAddressField) is "auto" (i.e. has RAM allocated for it)
   bool doesThisNMEAHaveCallback();       // Do we need to copy the data into the callback copy?
@@ -1459,8 +1470,8 @@ protected:
   // Support for data logging
   uint8_t *ubxFileBuffer = nullptr;                             // Pointer to the file buffer. RAM is allocated for this if required in .begin
   uint16_t fileBufferSize = 0;                                  // The size of the file buffer. This can be changed by calling setFileBufferSize _before_ .begin
-  uint16_t fileBufferHead;                                      // The incoming byte is written into the file buffer at this location
-  uint16_t fileBufferTail;                                      // The next byte to be read from the buffer will be read from this location
+  uint16_t fileBufferHead = 0;                                  // The incoming byte is written into the file buffer at this location
+  uint16_t fileBufferTail = 0;                                  // The next byte to be read from the buffer will be read from this location
   uint16_t fileBufferMaxAvail = 0;                              // The maximum number of bytes the file buffer has contained. Handy for checking the buffer is large enough to handle all the incoming data.
   bool createFileBuffer(void);                                  // Create the file buffer. Called by .begin
   uint16_t fileBufferSpaceAvailable(void);                      // Check how much space is available in the buffer

@@ -685,6 +685,8 @@ setRTCMLoggingMask	KEYWORD2
 getRTCMLoggingMask	KEYWORD2
 crc24q	KEYWORD2
 
+enableUBXlogging	KEYWORD2
+
 setMainTalkerID	KEYWORD2
 setHighPrecisionMode	KEYWORD2
 

@@ -237,6 +237,16 @@ typedef enum
   SFE_UBLOX_FILTER_RTCM_TYPE4072_1 = 0x08000000,
 } sfe_ublox_rtcm_filtering_e;
 
+// Define a linked list which defines which UBX messages should be logged automatically
+// - without needing to have and use the Auto methods
+struct sfe_ublox_ubx_logging_list_t
+{
+  uint8_t UBX_CLASS;
+  uint8_t UBX_ID;
+  bool enable;
+  sfe_ublox_ubx_logging_list_t *next;
+};
+
 //-=-=-=-=-
 
 #ifndef MAX_PAYLOAD_SIZE
