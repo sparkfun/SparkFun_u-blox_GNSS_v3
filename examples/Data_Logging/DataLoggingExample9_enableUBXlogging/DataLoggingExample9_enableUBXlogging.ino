@@ -1,14 +1,15 @@
 /*
-  Demonstrate how to log a UBX message that does not have full Auto support
+  Demonstrate how to log any UBX message - without needing the Auto methods
   By: Paul Clark
   SparkFun Electronics
   Date: February 21st, 2023
   License: MIT. See license file for more information.
 
-  This example shows how to configure the u-blox GNSS to output UBX_NAV_TIMEGPS
+  This example shows how to configure the u-blox GNSS to output (e.g.) UBX_NAV_TIMEGPS
   and log those messages to SD card in UBX format. This is cool because UBX_NAV_TIMEGPS
   does not have full "Auto" support. There are no setAutoNAVTIMEGPS or logNAVTIMEGPS methods.
-  But we can log it anyway...!
+  But we can log it anyway...! Just to prove it's possible, we also log NAV-SAT and RXM-RAWX
+  without using their Auto methods.
 
   ** Please note: this example will only work on processors like the ESP32 which have plenty of RAM available **
 
@@ -146,6 +147,7 @@ void setup()
 
   myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_UBX_NAV_TIMEGPS_I2C, 1); // Enable the NAV-TIMEGPS message on I2C
   myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_UBX_NAV_SAT_I2C, 1); // Enable the NAV-SAT message on I2C. This has full "Auto" support but we don't use that here.
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_UBX_RXM_RAWX_I2C, 1); // Enable the RXM-RAWX message on I2C. This has full "Auto" support but we don't use that here.
 
   myGNSS.sendCfgValset(); // Send the configuration VALSET
 
@@ -156,7 +158,8 @@ void setup()
   //myGNSS.setRTCMLoggingMask(SFE_UBLOX_FILTER_RTCM_4072_0 | SFE_UBLOX_FILTER_RTCM_4072_1); // Or we can, for example, log only RTCM 4072 messages
 
   myGNSS.enableUBXlogging(UBX_CLASS_NAV, UBX_NAV_TIMEGPS, true); // Enable logging of NAV-TIMEGPS
-  myGNSS.enableUBXlogging(UBX_CLASS_NAV, UBX_NAV_SAT, true); // Enable logging of NAV-SAT (requires 3K of available RAM!)
+  myGNSS.enableUBXlogging(UBX_CLASS_NAV, UBX_NAV_SAT, true); // Enable logging of NAV-SAT
+  myGNSS.enableUBXlogging(UBX_CLASS_RXM, UBX_RXM_RAWX, true); // Enable logging of RXM-RAWX
 
   myBuffer = new uint8_t[sdWriteSize]; // Create our own buffer to hold the data while we write it to SD card
   
