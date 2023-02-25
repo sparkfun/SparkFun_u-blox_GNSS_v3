@@ -129,13 +129,13 @@ messages = {} # The collected message types
 keepGoing = True
 
 # Sync 'state machine'
-looking_for_B5_dollar_D3    = 0 # Looking for either a UBX 0xB5 or an NMEA '$'
-looking_for_62              = 1 # Looking for a UBX 0x62 header byte
+looking_for_B5_dollar_D3    = 0 # Looking for UBX 0xB5, NMEA '$' or RTCM 0xD3
+looking_for_62              = 1 # Looking for UBX 0x62 header byte
 looking_for_class           = 2 # Looking for UBX class byte
 looking_for_ID              = 3 # Looking for UBX ID byte
 looking_for_length_LSB      = 4 # Looking for UBX length bytes
 looking_for_length_MSB      = 5
-processing_payload          = 6 # Processing the payload. Keep going until length bytes have been processed
+processing_UBX_payload      = 6 # Processing the UBX payload. Keep going until length bytes have been processed
 looking_for_checksum_A      = 7 # Looking for UBX checksum bytes
 looking_for_checksum_B      = 8
 sync_lost                   = 9 # Go into this state if sync is lost (bad checksum etc.)
@@ -144,15 +144,15 @@ looking_for_csum1           = 11 # Looking for NMEA checksum bytes
 looking_for_csum2           = 12
 looking_for_term1           = 13 # Looking for NMEA terminating bytes (CR and LF)
 looking_for_term2           = 14
-looking_for_RTCM_len1       = 15 # RTCM
-looking_for_RTCM_len2       = 16
-looking_for_RTCM_type1      = 17
-looking_for_RTCM_type2      = 18
-looking_for_RTCM_subtype    = 19
-processing_rtcm_payload     = 20
-looking_for_RTCM_csum1      = 21
-looking_for_RTCM_csum2      = 22
-looking_for_RTCM_csum3      = 23
+looking_for_RTCM_len1       = 15 # Looking for RTCM length byte (2 MS bits)
+looking_for_RTCM_len2       = 16 # Looking for RTCM length byte (8 LS bits)
+looking_for_RTCM_type1      = 17 # Looking for RTCM Type byte (8 MS bits, first byte of the payload)
+looking_for_RTCM_type2      = 18 # Looking for RTCM Type byte (4 LS bits, second byte of the payload)
+looking_for_RTCM_subtype    = 19 # Looking for RTCM Sub-Type byte (8 LS bits, third byte of the payload)
+processing_RTCM_payload     = 20 # Processing RTCM payload bytes
+looking_for_RTCM_csum1      = 21 # Looking for the first 8 bits of the CRC-24Q checksum
+looking_for_RTCM_csum2      = 22 # Looking for the second 8 bits of the CRC-24Q checksum
+looking_for_RTCM_csum3      = 23 # Looking for the third 8 bits of the CRC-24Q checksum
 
 ubx_nmea_state = sync_lost # Initialize the state machine
 
@@ -248,7 +248,8 @@ try:
         # Byte3 contains the first 8 bits of the message type
         # Byte4 contains the last 4 bits of the message type and (optionally) the first 4 bits of the sub type
         # Byte5 contains (optionally) the last 8 bits of the sub type
-        # Checksum: three bytes CRC-24Q (starting at Byte0 with seed 0)
+        # Payload
+        # Checksum: three bytes CRC-24Q (calculated from Byte0 to the end of the payload, with seed 0)
 
         # RXM_RAWX is class 0x02 ID 0x15
         # RXM_SFRBF is class 0x02 ID 0x13
@@ -290,6 +291,8 @@ try:
                     print("Warning: 0xD3 found at byte "+str(processed)+"! Are you sure this file does not contain RTCM messages?")
                 sync_lost_at = processed
                 ubx_nmea_state = sync_lost
+        
+        # UBX messages
         elif (ubx_nmea_state == looking_for_62):
             if (c == 0x62): # Have we found Sync Char 2 (0x62) when we were expecting one?
                 ubx_expected_checksum_A = 0 # Reset the expected checksum
@@ -323,8 +326,8 @@ try:
             ubx_expected_checksum_B = ubx_expected_checksum_B + ubx_expected_checksum_A
             longest_UBX_candidate = ubx_length + 8 # Update the longest UBX message length candidate. Include the header, class, ID, length and checksum bytes
             rewind_to = processed # If we lose sync due to dropped bytes then rewind to here
-            ubx_nmea_state = processing_payload # Now look for payload bytes (length: ubx_length)
-        elif (ubx_nmea_state == processing_payload):
+            ubx_nmea_state = processing_UBX_payload # Now look for payload bytes (length: ubx_length)
+        elif (ubx_nmea_state == processing_UBX_payload):
             ubx_length = ubx_length - 1 # Decrement length by one
             ubx_expected_checksum_A = ubx_expected_checksum_A + c # Update the expected checksum
             ubx_expected_checksum_B = ubx_expected_checksum_B + ubx_expected_checksum_A
@@ -518,10 +521,10 @@ try:
             rtcm_expected_csum = crc24q(c, rtcm_expected_csum) # Update expected checksum
             rtcm_length = rtcm_length - 1 # Decrement length by one
             if (rtcm_length > 0):
-                ubx_nmea_state = processing_rtcm_payload
+                ubx_nmea_state = processing_RTCM_payload
             else:
                 ubx_nmea_state = looking_for_RTCM_csum1
-        elif (ubx_nmea_state == processing_rtcm_payload):
+        elif (ubx_nmea_state == processing_RTCM_payload):
             rtcm_expected_csum = crc24q(c, rtcm_expected_csum) # Update expected checksum
             rtcm_length = rtcm_length - 1 # Decrement length by one
             if (rtcm_length == 0):
@@ -610,7 +613,8 @@ finally:
     if len(messages) > 0:
         print('Message types and totals were:')
         for key in messages.keys():
-            print('Message type:',key,'\tTotal:',messages[key])
+            spaces = ' ' * (9 - len(key))
+            print('Message type:',key,spaces,'Total:',messages[key])
     if (resyncs > 0):
         print('Number of successful resyncs:',resyncs)
     print()
