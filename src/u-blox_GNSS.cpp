@@ -1223,8 +1223,8 @@ bool DevUBLOXGNSS::autoLookup(uint8_t Class, uint8_t ID, uint16_t *maxSize)
     else if (ID == UBX_NAV_STATUS)
     {
       if (maxSize != nullptr)
-        *maxSize = UBX_RXM_PMP_MAX_LEN;
-      return (packetUBXNAVPOSECEF != nullptr);
+        *maxSize = UBX_NAV_STATUS_LEN;
+      return (packetUBXNAVSTATUS != nullptr);
     }
     else if (ID == UBX_NAV_DOP)
     {
@@ -2857,7 +2857,7 @@ void DevUBLOXGNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t 
 
     bool logBecauseAuto = autoLookup(incomingUBX->cls, incomingUBX->id, &maximum_payload_size);
     bool logBecauseEnabled = logThisUBX(incomingUBX->cls, incomingUBX->id);
-    if (!logBecauseAuto && logBecauseEnabled)
+    if ((!logBecauseAuto) && (logBecauseEnabled))
       maximum_payload_size = SFE_UBX_MAX_LENGTH;
     if (maximum_payload_size == 0)
     {
