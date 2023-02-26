@@ -1208,85 +1208,251 @@ bool DevUBLOXGNSS::checkUbloxSpi(ubxPacket *incomingUBX, uint8_t requestedClass,
 // Also calculate how much RAM is needed to store the payload for a given automatic message
 bool DevUBLOXGNSS::autoLookup(uint8_t Class, uint8_t ID, uint16_t *maxSize)
 {
-  typedef struct
-  {
-    uint8_t Class;
-    uint8_t ID;
-    void *packetPtr;
-    uint16_t maxSize;
-  } checkAutomaticTableEntry;
-
-  const checkAutomaticTableEntry checkAutomaticTable[]{
-      {UBX_CLASS_NAV, UBX_NAV_POSECEF, &packetUBXNAVPOSECEF, UBX_NAV_POSECEF_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_STATUS, &packetUBXNAVSTATUS, UBX_NAV_STATUS_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_DOP, &packetUBXNAVDOP, UBX_NAV_DOP_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_ATT, &packetUBXNAVATT, UBX_NAV_ATT_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_PVT, &packetUBXNAVPVT, UBX_NAV_PVT_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_ODO, &packetUBXNAVODO, UBX_NAV_ODO_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_VELECEF, &packetUBXNAVVELECEF, UBX_NAV_VELECEF_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_VELNED, &packetUBXNAVVELNED, UBX_NAV_VELNED_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_HPPOSECEF, &packetUBXNAVHPPOSECEF, UBX_NAV_HPPOSECEF_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_HPPOSLLH, &packetUBXNAVHPPOSLLH, UBX_NAV_HPPOSLLH_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_PVAT, &packetUBXNAVPVAT, UBX_NAV_PVAT_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_TIMEUTC, &packetUBXNAVTIMEUTC, UBX_NAV_TIMEUTC_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_CLOCK, &packetUBXNAVCLOCK, UBX_NAV_CLOCK_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_TIMELS, &packetUBXNAVTIMELS, UBX_NAV_TIMELS_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_SVIN, &packetUBXNAVSVIN, UBX_NAV_SVIN_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_RELPOSNED, &packetUBXNAVRELPOSNED, UBX_NAV_RELPOSNED_LEN_F9},
-      {UBX_CLASS_NAV, UBX_NAV_AOPSTATUS, &packetUBXNAVAOPSTATUS, UBX_NAV_AOPSTATUS_LEN},
-      {UBX_CLASS_NAV, UBX_NAV_EOE, &packetUBXNAVEOE, UBX_NAV_EOE_LEN},
-#ifndef SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
-      {UBX_CLASS_NAV, UBX_NAV_SAT, &packetUBXNAVSAT, UBX_NAV_SAT_MAX_LEN},
-      {UBX_CLASS_RXM, UBX_RXM_SFRBX, &packetUBXRXMSFRBX, UBX_RXM_SFRBX_MAX_LEN},
-      {UBX_CLASS_RXM, UBX_RXM_RAWX, &packetUBXRXMRAWX, UBX_RXM_RAWX_MAX_LEN},
-      {UBX_CLASS_RXM, UBX_RXM_QZSSL6, &packetUBXRXMQZSSL6message, UBX_RXM_QZSSL6_MAX_LEN},
-      {UBX_CLASS_RXM, UBX_RXM_COR, &packetUBXRXMCOR, UBX_RXM_COR_LEN},
-      {UBX_CLASS_RXM, UBX_RXM_MEASX, &packetUBXRXMMEASX, UBX_RXM_MEASX_MAX_LEN},
-#endif
-      {UBX_CLASS_TIM, UBX_TIM_TM2, &packetUBXTIMTM2, UBX_TIM_TM2_LEN},
-#ifndef SFE_UBLOX_DISABLE_ESF
-      {UBX_CLASS_ESF, UBX_ESF_ALG, &packetUBXESFALG, UBX_ESF_ALG_LEN},
-      {UBX_CLASS_ESF, UBX_ESF_INS, &packetUBXESFINS, UBX_ESF_INS_LEN},
-      {UBX_CLASS_ESF, UBX_ESF_MEAS, &packetUBXESFMEAS, UBX_ESF_MEAS_MAX_LEN},
-      {UBX_CLASS_ESF, UBX_ESF_RAW, &packetUBXESFRAW, UBX_ESF_RAW_MAX_LEN},
-      {UBX_CLASS_ESF, UBX_ESF_STATUS, &packetUBXESFSTATUS, UBX_ESF_STATUS_MAX_LEN},
-#endif
-      {UBX_CLASS_MGA, UBX_MGA_ACK_DATA0, &packetUBXMGAACK, UBX_MGA_ACK_DATA0_LEN},
-      {UBX_CLASS_MGA, UBX_MGA_DBD, &packetUBXMGADBD, UBX_MGA_DBD_LEN},
-#ifndef SFE_UBLOX_DISABLE_HNR
-      {UBX_CLASS_HNR, UBX_HNR_PVT, &packetUBXHNRPVT, UBX_HNR_PVT_LEN},
-      {UBX_CLASS_HNR, UBX_HNR_ATT, &packetUBXHNRATT, UBX_HNR_ATT_LEN},
-      {UBX_CLASS_HNR, UBX_HNR_INS, &packetUBXHNRINS, UBX_HNR_INS_LEN}
-#endif
-  };
-
   if (maxSize != nullptr)
     *maxSize = 0;
 
-#ifndef SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
-  // PMP is a special case as it has both struct and message packages
-  if (Class == UBX_CLASS_RXM)
+  switch (Class)
   {
-    if (ID == UBX_RXM_PMP)
+  case UBX_CLASS_NAV:
+    if (ID == UBX_NAV_POSECEF)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_POSECEF_LEN;
+      return (packetUBXNAVPOSECEF != nullptr);
+    }
+    else if (ID == UBX_NAV_STATUS)
     {
       if (maxSize != nullptr)
         *maxSize = UBX_RXM_PMP_MAX_LEN;
-      return (packetUBXRXMPMP != nullptr) || (packetUBXRXMPMPmessage != nullptr);
+      return (packetUBXNAVPOSECEF != nullptr);
     }
-  }
-#endif
-
-  for (size_t i = 0; i < (sizeof(checkAutomaticTable) / sizeof(checkAutomaticTableEntry)); i++)
-  {
-    if (Class == checkAutomaticTable[i].Class)
+    else if (ID == UBX_NAV_DOP)
     {
-      if (ID == checkAutomaticTable[i].ID)
-      {
-        if (maxSize != nullptr)
-          *maxSize = checkAutomaticTable[i].maxSize;
-        return (&checkAutomaticTable[i].packetPtr != nullptr);
-      }
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_DOP_LEN;
+      return (packetUBXNAVDOP != nullptr);
     }
+    else if (ID == UBX_NAV_ATT)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_ATT_LEN;
+      return (packetUBXNAVATT != nullptr);
+    }
+    else if (ID == UBX_NAV_PVT)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_PVT_LEN;
+      return (packetUBXNAVPVT != nullptr);
+    }
+    else if (ID == UBX_NAV_ODO)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_ODO_LEN;
+      return (packetUBXNAVODO != nullptr);
+    }
+    else if (ID == UBX_NAV_VELECEF)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_VELECEF_LEN;
+      return (packetUBXNAVVELECEF != nullptr);
+    }
+    else if (ID == UBX_NAV_VELNED)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_VELNED_LEN;
+      return (packetUBXNAVVELNED != nullptr);
+    }
+    else if (ID == UBX_NAV_HPPOSECEF)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_HPPOSECEF_LEN;
+      return (packetUBXNAVHPPOSECEF != nullptr);
+    }
+    else if (ID == UBX_NAV_HPPOSLLH)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_HPPOSLLH_LEN;
+      return (packetUBXNAVHPPOSLLH != nullptr);
+    }
+    else if (ID == UBX_NAV_PVAT)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_PVAT_LEN;
+      return (packetUBXNAVPVAT != nullptr);
+    }
+    else if (ID == UBX_NAV_TIMEUTC)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_TIMEUTC_LEN;
+      return (packetUBXNAVTIMEUTC != nullptr);
+    }
+    else if (ID == UBX_NAV_CLOCK)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_CLOCK_LEN;
+      return (packetUBXNAVCLOCK != nullptr);
+    }
+    else if (ID == UBX_NAV_TIMELS)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_TIMELS_LEN;
+      return (packetUBXNAVTIMELS != nullptr);
+    }
+    else if (ID == UBX_NAV_SVIN)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_SVIN_LEN;
+      return (packetUBXNAVSVIN != nullptr);
+    }
+    else if (ID == UBX_NAV_RELPOSNED)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_RELPOSNED_LEN_F9;
+      return (packetUBXNAVRELPOSNED != nullptr);
+    }
+    else if (ID == UBX_NAV_AOPSTATUS)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_AOPSTATUS_LEN;
+      return (packetUBXNAVAOPSTATUS != nullptr);
+    }
+    else if (ID == UBX_NAV_EOE)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_EOE_LEN;
+      return (packetUBXNAVEOE != nullptr);
+    }
+#ifndef SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
+    else if (ID == UBX_NAV_SAT)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_SAT_MAX_LEN;
+      return (packetUBXNAVSAT != nullptr);
+    }
+#endif
+    break;
+  case UBX_CLASS_RXM:
+#ifndef SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
+    if (ID == UBX_RXM_SFRBX)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_RXM_SFRBX_MAX_LEN;
+      return (packetUBXRXMSFRBX != nullptr);
+    }
+    else if (ID == UBX_RXM_RAWX)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_RXM_RAWX_MAX_LEN;
+      return (packetUBXRXMRAWX != nullptr);
+    }
+    else if (ID == UBX_RXM_QZSSL6)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_RXM_QZSSL6_MAX_LEN;
+      return (packetUBXRXMQZSSL6message != nullptr);
+    }
+    else if (ID == UBX_RXM_COR)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_RXM_COR_LEN;
+      return (packetUBXRXMCOR != nullptr);
+    }
+    else if (ID == UBX_RXM_MEASX)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_RXM_MEASX_MAX_LEN;
+      return (packetUBXRXMMEASX != nullptr);
+    }
+    else if (ID == UBX_RXM_PMP)
+    {
+      // PMP is a special case as it has both struct and message packages
+      if (maxSize != nullptr)
+        *maxSize = UBX_RXM_PMP_MAX_LEN;
+      return ((packetUBXRXMPMP != nullptr) || (packetUBXRXMPMPmessage != nullptr));
+    }
+#endif
+    break;
+  case UBX_CLASS_TIM:
+    if (ID == UBX_TIM_TM2)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_TIM_TM2_LEN;
+      return (packetUBXTIMTM2 != nullptr);
+    }
+    break;
+  case UBX_CLASS_ESF:
+#ifndef SFE_UBLOX_DISABLE_ESF
+    if (ID == UBX_ESF_ALG)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_ESF_ALG_LEN;
+      return (packetUBXESFALG != nullptr);
+    }
+    else if (ID == UBX_ESF_INS)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_ESF_INS_LEN;
+      return (packetUBXESFINS != nullptr);
+    }
+    else if (ID == UBX_ESF_MEAS)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_ESF_MEAS_MAX_LEN;
+      return (packetUBXESFMEAS != nullptr);
+    }
+    else if (ID == UBX_ESF_RAW)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_ESF_RAW_MAX_LEN;
+      return (packetUBXESFRAW != nullptr);
+    }
+    else if (ID == UBX_ESF_STATUS)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_ESF_STATUS_MAX_LEN;
+      return (packetUBXESFSTATUS != nullptr);
+    }
+#endif
+    break;
+  case UBX_CLASS_MGA:
+    if (ID == UBX_MGA_ACK_DATA0)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_MGA_ACK_DATA0_LEN;
+      return (packetUBXMGAACK != nullptr);
+    }
+    else if (ID == UBX_MGA_DBD)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_MGA_DBD_LEN;
+      return (packetUBXMGADBD != nullptr);
+    }
+    break;
+  case UBX_CLASS_HNR:
+#ifndef SFE_UBLOX_DISABLE_HNR
+    if (ID == UBX_HNR_PVT)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_HNR_PVT_LEN;
+      return (packetUBXHNRPVT != nullptr);
+    }
+    else if (ID == UBX_HNR_ATT)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_HNR_ATT_LEN;
+      return (packetUBXHNRATT != nullptr);
+    }
+    else if (ID == UBX_HNR_INS)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_HNR_INS_LEN;
+      return (packetUBXHNRINS != nullptr);
+    }
+#endif
+    break;
+  default:
+    return false;
+    break;
   }
   return false;
 }
@@ -1439,7 +1605,11 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
               _debugSerial.print(F("process: incoming \"automatic\" message: Class: 0x"));
               _debugSerial.print(packetBuf.cls, HEX);
               _debugSerial.print(F(" ID: 0x"));
-              _debugSerial.println(packetBuf.id, HEX);
+              _debugSerial.print(packetBuf.id, HEX);
+              _debugSerial.print(F(" logBecauseAuto:"));
+              _debugSerial.print(logBecauseAuto);
+              _debugSerial.print(F(" logBecauseEnabled:"));
+              _debugSerial.println(logBecauseEnabled);
             }
 #endif
           }
@@ -2777,7 +2947,7 @@ void DevUBLOXGNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t 
 
       // This is not an ACK and we do not have a complete class and ID match
       // So let's check for an "automatic" message arriving
-      else if (autoLookup(incomingUBX->cls, incomingUBX->id) || logThisUBX(incomingUBX->cls, incomingUBX->id))
+      else if ((autoLookup(incomingUBX->cls, incomingUBX->id)) || (logThisUBX(incomingUBX->cls, incomingUBX->id)))
       {
         // This isn't the message we are looking for...
         // Let's say so and leave incomingUBX->classAndIDmatch _unchanged_
@@ -4289,7 +4459,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
   }
 
   // Check if this UBX message should be added to the file buffer - if it has not been added already
-  if (!addedToFileBuffer && logThisUBX(msg->cls, msg->id))
+  if ((!addedToFileBuffer) && (logThisUBX(msg->cls, msg->id)))
     storePacket(msg);
 }
 
