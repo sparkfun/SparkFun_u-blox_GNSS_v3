@@ -6750,6 +6750,7 @@ bool DevUBLOXGNSS::createFileBuffer(void)
     {
       _debugSerial.println(F("createFileBuffer: RAM alloc failed!"));
     }
+    fileBufferSize = 0; // Set file buffer size so user can check with getFileBufferSize (ubxFileBuffer is protected)
     return (false);
   }
 
