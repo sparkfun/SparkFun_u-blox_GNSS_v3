@@ -1295,10 +1295,6 @@ public:
 #endif
 
   uint16_t rtcmFrameCounter = 0; // Tracks the type of incoming byte inside RTCM frame
-#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
-  RTCM_FRAME_t *storageRTCM = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
-  void crc24q(uint8_t incoming, uint32_t *checksum); // Add incoming to checksum as per CRC-24Q
-#endif
 
 protected:
   // Depending on the ubx binary response class, store binary responses into different places
@@ -1371,6 +1367,7 @@ protected:
   bool initStorageNMEAGNZDA(); // Allocate RAM for incoming NMEA GNZDA messages and initialize it
 
   bool initStorageRTCM(); // Allocate RAM for incoming RTCM messages and initialize it
+  bool initStorageNMEA(); // Allocate RAM for incoming non-Auto NMEA messages and initialize it
 
   // Variables
   SparkFun_UBLOX_GNSS::GNSSDeviceBus *_sfeBus;
@@ -1382,11 +1379,6 @@ protected:
   SparkFun_UBLOX_GNSS::SfePrint _debugSerial;    // The stream to send debug messages to if enabled
   bool _printDebug = false;                       // Flag to print the serial commands we are sending to the Serial port for debug
   bool _printLimitedDebug = false;                // Flag to print limited debug messages. Useful for I2C debugging or high navigation rates
-
-  sfe_ublox_nmea_filtering_t _logNMEA;     // Flags to indicate which NMEA messages should be added to the file buffer for logging
-  sfe_ublox_nmea_filtering_t _processNMEA; // Flags to indicate which NMEA messages should be passed to processNMEA
-
-  sfe_ublox_rtcm_filtering_t _logRTCM;     // Flags to indicate which NMEA messages should be added to the file buffer for logging
 
   // The packet buffers
   // These are pointed at from within the ubxPacket
@@ -1433,6 +1425,10 @@ protected:
   uint8_t rollingChecksumA; // Rolls forward as we receive incoming bytes. Checked against the last two A/B checksum bytes
   uint8_t rollingChecksumB; // Rolls forward as we receive incoming bytes. Checked against the last two A/B checksum bytes
 
+  // NMEA logging / Auto support
+  sfe_ublox_nmea_filtering_t _logNMEA;     // Flags to indicate which NMEA messages should be added to the file buffer for logging
+  sfe_ublox_nmea_filtering_t _processNMEA; // Flags to indicate which NMEA messages should be passed to processNMEA
+
   int8_t nmeaByteCounter; // Count all NMEA message bytes.
   // Abort NMEA message reception if nmeaByteCounter exceeds maxNMEAByteCount.
   // The user can adjust maxNMEAByteCount by calling setMaxNMEAByteCount
@@ -1442,13 +1438,7 @@ protected:
   bool processThisNMEA();      // Return true if we should pass this NMEA message to processNMEA
   bool isNMEAHeaderValid();    // Return true if the six byte NMEA header appears valid. Used to set _signsOfLife
 
-  //Define the maximum possible message length for packetAuto and enableUBXlogging
-  //UBX_NAV_SAT_MAX_LEN is just > UBX_RXM_RAWX_MAX_LEN
-  const uint16_t SFE_UBX_MAX_LENGTH = UBX_NAV_SAT_MAX_LEN;
-
-  // UBX logging
-  sfe_ublox_ubx_logging_list_t *sfe_ublox_ubx_logging_list_head = nullptr; // Linked list of which messages to log
-  bool logThisUBX(uint8_t UBX_CLASS, uint8_t UBX_ID); // Returns true if this UBX should be added to the logging buffer
+  NMEA_STORAGE_t *_storageNMEA = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
 
 #ifndef SFE_UBLOX_DISABLE_AUTO_NMEA
   bool isThisNMEAauto();                 // Check if the NMEA message (in nmeaAddressField) is "auto" (i.e. has RAM allocated for it)
@@ -1462,6 +1452,22 @@ protected:
   uint8_t getNMEAMaxLength();            // Get the maximum length of this NMEA message
   nmeaAutomaticFlags *getNMEAFlagsPtr(); // Get a pointer to the flags
 #endif
+
+  // RTCM logging
+  sfe_ublox_rtcm_filtering_t _logRTCM;     // Flags to indicate which NMEA messages should be added to the file buffer for logging
+
+#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
+  RTCM_FRAME_t *_storageRTCM = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
+  void crc24q(uint8_t incoming, uint32_t *checksum); // Add incoming to checksum as per CRC-24Q
+#endif
+
+  //Define the maximum possible message length for packetAuto and enableUBXlogging
+  //UBX_NAV_SAT_MAX_LEN is just > UBX_RXM_RAWX_MAX_LEN
+  const uint16_t SFE_UBX_MAX_LENGTH = UBX_NAV_SAT_MAX_LEN;
+
+  // UBX logging
+  sfe_ublox_ubx_logging_list_t *sfe_ublox_ubx_logging_list_head = nullptr; // Linked list of which messages to log
+  bool logThisUBX(uint8_t UBX_CLASS, uint8_t UBX_ID); // Returns true if this UBX should be added to the logging buffer
 
   // Flag to prevent reentry into checkCallbacks
   // Prevent badness if the user accidentally calls checkCallbacks from inside a callback

@@ -264,7 +264,8 @@ struct sfe_ublox_ubx_logging_list_t
 // maxNMEAByteCount was set to 82: https://en.wikipedia.org/wiki/NMEA_0183#Message_structure
 // but the u-blox HP (RTK) GGA messages are 88 bytes long
 // The user can adjust maxNMEAByteCount by calling setMaxNMEAByteCount
-#define SFE_UBLOX_MAX_NMEA_BYTE_COUNT 88
+// To be safe - use 100 like we do for the Auto NMEA messages
+#define SFE_UBLOX_MAX_NMEA_BYTE_COUNT 100
 
 //-=-=-=-=- UBX binary specific variables
 struct ubxPacket

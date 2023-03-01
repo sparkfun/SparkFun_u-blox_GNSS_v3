@@ -2638,6 +2638,12 @@ typedef struct
   NMEA_ZDA_data_t *callbackCopy; // The callback gets its own preserved copy of the complete copy
 } NMEA_GNZDA_t;
 
+typedef struct
+{
+  uint8_t length;
+  uint8_t *data;
+} NMEA_STORAGE_t;
+
 // RTCM-specific structs
 
 // Maximum length of an RTCM message: 1023

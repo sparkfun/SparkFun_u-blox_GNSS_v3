@@ -577,11 +577,21 @@ void DevUBLOXGNSS::end(void)
   }
 #endif
 
-#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
-  if (storageRTCM != nullptr)
+  if (_storageNMEA != nullptr)
   {
-    delete storageRTCM;
-    storageRTCM = nullptr;
+    if (_storageNMEA->data != nullptr)
+    {
+      delete[] _storageNMEA->data;
+    }
+    delete _storageNMEA;
+    _storageNMEA = nullptr;
+  }
+
+#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
+  if (_storageRTCM != nullptr)
+  {
+    delete _storageRTCM;
+    _storageRTCM = nullptr;
   }
 #endif
 
@@ -913,6 +923,7 @@ size_t DevUBLOXGNSS::getSpiBufferSize(void)
 }
 
 // Sets the size of maxNMEAByteCount
+// Call this before .begin to avoid badness with _storageNMEA
 void DevUBLOXGNSS::setMaxNMEAByteCount(int8_t newMax)
 {
   maxNMEAByteCount = newMax;
@@ -1773,7 +1784,8 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
       // We've just received the end of the address field. Check if it is selected for logging
       if (logThisNMEA())
       {
-        storeFileBytes(&nmeaAddressField[0], 6); // Add start character and address field to the file buffer
+        memcpy(_storageNMEA->data, &nmeaAddressField[0], 6); // Add start character and address field to the storage
+        _storageNMEA->length = 6;
       }
       // Check if it should be passed to processNMEA
       if (processThisNMEA())
@@ -1812,7 +1824,15 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
       }
 #endif
       if (logThisNMEA())
-        storeFileBytes(&incoming, 1); // Add incoming to the file buffer
+      {
+        //This check is probably redundant.
+        //currentSentence is set to SFE_UBLOX_SENTENCE_TYPE_NONE below if nmeaByteCounter == maxNMEAByteCount
+        if (_storageNMEA->length < maxNMEAByteCount) // Check we have room for it
+        {
+          _storageNMEA->data[_storageNMEA->length] = incoming; // Store the byte
+          _storageNMEA->length = _storageNMEA->length + 1;
+        }
+      }        
       if (processThisNMEA())
       {
         processNMEA(incoming); // Pass incoming to processNMEA
@@ -1909,6 +1929,38 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
         }
       }
 #endif
+      if (logThisNMEA())
+      {
+        // Check the checksum: the checksum is the exclusive-OR of all characters between the $ and the *
+        uint8_t nmeaChecksum = 0;
+        int8_t charsChecked = 1; // Start after the $
+        uint8_t thisChar = '\0';
+        while ((charsChecked < maxNMEAByteCount) && (charsChecked < (_storageNMEA->length - 4)) && (thisChar != '*'))
+        {
+          thisChar = _storageNMEA->data[charsChecked]; // Get a char from the storage
+          if (thisChar != '*')                        // Ex-or the char into the checksum - but not if it is the '*'
+            nmeaChecksum ^= thisChar;
+          charsChecked++; // Increment the counter
+        }
+        if (thisChar == '*') // Make sure we found the *
+        {
+          uint8_t expectedChecksum1 = (nmeaChecksum >> 4) + '0';
+          if (expectedChecksum1 >= ':') // Handle Hex correctly
+            expectedChecksum1 += 'A' - ':';
+          uint8_t expectedChecksum2 = (nmeaChecksum & 0x0F) + '0';
+          if (expectedChecksum2 >= ':') // Handle Hex correctly
+            expectedChecksum2 += 'A' - ':';
+          if ((expectedChecksum1 == _storageNMEA->data[charsChecked]) && (expectedChecksum2 == _storageNMEA->data[charsChecked + 1]))
+          {
+            storeFileBytes(_storageNMEA->data, _storageNMEA->length); // Add NMEA to the file buffer
+          }
+          else
+          if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+          {
+            _debugSerial.println(F("process: _storageNMEA checksum fail!"));
+          }
+        }
+      }
       currentSentence = SFE_UBLOX_SENTENCE_TYPE_NONE; // All done!
     }
   }
@@ -1917,50 +1969,50 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
 
     // RTCM Logging
 #ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
-    if (storageRTCM != nullptr) // Check if RTCM logging storage exists
+    if (_storageRTCM != nullptr) // Check if RTCM logging storage exists
     {
       if (rtcmFrameCounter == 0)
       {
-        storageRTCM->dataMessage[0] = incoming;
-        storageRTCM->rollingChecksum = 0; // Initialize the checksum. Seed is 0x000000
+        _storageRTCM->dataMessage[0] = incoming;
+        _storageRTCM->rollingChecksum = 0; // Initialize the checksum. Seed is 0x000000
       }
       else if (rtcmFrameCounter == 1)
       {
-        storageRTCM->dataMessage[1] = incoming;
-        storageRTCM->messageLength = (uint16_t)(incoming & 0x03) << 8;
+        _storageRTCM->dataMessage[1] = incoming;
+        _storageRTCM->messageLength = (uint16_t)(incoming & 0x03) << 8;
       }
       else if (rtcmFrameCounter == 2)
       {
-        storageRTCM->dataMessage[2] = incoming;
-        storageRTCM->messageLength |= incoming;
+        _storageRTCM->dataMessage[2] = incoming;
+        _storageRTCM->messageLength |= incoming;
       }
 
       // Store the mesage data (and CRC) - now that the message length is known
-      if ((rtcmFrameCounter >= 3) && (rtcmFrameCounter < (storageRTCM->messageLength + 6)) && (rtcmFrameCounter < (3 + SFE_UBLOX_MAX_RTCM_MSG_LEN + 3)))
-        storageRTCM->dataMessage[rtcmFrameCounter] = incoming;
+      if ((rtcmFrameCounter >= 3) && (rtcmFrameCounter < (_storageRTCM->messageLength + 6)) && (rtcmFrameCounter < (3 + SFE_UBLOX_MAX_RTCM_MSG_LEN + 3)))
+        _storageRTCM->dataMessage[rtcmFrameCounter] = incoming;
 
       // Add incoming header and data bytes to the checksum
-      if ((rtcmFrameCounter < 3) || ((rtcmFrameCounter >= 3) && (rtcmFrameCounter < (storageRTCM->messageLength + 3))))
-        crc24q(incoming, &storageRTCM->rollingChecksum);
+      if ((rtcmFrameCounter < 3) || ((rtcmFrameCounter >= 3) && (rtcmFrameCounter < (_storageRTCM->messageLength + 3))))
+        crc24q(incoming, &_storageRTCM->rollingChecksum);
       
       // Check if all bytes have been received
-      if ((rtcmFrameCounter >= 3) && (rtcmFrameCounter == storageRTCM->messageLength + 5))
+      if ((rtcmFrameCounter >= 3) && (rtcmFrameCounter == _storageRTCM->messageLength + 5))
       {
-        uint32_t expectedChecksum = storageRTCM->dataMessage[storageRTCM->messageLength + 3];
+        uint32_t expectedChecksum = _storageRTCM->dataMessage[_storageRTCM->messageLength + 3];
         expectedChecksum <<= 8;
-        expectedChecksum |= storageRTCM->dataMessage[storageRTCM->messageLength + 4];
+        expectedChecksum |= _storageRTCM->dataMessage[_storageRTCM->messageLength + 4];
         expectedChecksum <<= 8;
-        expectedChecksum |= storageRTCM->dataMessage[storageRTCM->messageLength + 5];
+        expectedChecksum |= _storageRTCM->dataMessage[_storageRTCM->messageLength + 5];
         
-        if (expectedChecksum == storageRTCM->rollingChecksum) // Does the checksum match?
+        if (expectedChecksum == _storageRTCM->rollingChecksum) // Does the checksum match?
         {
           // Extract the message type and check if it should be logged
 
           // Extract the message number from the first 12 bits
-          uint16_t messageType = ((uint16_t)storageRTCM->dataMessage[3]) << 4;
-          messageType |= storageRTCM->dataMessage[4] >> 4;
-          uint16_t messageSubType = ((uint16_t)storageRTCM->dataMessage[4] & 0x0F) << 8;
-          messageSubType |= storageRTCM->dataMessage[5];
+          uint16_t messageType = ((uint16_t)_storageRTCM->dataMessage[3]) << 4;
+          messageType |= _storageRTCM->dataMessage[4] >> 4;
+          uint16_t messageSubType = ((uint16_t)_storageRTCM->dataMessage[4] & 0x0F) << 8;
+          messageSubType |= _storageRTCM->dataMessage[5];
           bool logThisRTCM = false;
 
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
@@ -2007,20 +2059,15 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
 
           if (logThisRTCM) // Should we log this message?
           {
-            storeFileBytes(storageRTCM->dataMessage, storageRTCM->messageLength + 6);
+            storeFileBytes(_storageRTCM->dataMessage, _storageRTCM->messageLength + 6);
           }
         }
         else
         {
-#ifndef SFE_UBLOX_REDUCED_PROG_MEM
           if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
           {
-            _debugSerial.print(F("process: RTCM checksum fail: 0x"));
-            _debugSerial.print(expectedChecksum, HEX);
-            _debugSerial.print(F(" vs 0x"));
-            _debugSerial.println(storageRTCM->rollingChecksum, HEX);
+            _debugSerial.println(F("process: RTCM checksum fail!"));
           }
-#endif
         }
       }
     }
@@ -2040,54 +2087,58 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
 // PRIVATE: Return true if we should add this NMEA message to the file buffer for logging
 bool DevUBLOXGNSS::logThisNMEA()
 {
+  bool logMe = false;
   if (_logNMEA.bits.all == 1)
-    return (true);
+    logMe = true;
   if ((nmeaAddressField[3] == 'D') && (nmeaAddressField[4] == 'T') && (nmeaAddressField[5] == 'M') && (_logNMEA.bits.UBX_NMEA_DTM == 1))
-    return (true);
+    logMe = true;
   if (nmeaAddressField[3] == 'G')
   {
     if ((nmeaAddressField[4] == 'A') && (nmeaAddressField[5] == 'Q') && (_logNMEA.bits.UBX_NMEA_GAQ == 1))
-      return (true);
+      logMe = true;
     if ((nmeaAddressField[4] == 'B') && (nmeaAddressField[5] == 'Q') && (_logNMEA.bits.UBX_NMEA_GBQ == 1))
-      return (true);
+      logMe = true;
     if ((nmeaAddressField[4] == 'B') && (nmeaAddressField[5] == 'S') && (_logNMEA.bits.UBX_NMEA_GBS == 1))
-      return (true);
+      logMe = true;
     if ((nmeaAddressField[4] == 'G') && (nmeaAddressField[5] == 'A') && (_logNMEA.bits.UBX_NMEA_GGA == 1))
-      return (true);
+      logMe = true;
     if ((nmeaAddressField[4] == 'L') && (nmeaAddressField[5] == 'L') && (_logNMEA.bits.UBX_NMEA_GLL == 1))
-      return (true);
+      logMe = true;
     if ((nmeaAddressField[4] == 'L') && (nmeaAddressField[5] == 'Q') && (_logNMEA.bits.UBX_NMEA_GLQ == 1))
-      return (true);
+      logMe = true;
     if ((nmeaAddressField[4] == 'N') && (nmeaAddressField[5] == 'Q') && (_logNMEA.bits.UBX_NMEA_GNQ == 1))
-      return (true);
+      logMe = true;
     if ((nmeaAddressField[4] == 'N') && (nmeaAddressField[5] == 'S') && (_logNMEA.bits.UBX_NMEA_GNS == 1))
-      return (true);
+      logMe = true;
     if ((nmeaAddressField[4] == 'P') && (nmeaAddressField[5] == 'Q') && (_logNMEA.bits.UBX_NMEA_GPQ == 1))
-      return (true);
+      logMe = true;
     if ((nmeaAddressField[4] == 'Q') && (nmeaAddressField[5] == 'Q') && (_logNMEA.bits.UBX_NMEA_GQQ == 1))
-      return (true);
+      logMe = true;
     if ((nmeaAddressField[4] == 'R') && (nmeaAddressField[5] == 'S') && (_logNMEA.bits.UBX_NMEA_GRS == 1))
-      return (true);
+      logMe = true;
     if ((nmeaAddressField[4] == 'S') && (nmeaAddressField[5] == 'A') && (_logNMEA.bits.UBX_NMEA_GSA == 1))
-      return (true);
+      logMe = true;
     if ((nmeaAddressField[4] == 'S') && (nmeaAddressField[5] == 'T') && (_logNMEA.bits.UBX_NMEA_GST == 1))
-      return (true);
+      logMe = true;
     if ((nmeaAddressField[4] == 'S') && (nmeaAddressField[5] == 'V') && (_logNMEA.bits.UBX_NMEA_GSV == 1))
-      return (true);
+      logMe = true;
   }
   if ((nmeaAddressField[3] == 'R') && (nmeaAddressField[4] == 'L') && (nmeaAddressField[5] == 'M') && (_logNMEA.bits.UBX_NMEA_RLM == 1))
-    return (true);
+    logMe = true;
   if ((nmeaAddressField[3] == 'R') && (nmeaAddressField[4] == 'M') && (nmeaAddressField[5] == 'C') && (_logNMEA.bits.UBX_NMEA_RMC == 1))
-    return (true);
+    logMe = true;
   if ((nmeaAddressField[3] == 'T') && (nmeaAddressField[4] == 'X') && (nmeaAddressField[5] == 'T') && (_logNMEA.bits.UBX_NMEA_TXT == 1))
-    return (true);
+    logMe = true;
   if ((nmeaAddressField[3] == 'V') && (nmeaAddressField[4] == 'L') && (nmeaAddressField[5] == 'W') && (_logNMEA.bits.UBX_NMEA_VLW == 1))
-    return (true);
+    logMe = true;
   if ((nmeaAddressField[3] == 'V') && (nmeaAddressField[4] == 'T') && (nmeaAddressField[5] == 'G') && (_logNMEA.bits.UBX_NMEA_VTG == 1))
-    return (true);
+    logMe = true;
   if ((nmeaAddressField[3] == 'Z') && (nmeaAddressField[4] == 'D') && (nmeaAddressField[5] == 'A') && (_logNMEA.bits.UBX_NMEA_ZDA == 1))
-    return (true);
-  return (false);
+    logMe = true;
+
+  if (logMe) // Message should be logged. 
+    logMe = initStorageNMEA(); // Check we have non-Auto storage for it
+  return (logMe);
 }
 
 // PRIVATE: Return true if the NMEA header is valid
@@ -2207,7 +2258,7 @@ void DevUBLOXGNSS::processNMEA(char incoming)
 }
 
 #ifndef SFE_UBLOX_DISABLE_AUTO_NMEA
-// Check if the NMEA message (in nmeaAddressField) is "auto" (i.e. has RAM allocated for it)
+// Check if the NMEA message (in nmeaAddressField) is "auto" (i.e. has dedicated RAM allocated for it)
 bool DevUBLOXGNSS::isThisNMEAauto()
 {
   char thisNMEA[] = "GPGGA";
@@ -14834,6 +14885,36 @@ bool DevUBLOXGNSS::initStorageNMEAGNZDA()
 }
 #endif
 
+// Private: allocate RAM for incoming non-Auto NMEA messages and initialize it
+bool DevUBLOXGNSS::initStorageNMEA()
+{
+  if (_storageNMEA != nullptr) // Check if storage already exists
+    return true;
+
+  _storageNMEA = new NMEA_STORAGE_t; // Allocate RAM for the main struct
+  if (_storageNMEA == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("initStorageNMEA: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+  _storageNMEA->data = nullptr;
+
+  _storageNMEA->data = new uint8_t[maxNMEAByteCount];
+  if (_storageNMEA->data == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("initStorageNMEA: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+
+  return (true);
+}
+
 // ***** RTCM Logging
 
 #ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
@@ -14853,11 +14934,11 @@ uint32_t DevUBLOXGNSS::getRTCMLoggingMask()
 // Private: allocate RAM for incoming RTCM messages and initialize it
 bool DevUBLOXGNSS::initStorageRTCM()
 {
-  if (storageRTCM != nullptr) // Check if storage already exists
+  if (_storageRTCM != nullptr) // Check if storage already exists
     return true;
 
-  storageRTCM = new RTCM_FRAME_t; // Allocate RAM for the main struct
-  if (storageRTCM == nullptr)
+  _storageRTCM = new RTCM_FRAME_t; // Allocate RAM for the main struct
+  if (_storageRTCM == nullptr)
   {
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
     if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
