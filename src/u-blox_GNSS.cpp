@@ -1501,6 +1501,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
     else
     {
       // This character is unknown or we missed the previous start of a sentence
+      // Or it could be a 0xFF from a SPI transaction
     }
   }
 
@@ -1562,9 +1563,9 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
             if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
             {
               _debugSerial.print(F("process: autoLookup returned ZERO maxPayload!! Class: 0x"));
-              _debugSerial.print(packetBuf.cls);
+              _debugSerial.print(packetBuf.cls, HEX);
               _debugSerial.print(F(" ID: 0x"));
-              _debugSerial.println(packetBuf.id);
+              _debugSerial.println(packetBuf.id, HEX);
             }
 #endif
           }
@@ -2079,8 +2080,6 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
     // but only if the port is different (otherwise we'll output each character twice!)
     if (_outputPort != _rtcmOutputPort)
       _rtcmOutputPort.write(incoming); // Echo this byte to the serial port
-
-
   }
 }
 
@@ -2916,9 +2915,9 @@ void DevUBLOXGNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t 
       if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
       {
         _debugSerial.print(F("processUBX: autoLookup returned ZERO maxPayload!! Class: 0x"));
-        _debugSerial.print(incomingUBX->cls);
+        _debugSerial.print(incomingUBX->cls, HEX);
         _debugSerial.print(F(" ID: 0x"));
-        _debugSerial.println(incomingUBX->id);
+        _debugSerial.println(incomingUBX->id, HEX);
       }
 #endif
     }
@@ -2933,7 +2932,7 @@ void DevUBLOXGNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t 
 
   // Add all incoming bytes to the rolling checksum
   // Stop at len+4 as this is the checksum bytes to that should not be added to the rolling checksum
-  if (incomingUBX->counter < incomingUBX->len + 4)
+  if (incomingUBX->counter < (incomingUBX->len + 4))
     addToChecksum(incoming);
 
   if (incomingUBX->counter == 0)
@@ -4685,7 +4684,7 @@ sfe_ublox_status_e DevUBLOXGNSS::sendCommand(ubxPacket *outgoingUBX, uint16_t ma
   }
   else
   {
-    processSpiBuffer(&packetCfg, 0, 0); // Process any SPI data received during the sendSpiCommand
+    processSpiBuffer(&packetCfg, 0, 0); // Process any SPI data received during the sendSpiCommand - but only if not checking for a response
   }
   return retVal;
 }
@@ -4839,21 +4838,25 @@ void DevUBLOXGNSS::spiTransfer(const uint8_t byteToTransfer)
     printOnce = false;
 #endif
 
+  // If we start to receive something, we need to keep receiving and buffering
+  // otherwise 0xFF bytes will be ignored if currentSentence == SFE_UBLOX_SENTENCE_TYPE_NONE
+  static bool receivedSomething = false;
+  if (spiBufferIndex == 0)
+    receivedSomething = false;
+
   uint8_t returnedByte = 0xFF;
 
   writeReadByte(byteToTransfer, &returnedByte);
 
-  if (spiBufferIndex < spiBufferSize)
+  if ((returnedByte != 0xFF) || (currentSentence != SFE_UBLOX_SENTENCE_TYPE_NONE) || receivedSomething)
   {
-    if ((returnedByte != 0xFF) || (currentSentence != SFE_UBLOX_SENTENCE_TYPE_NONE))
+  if (spiBufferIndex < spiBufferSize)
     {
       spiBuffer[spiBufferIndex] = returnedByte;
       spiBufferIndex++;
+      receivedSomething = true;
     }
-  }
-  else
-  {
-    if ((returnedByte != 0xFF) || (currentSentence != SFE_UBLOX_SENTENCE_TYPE_NONE))
+    else
     {
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
       if (((_printDebug == true) || (_printLimitedDebug == true)) && !printOnce) // This is important. Print this if doing limited debugging
@@ -4895,7 +4898,7 @@ sfe_ublox_status_e DevUBLOXGNSS::sendSpiCommand(ubxPacket *outgoingUBX)
   spiTransfer(outgoingUBX->len >> 8);   // MSB
 
   // Check if we can send all the data in one transfer?
-  if (bytesLeftToSend + 8 <= spiTransactionSize)
+  if ((bytesLeftToSend + 8) <= spiTransactionSize)
   {
     for (uint16_t i = 0; i < bytesLeftToSend; i++)
       spiTransfer(outgoingUBX->payload[i]);
@@ -5284,10 +5287,10 @@ sfe_ublox_status_e DevUBLOXGNSS::waitForNoACKResponse(ubxPacket *outgoingUBX, ui
         // {
         //   _debugSerial.print(F("waitForNoACKResponse: valid but UNWANTED data after "));
         //   _debugSerial.print(millis() - startTime);
-        //   _debugSerial.print(F(" msec. Class: "));
-        //   _debugSerial.print(outgoingUBX->cls);
-        //   _debugSerial.print(F(" ID: "));
-        //   _debugSerial.print(outgoingUBX->id);
+        //   _debugSerial.print(F(" msec. Class: 0x"));
+        //   _debugSerial.print(outgoingUBX->cls, HEX);
+        //   _debugSerial.print(F(" ID: 0x"));
+        //   _debugSerial.print(outgoingUBX->id, HEX);
         // }
       }
 
