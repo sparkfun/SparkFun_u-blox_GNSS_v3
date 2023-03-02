@@ -4621,6 +4621,8 @@ void DevUBLOXGNSS::addToChecksum(uint8_t incoming)
 // Given a packet and payload, send everything including CRC bytes via I2C port
 sfe_ublox_status_e DevUBLOXGNSS::sendCommand(ubxPacket *outgoingUBX, uint16_t maxWait, bool expectACKonly)
 {
+  if (!lock()) return SFE_UBLOX_STATUS_FAIL;
+
   sfe_ublox_status_e retVal = SFE_UBLOX_STATUS_SUCCESS;
 
   calcChecksum(outgoingUBX); // Sets checksum A and B bytes of the packet
@@ -4633,7 +4635,6 @@ sfe_ublox_status_e DevUBLOXGNSS::sendCommand(ubxPacket *outgoingUBX, uint16_t ma
   }
 #endif
 
-  if (!lock()) return SFE_UBLOX_STATUS_FAIL;
   if (_commType == COMM_TYPE_I2C)
   {
     retVal = sendI2cCommand(outgoingUBX);
@@ -4656,6 +4657,7 @@ sfe_ublox_status_e DevUBLOXGNSS::sendCommand(ubxPacket *outgoingUBX, uint16_t ma
   {
     sendSpiCommand(outgoingUBX);
   }
+  
   unlock();
   
   if (maxWait > 0)
@@ -6050,7 +6052,7 @@ size_t DevUBLOXGNSS::pushAssistNowDataInternal(size_t offset, bool skipTime, con
           bool keepGoing = true;
           while (keepGoing && (millis() < (startTime + maxWait))) // Keep checking for the ACK until we time out
           {
-            checkUblox();
+            checkUbloxInternal(&packetCfg, UBX_CLASS_MGA, UBX_MGA_ACK_DATA0); // Was checkUblox();
             if (packetUBXMGAACK->head != packetUBXMGAACK->tail) // Does the MGA ACK ringbuffer contain any ACK's?
             {
               bool dataAckd = true;                                                                                        // Check if we've received the correct ACK
@@ -6573,7 +6575,7 @@ size_t DevUBLOXGNSS::readNavigationDatabase(uint8_t *dataBytes, size_t maxNumDat
 
   while (keepGoing && (millis() < (startTime + maxWait)))
   {
-    checkUblox();
+    checkUbloxInternal(&packetCfg, UBX_CLASS_MGA, UBX_MGA_ACK_DATA0); // Was checkUblox();
 
     while (packetUBXMGADBD->head != packetUBXMGADBD->tail) // Does the MGA DBD ringbuffer contain any data?
     {

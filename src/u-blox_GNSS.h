@@ -140,6 +140,7 @@ protected:
   // the idea is that in a RTOS you override this class and the two functions in which you take and give a mutex.
   virtual bool lock(void) { return true; }
   virtual void unlock(void) { }
+
 public:
   void connectedToUART2(bool connected = true) { _UART2 = connected; }
 
@@ -1377,8 +1378,8 @@ protected:
   SparkFun_UBLOX_GNSS::SfePrint _ubxOutputPort;  // The user can assign an output port to print UBX sentences if they wish
   SparkFun_UBLOX_GNSS::SfePrint _outputPort;     // The user can assign an output port to print ALL characters to if they wish
   SparkFun_UBLOX_GNSS::SfePrint _debugSerial;    // The stream to send debug messages to if enabled
-  bool _printDebug = false;                       // Flag to print the serial commands we are sending to the Serial port for debug
-  bool _printLimitedDebug = false;                // Flag to print limited debug messages. Useful for I2C debugging or high navigation rates
+  bool _printDebug = false;                      // Flag to print the serial commands we are sending to the Serial port for debug
+  bool _printLimitedDebug = false;               // Flag to print limited debug messages. Useful for I2C debugging or high navigation rates
 
   // The packet buffers
   // These are pointed at from within the ubxPacket
