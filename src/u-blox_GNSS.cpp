@@ -5825,6 +5825,7 @@ bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool cal
     return false; // Indicate to the user that there was no data to push
 
   if (!lock()) return false;
+
   bool ok = false;
   if (_commType == COMM_TYPE_SERIAL)
   {
@@ -5932,7 +5933,9 @@ bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool cal
 
     ok = true;
   }
+
   unlock();
+  
   return ok;
 }
 

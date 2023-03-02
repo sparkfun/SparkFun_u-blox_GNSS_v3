@@ -136,13 +136,14 @@ protected:
   // Flag to indicate if we are connected to UART1 or UART2
   // Needed to select the correct config items when enabling a periodic message
   bool _UART2 = false; // Default to UART1
-  
-  // the lock / unlock functions can be used if you have multiple tasks writing to the bus. 
-  // the idea is that in a RTOS you override this class and the two functions in which you take and give a mutex.
+
+  // These lock / unlock functions can be used if you have multiple tasks writing to the bus. 
+  // The idea is that in a RTOS you override this class and the two functions in which you take and give a mutex.
   virtual bool lock(void) { return true; }
   virtual void unlock(void) { }
 
-  // A simpler lock to prevent checkUblox from being called while a sendCommand and waitForResponse is in progress
+  // A simpler lock to prevent checkUblox from being called by another thread while a full sendCommand and waitForResponse is in progress.
+  // Note: this won't prevent pushRawData from gatecrashing the party...
   void lockCheckUblox(void)  __attribute__((weak));
   void unlockCheckUblox(void)  __attribute__((weak));
   volatile bool _checkUbloxLock = false;
