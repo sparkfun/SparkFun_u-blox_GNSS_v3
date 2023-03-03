@@ -1065,14 +1065,28 @@ bool DevUBLOXGNSS::checkUblox(uint8_t requestedClass, uint8_t requestedID)
 bool DevUBLOXGNSS::checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
   if (!lock()) return false;
+
+  // Update storedClass and storedID if either requestedClass or requestedID is non-zero,
+  // otherwise leave unchanged. This allows calls of checkUblox() (which defaults to checkUblox(0,0))
+  // by other threads without changing the requested / expected Class and ID.
+  volatile static uint8_t storedClass = 0;
+  volatile static uint8_t storedID = 0;
+  if (requestedClass || requestedID) // If either is non-zero, store the requested Class and ID
+  {
+    storedClass = requestedClass;
+    storedID = requestedID;
+  }
+
   bool ok = false;
   if (_commType == COMM_TYPE_I2C)
-    ok = (checkUbloxI2C(incomingUBX, requestedClass, requestedID));
+    ok = (checkUbloxI2C(incomingUBX, storedClass, storedID));
   else if (_commType == COMM_TYPE_SERIAL)
-    ok = (checkUbloxSerial(incomingUBX, requestedClass, requestedID));
+    ok = (checkUbloxSerial(incomingUBX, storedClass, storedID));
   else if (_commType == COMM_TYPE_SPI)
-    ok = (checkUbloxSpi(incomingUBX, requestedClass, requestedID));
+    ok = (checkUbloxSpi(incomingUBX, storedClass, storedID));
+
   unlock();
+
   return ok;
 }
 
