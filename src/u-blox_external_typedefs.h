@@ -162,6 +162,91 @@ typedef enum
   SFE_UBLOX_FILTER_NMEA_ZDA = 0x00200000
 } sfe_ublox_nmea_filtering_e;
 
+// Define a struct to allow selective logging of RTCM messages
+// Set the individual bits to pass the RTCM messages to the file buffer
+// Setting bits.all will pass all messages to the file buffer
+typedef struct
+{
+  union
+  {
+    uint32_t all;
+    struct
+    {
+      uint32_t all : 1;
+      uint32_t UBX_RTCM_TYPE1001 : 1;
+      uint32_t UBX_RTCM_TYPE1002 : 1;
+      uint32_t UBX_RTCM_TYPE1003 : 1;
+      uint32_t UBX_RTCM_TYPE1004 : 1;
+      uint32_t UBX_RTCM_TYPE1005 : 1;
+      uint32_t UBX_RTCM_TYPE1006 : 1;
+      uint32_t UBX_RTCM_TYPE1007 : 1;
+      uint32_t UBX_RTCM_TYPE1009 : 1;
+      uint32_t UBX_RTCM_TYPE1010 : 1;
+      uint32_t UBX_RTCM_TYPE1011 : 1;
+      uint32_t UBX_RTCM_TYPE1012 : 1;
+      uint32_t UBX_RTCM_TYPE1033 : 1;
+      uint32_t UBX_RTCM_TYPE1074 : 1;
+      uint32_t UBX_RTCM_TYPE1075 : 1;
+      uint32_t UBX_RTCM_TYPE1077 : 1;
+      uint32_t UBX_RTCM_TYPE1084 : 1;
+      uint32_t UBX_RTCM_TYPE1085 : 1;
+      uint32_t UBX_RTCM_TYPE1087 : 1;
+      uint32_t UBX_RTCM_TYPE1094 : 1;
+      uint32_t UBX_RTCM_TYPE1095 : 1;
+      uint32_t UBX_RTCM_TYPE1097 : 1;
+      uint32_t UBX_RTCM_TYPE1124 : 1;
+      uint32_t UBX_RTCM_TYPE1125 : 1;
+      uint32_t UBX_RTCM_TYPE1127 : 1;
+      uint32_t UBX_RTCM_TYPE1230 : 1;
+      uint32_t UBX_RTCM_TYPE4072_0 : 1;
+      uint32_t UBX_RTCM_TYPE4072_1 : 1;
+    } bits;
+  };
+} sfe_ublox_rtcm_filtering_t;
+
+// Define an enum to make it easy to enable/disable selected NMEA messages for logging / processing
+typedef enum
+{
+  SFE_UBLOX_FILTER_RTCM_ALL = 0x00000001,
+  SFE_UBLOX_FILTER_RTCM_TYPE1001 = 0x00000002,
+  SFE_UBLOX_FILTER_RTCM_TYPE1002 = 0x00000004,
+  SFE_UBLOX_FILTER_RTCM_TYPE1003 = 0x00000008,
+  SFE_UBLOX_FILTER_RTCM_TYPE1004 = 0x00000010,
+  SFE_UBLOX_FILTER_RTCM_TYPE1005 = 0x00000020,
+  SFE_UBLOX_FILTER_RTCM_TYPE1006 = 0x00000040,
+  SFE_UBLOX_FILTER_RTCM_TYPE1007 = 0x00000080,
+  SFE_UBLOX_FILTER_RTCM_TYPE1009 = 0x00000100,
+  SFE_UBLOX_FILTER_RTCM_TYPE1010 = 0x00000200,
+  SFE_UBLOX_FILTER_RTCM_TYPE1011 = 0x00000400,
+  SFE_UBLOX_FILTER_RTCM_TYPE1012 = 0x00000800,
+  SFE_UBLOX_FILTER_RTCM_TYPE1033 = 0x00001000,
+  SFE_UBLOX_FILTER_RTCM_TYPE1074 = 0x00002000,
+  SFE_UBLOX_FILTER_RTCM_TYPE1075 = 0x00004000,
+  SFE_UBLOX_FILTER_RTCM_TYPE1077 = 0x00008000,
+  SFE_UBLOX_FILTER_RTCM_TYPE1084 = 0x00010000,
+  SFE_UBLOX_FILTER_RTCM_TYPE1085 = 0x00020000,
+  SFE_UBLOX_FILTER_RTCM_TYPE1087 = 0x00040000,
+  SFE_UBLOX_FILTER_RTCM_TYPE1094 = 0x00080000,
+  SFE_UBLOX_FILTER_RTCM_TYPE1095 = 0x00100000,
+  SFE_UBLOX_FILTER_RTCM_TYPE1097 = 0x00200000,
+  SFE_UBLOX_FILTER_RTCM_TYPE1124 = 0x00400000,
+  SFE_UBLOX_FILTER_RTCM_TYPE1125 = 0x00800000,
+  SFE_UBLOX_FILTER_RTCM_TYPE1127 = 0x01000000,
+  SFE_UBLOX_FILTER_RTCM_TYPE1230 = 0x02000000,
+  SFE_UBLOX_FILTER_RTCM_TYPE4072_0 = 0x04000000,
+  SFE_UBLOX_FILTER_RTCM_TYPE4072_1 = 0x08000000,
+} sfe_ublox_rtcm_filtering_e;
+
+// Define a linked list which defines which UBX messages should be logged automatically
+// - without needing to have and use the Auto methods
+struct sfe_ublox_ubx_logging_list_t
+{
+  uint8_t UBX_CLASS;
+  uint8_t UBX_ID;
+  bool enable;
+  sfe_ublox_ubx_logging_list_t *next;
+};
+
 //-=-=-=-=-
 
 #ifndef MAX_PAYLOAD_SIZE
@@ -179,7 +264,8 @@ typedef enum
 // maxNMEAByteCount was set to 82: https://en.wikipedia.org/wiki/NMEA_0183#Message_structure
 // but the u-blox HP (RTK) GGA messages are 88 bytes long
 // The user can adjust maxNMEAByteCount by calling setMaxNMEAByteCount
-#define SFE_UBLOX_MAX_NMEA_BYTE_COUNT 88
+// To be safe - use 100 like we do for the Auto NMEA messages
+#define SFE_UBLOX_MAX_NMEA_BYTE_COUNT 100
 
 //-=-=-=-=- UBX binary specific variables
 struct ubxPacket

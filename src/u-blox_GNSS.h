@@ -56,6 +56,9 @@
 // Uncomment the next line (or add SFE_UBLOX_DISABLE_AUTO_NMEA as a compiler directive) to reduce the amount of program memory used by the library
 // #define SFE_UBLOX_DISABLE_AUTO_NMEA // Uncommenting this line will disable auto-NMEA support to save memory
 
+// Uncomment the next line (or add SFE_UBLOX_DISABLE_RTCM_LOGGING as a compiler directive) to reduce the amount of program memory used by the library
+// #define SFE_UBLOX_DISABLE_RTCM_LOGGING // Uncommenting this line will disable RTCM logging support to save memory
+
 // Uncomment the next line (or add SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT as a compiler directive) to reduce the amount of program memory used by the library
 // #define SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT // Uncommenting this line will disable the RAM-heavy RXM and NAV-SAT support to save memory
 
@@ -72,6 +75,9 @@
 #endif
 #if !defined(SFE_UBLOX_DISABLE_AUTO_NMEA) && defined(ARDUINO_ARCH_AVR) && !defined(ARDUINO_AVR_MEGA2560) && !defined(ARDUINO_AVR_MEGA) && !defined(ARDUINO_AVR_ADK)
 #define SFE_UBLOX_DISABLE_AUTO_NMEA
+#endif
+#if !defined(SFE_UBLOX_DISABLE_RTCM_LOGGING) && defined(ARDUINO_ARCH_AVR) && !defined(ARDUINO_AVR_MEGA2560) && !defined(ARDUINO_AVR_MEGA) && !defined(ARDUINO_AVR_ADK)
+#define SFE_UBLOX_DISABLE_RTCM_LOGGING
 #endif
 #if !defined(SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT) && defined(ARDUINO_ARCH_AVR) && !defined(ARDUINO_AVR_MEGA2560) && !defined(ARDUINO_AVR_MEGA) && !defined(ARDUINO_AVR_ADK)
 #define SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
@@ -130,10 +136,12 @@ protected:
   // Flag to indicate if we are connected to UART1 or UART2
   // Needed to select the correct config items when enabling a periodic message
   bool _UART2 = false; // Default to UART1
-  // the lock / unlock functions can be used if you have multiple tasks writing to the bus. 
-  // the idea is that in a RTOS you override this class and the two functions in which you take and give a mutex.
+
+  // These lock / unlock functions can be used if you have multiple tasks writing to the bus. 
+  // The idea is that in a RTOS you override this class and the two functions in which you take and give a mutex.
   virtual bool lock(void) { return true; }
   virtual void unlock(void) { }
+
 public:
   void connectedToUART2(bool connected = true) { _UART2 = connected; }
 
@@ -1203,6 +1211,15 @@ public:
   bool setNMEAGNZDAcallbackPtr(void (*callbackPointerPtr)(NMEA_ZDA_data_t *)); // Enable a callback on the arrival of a GNZDA message
 #endif
 
+  // Helper functions for RTCM logging
+#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
+  bool setRTCMLoggingMask(uint32_t messages = SFE_UBLOX_FILTER_RTCM_ALL); // Add selected RTCM messages to file buffer - if enabled. Default to adding ALL messages to the file buffer
+  uint32_t getRTCMLoggingMask();                                          // Return which RTCM messages are selected for logging to the file buffer - if enabled
+#endif
+
+  // UBX Logging - log any UBX message using packetAuto and avoiding having to have and use "Auto" (setAutonnn and lognnn) methods
+  void enableUBXlogging(uint8_t UBX_CLASS, uint8_t UBX_ID, bool enable = true);
+
   // Functions to extract signed and unsigned 8/16/32-bit data from a ubxPacket
   // From v2.0: These are public. The user can call these to extract data from custom packets
   uint64_t extractLongLong(ubxPacket *msg, uint16_t spotToStart);      // Combine eight bytes from payload into uint64_t
@@ -1351,6 +1368,9 @@ protected:
   bool initStorageNMEAGPZDA(); // Allocate RAM for incoming NMEA GPZDA messages and initialize it
   bool initStorageNMEAGNZDA(); // Allocate RAM for incoming NMEA GNZDA messages and initialize it
 
+  bool initStorageRTCM(); // Allocate RAM for incoming RTCM messages and initialize it
+  bool initStorageNMEA(); // Allocate RAM for incoming non-Auto NMEA messages and initialize it
+
   // Variables
   SparkFun_UBLOX_GNSS::GNSSDeviceBus *_sfeBus;
 
@@ -1359,11 +1379,8 @@ protected:
   SparkFun_UBLOX_GNSS::SfePrint _ubxOutputPort;  // The user can assign an output port to print UBX sentences if they wish
   SparkFun_UBLOX_GNSS::SfePrint _outputPort;     // The user can assign an output port to print ALL characters to if they wish
   SparkFun_UBLOX_GNSS::SfePrint _debugSerial;    // The stream to send debug messages to if enabled
-  bool _printDebug = false;                       // Flag to print the serial commands we are sending to the Serial port for debug
-  bool _printLimitedDebug = false;                // Flag to print limited debug messages. Useful for I2C debugging or high navigation rates
-
-  sfe_ublox_nmea_filtering_t _logNMEA;     // Flags to indicate which NMEA messages should be added to the file buffer for logging
-  sfe_ublox_nmea_filtering_t _processNMEA; // Flags to indicate which NMEA messages should be passed to processNMEA
+  bool _printDebug = false;                      // Flag to print the serial commands we are sending to the Serial port for debug
+  bool _printLimitedDebug = false;               // Flag to print limited debug messages. Useful for I2C debugging or high navigation rates
 
   // The packet buffers
   // These are pointed at from within the ubxPacket
@@ -1410,6 +1427,10 @@ protected:
   uint8_t rollingChecksumA; // Rolls forward as we receive incoming bytes. Checked against the last two A/B checksum bytes
   uint8_t rollingChecksumB; // Rolls forward as we receive incoming bytes. Checked against the last two A/B checksum bytes
 
+  // NMEA logging / Auto support
+  sfe_ublox_nmea_filtering_t _logNMEA;     // Flags to indicate which NMEA messages should be added to the file buffer for logging
+  sfe_ublox_nmea_filtering_t _processNMEA; // Flags to indicate which NMEA messages should be passed to processNMEA
+
   int8_t nmeaByteCounter; // Count all NMEA message bytes.
   // Abort NMEA message reception if nmeaByteCounter exceeds maxNMEAByteCount.
   // The user can adjust maxNMEAByteCount by calling setMaxNMEAByteCount
@@ -1418,6 +1439,8 @@ protected:
   bool logThisNMEA();          // Return true if we should log this NMEA message
   bool processThisNMEA();      // Return true if we should pass this NMEA message to processNMEA
   bool isNMEAHeaderValid();    // Return true if the six byte NMEA header appears valid. Used to set _signsOfLife
+
+  NMEA_STORAGE_t *_storageNMEA = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
 
 #ifndef SFE_UBLOX_DISABLE_AUTO_NMEA
   bool isThisNMEAauto();                 // Check if the NMEA message (in nmeaAddressField) is "auto" (i.e. has RAM allocated for it)
@@ -1432,6 +1455,22 @@ protected:
   nmeaAutomaticFlags *getNMEAFlagsPtr(); // Get a pointer to the flags
 #endif
 
+  // RTCM logging
+  sfe_ublox_rtcm_filtering_t _logRTCM;     // Flags to indicate which NMEA messages should be added to the file buffer for logging
+
+#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
+  RTCM_FRAME_t *_storageRTCM = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
+  void crc24q(uint8_t incoming, uint32_t *checksum); // Add incoming to checksum as per CRC-24Q
+#endif
+
+  //Define the maximum possible message length for packetAuto and enableUBXlogging
+  //UBX_NAV_SAT_MAX_LEN is just > UBX_RXM_RAWX_MAX_LEN
+  const uint16_t SFE_UBX_MAX_LENGTH = UBX_NAV_SAT_MAX_LEN;
+
+  // UBX logging
+  sfe_ublox_ubx_logging_list_t *sfe_ublox_ubx_logging_list_head = nullptr; // Linked list of which messages to log
+  bool logThisUBX(uint8_t UBX_CLASS, uint8_t UBX_ID); // Returns true if this UBX should be added to the logging buffer
+
   // Flag to prevent reentry into checkCallbacks
   // Prevent badness if the user accidentally calls checkCallbacks from inside a callback
   volatile bool checkCallbacksReentrant = false;
@@ -1439,8 +1478,8 @@ protected:
   // Support for data logging
   uint8_t *ubxFileBuffer = nullptr;                             // Pointer to the file buffer. RAM is allocated for this if required in .begin
   uint16_t fileBufferSize = 0;                                  // The size of the file buffer. This can be changed by calling setFileBufferSize _before_ .begin
-  uint16_t fileBufferHead;                                      // The incoming byte is written into the file buffer at this location
-  uint16_t fileBufferTail;                                      // The next byte to be read from the buffer will be read from this location
+  uint16_t fileBufferHead = 0;                                  // The incoming byte is written into the file buffer at this location
+  uint16_t fileBufferTail = 0;                                  // The next byte to be read from the buffer will be read from this location
   uint16_t fileBufferMaxAvail = 0;                              // The maximum number of bytes the file buffer has contained. Handy for checking the buffer is large enough to handle all the incoming data.
   bool createFileBuffer(void);                                  // Create the file buffer. Called by .begin
   uint16_t fileBufferSpaceAvailable(void);                      // Check how much space is available in the buffer
