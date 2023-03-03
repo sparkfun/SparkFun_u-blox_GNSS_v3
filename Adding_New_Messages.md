@@ -130,10 +130,15 @@ Add the new code which will safely delete the message storgae when ```end()``` i
 
 #### Step 6.2: Update autoLookup()
 
-Add a new entry for the message in the ```checkAutomaticTable``` :
+Add a new `switch` `case` for the message:
 
 ```
-      {UBX_CLASS_NAV, UBX_NAV_PVAT, &packetUBXNAVPVAT, UBX_NAV_PVAT_LEN},
+    else if (ID == UBX_NAV_PVAT)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_PVAT_LEN;
+      return (packetUBXNAVPVAT != nullptr);
+    }
 ```
 
 #### Step 6.3: Update processUBXpacket()
