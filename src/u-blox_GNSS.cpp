@@ -1050,14 +1050,8 @@ const char *DevUBLOXGNSS::statusString(sfe_ublox_status_e stat)
 // Check for the arrival of new I2C/Serial/SPI data
 // Called regularly to check for available bytes on the user' specified port
 
-void DevUBLOXGNSS::lockCheckUblox(void) { if (_enableCheckUbloxLock) _checkUbloxLock = true; }
-void DevUBLOXGNSS::unlockCheckUblox(void) { _checkUbloxLock = false; }
-
 bool DevUBLOXGNSS::checkUblox(uint8_t requestedClass, uint8_t requestedID)
 {
-  if (_checkUbloxLock)
-    return false;
-
   return checkUbloxInternal(&packetCfg, requestedClass, requestedID);
 }
 
@@ -1068,7 +1062,7 @@ bool DevUBLOXGNSS::checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requestedC
 
   // Update storedClass and storedID if either requestedClass or requestedID is non-zero,
   // otherwise leave unchanged. This allows calls of checkUblox() (which defaults to checkUblox(0,0))
-  // by other threads without changing the requested / expected Class and ID.
+  // by other threads without overwriting the requested / expected Class and ID.
   volatile static uint8_t storedClass = 0;
   volatile static uint8_t storedID = 0;
   if (requestedClass || requestedID) // If either is non-zero, store the requested Class and ID
@@ -4641,8 +4635,6 @@ void DevUBLOXGNSS::addToChecksum(uint8_t incoming)
 // Given a packet and payload, send everything including CRC bytes via I2C port
 sfe_ublox_status_e DevUBLOXGNSS::sendCommand(ubxPacket *outgoingUBX, uint16_t maxWait, bool expectACKonly)
 {
-  lockCheckUblox();
-
   if (!lock()) return SFE_UBLOX_STATUS_FAIL;
 
   sfe_ublox_status_e retVal = SFE_UBLOX_STATUS_SUCCESS;
@@ -4669,7 +4661,6 @@ sfe_ublox_status_e DevUBLOXGNSS::sendCommand(ubxPacket *outgoingUBX, uint16_t ma
       }
 #endif
       unlock();
-      unlockCheckUblox();
       return retVal;
     }
   }
@@ -4712,8 +4703,6 @@ sfe_ublox_status_e DevUBLOXGNSS::sendCommand(ubxPacket *outgoingUBX, uint16_t ma
   {
     processSpiBuffer(&packetCfg, 0, 0); // Process any SPI data received during the sendSpiCommand - but only if not checking for a response
   }
-
-  unlockCheckUblox();
 
   return retVal;
 }

@@ -142,14 +142,6 @@ protected:
   virtual bool lock(void) { return true; }
   virtual void unlock(void) { }
 
-  // A simpler lock to prevent checkUblox from being called by another thread while a full sendCommand and waitForResponse is in progress.
-  // Note: this won't prevent pushRawData from gatecrashing the party...
-  void lockCheckUblox(void)  __attribute__((weak));
-  void unlockCheckUblox(void)  __attribute__((weak));
-  volatile bool _checkUbloxLock = false;
-public:
-  volatile bool _enableCheckUbloxLock = false; // Change this to true to enable simple checkUblox locking
-
 public:
   void connectedToUART2(bool connected = true) { _UART2 = connected; }
 
