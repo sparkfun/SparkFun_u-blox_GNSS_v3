@@ -4868,7 +4868,7 @@ void DevUBLOXGNSS::spiTransfer(const uint8_t byteToTransfer)
 
   if ((returnedByte != 0xFF) || (currentSentence != SFE_UBLOX_SENTENCE_TYPE_NONE) || receivedSomething)
   {
-  if (spiBufferIndex < spiBufferSize)
+    if (spiBufferIndex < spiBufferSize)
     {
       spiBuffer[spiBufferIndex] = returnedByte;
       spiBufferIndex++;
