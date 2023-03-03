@@ -1060,24 +1060,13 @@ bool DevUBLOXGNSS::checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requestedC
 {
   if (!lock()) return false;
 
-  // Update storedClass and storedID if either requestedClass or requestedID is non-zero,
-  // otherwise leave unchanged. This allows calls of checkUblox() (which defaults to checkUblox(0,0))
-  // by other threads without overwriting the requested / expected Class and ID.
-  volatile static uint8_t storedClass = 0;
-  volatile static uint8_t storedID = 0;
-  if (requestedClass || requestedID) // If either is non-zero, store the requested Class and ID
-  {
-    storedClass = requestedClass;
-    storedID = requestedID;
-  }
-
   bool ok = false;
   if (_commType == COMM_TYPE_I2C)
-    ok = (checkUbloxI2C(incomingUBX, storedClass, storedID));
+    ok = (checkUbloxI2C(incomingUBX, requestedClass, requestedID));
   else if (_commType == COMM_TYPE_SERIAL)
-    ok = (checkUbloxSerial(incomingUBX, storedClass, storedID));
+    ok = (checkUbloxSerial(incomingUBX, requestedClass, requestedID));
   else if (_commType == COMM_TYPE_SPI)
-    ok = (checkUbloxSpi(incomingUBX, storedClass, storedID));
+    ok = (checkUbloxSpi(incomingUBX, requestedClass, requestedID));
 
   unlock();
 
@@ -1486,6 +1475,17 @@ bool DevUBLOXGNSS::autoLookup(uint8_t Class, uint8_t ID, uint16_t *maxSize)
 // Take a given byte and file it into the proper array
 void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
+  // Update storedClass and storedID if either requestedClass or requestedID is non-zero,
+  // otherwise leave unchanged. This allows calls of checkUblox() (which defaults to checkUblox(0,0))
+  // by other threads without overwriting the requested / expected Class and ID.
+  volatile static uint8_t storedClass = 0;
+  volatile static uint8_t storedID = 0;
+  if (requestedClass || requestedID) // If either is non-zero, store the requested Class and ID
+  {
+    storedClass = requestedClass;
+    storedID = requestedID;
+  }
+
   _outputPort.write(incoming); // Echo this byte to the serial port
 
   if ((currentSentence == SFE_UBLOX_SENTENCE_TYPE_NONE) || (currentSentence == SFE_UBLOX_SENTENCE_TYPE_NMEA))
@@ -1499,7 +1499,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
       // Reset the packetBuf.counter even though we will need to reset it again when ubxFrameCounter == 2
       packetBuf.counter = 0;
       ignoreThisPayload = false; // We should not ignore this payload - yet
-      // Store data in packetBuf until we know if we have a requested class and ID match
+      // Store data in packetBuf until we know if we have a stored class and ID match
       activePacketBuffer = SFE_UBLOX_PACKET_PACKETBUF;
     }
     else if (incoming == '$')
@@ -1554,7 +1554,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
         bool logBecauseEnabled = logThisUBX(packetBuf.cls, packetBuf.id);
 
         // This is not an ACK so check for a class and ID match
-        if ((packetBuf.cls == requestedClass) && (packetBuf.id == requestedID))
+        if ((packetBuf.cls == storedClass) && (packetBuf.id == storedID))
         {
           // This is not an ACK and we have a class and ID match
           // So start diverting data into incomingUBX (usually packetCfg)
@@ -1705,8 +1705,8 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
       // Now that we have received two payload bytes, we can check for a matching ACK/NACK
       if ((activePacketBuffer == SFE_UBLOX_PACKET_PACKETBUF) // If we are not already processing a data packet
           && (packetBuf.cls == UBX_CLASS_ACK)                // and if this is an ACK/NACK
-          && (packetBuf.payload[0] == requestedClass)        // and if the class matches
-          && (packetBuf.payload[1] == requestedID))          // and if the ID matches
+          && (packetBuf.payload[0] == storedClass)        // and if the class matches
+          && (packetBuf.payload[1] == storedID))          // and if the ID matches
       {
         if (packetBuf.len == 2) // Check if .len is 2
         {
@@ -1738,13 +1738,13 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
 
     // Divert incoming into the correct buffer
     if (activePacketBuffer == SFE_UBLOX_PACKET_PACKETACK)
-      processUBX(incoming, &packetAck, requestedClass, requestedID);
+      processUBX(incoming, &packetAck, storedClass, storedID);
     else if (activePacketBuffer == SFE_UBLOX_PACKET_PACKETCFG)
-      processUBX(incoming, incomingUBX, requestedClass, requestedID);
+      processUBX(incoming, incomingUBX, storedClass, storedID);
     else if (activePacketBuffer == SFE_UBLOX_PACKET_PACKETBUF)
-      processUBX(incoming, &packetBuf, requestedClass, requestedID);
+      processUBX(incoming, &packetBuf, storedClass, storedID);
     else // if (activePacketBuffer == SFE_UBLOX_PACKET_PACKETAUTO)
-      processUBX(incoming, &packetAuto, requestedClass, requestedID);
+      processUBX(incoming, &packetAuto, storedClass, storedID);
 
     // If user has assigned an output port then pipe the characters there,
     // but only if the port is different (otherwise we'll output each character twice!)
@@ -6071,7 +6071,7 @@ size_t DevUBLOXGNSS::pushAssistNowDataInternal(size_t offset, bool skipTime, con
           bool keepGoing = true;
           while (keepGoing && (millis() < (startTime + maxWait))) // Keep checking for the ACK until we time out
           {
-            checkUbloxInternal(&packetCfg, UBX_CLASS_MGA, UBX_MGA_ACK_DATA0); // Was checkUblox();
+            checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID. We could be pushing this from another thread...
             if (packetUBXMGAACK->head != packetUBXMGAACK->tail) // Does the MGA ACK ringbuffer contain any ACK's?
             {
               bool dataAckd = true;                                                                                        // Check if we've received the correct ACK
@@ -6594,7 +6594,7 @@ size_t DevUBLOXGNSS::readNavigationDatabase(uint8_t *dataBytes, size_t maxNumDat
 
   while (keepGoing && (millis() < (startTime + maxWait)))
   {
-    checkUbloxInternal(&packetCfg, UBX_CLASS_MGA, UBX_MGA_ACK_DATA0); // Was checkUblox();
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID. We could be pushing this from another thread...
 
     while (packetUBXMGADBD->head != packetUBXMGADBD->tail) // Does the MGA DBD ringbuffer contain any data?
     {
@@ -9000,7 +9000,7 @@ bool DevUBLOXGNSS::getNAVPOSECEF(uint16_t maxWait)
   if (packetUBXNAVPOSECEF->automaticFlags.flags.bits.automatic && packetUBXNAVPOSECEF->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_POSECEF);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVPOSECEF->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXNAVPOSECEF->automaticFlags.flags.bits.automatic && !packetUBXNAVPOSECEF->automaticFlags.flags.bits.implicitUpdate)
@@ -9170,7 +9170,7 @@ bool DevUBLOXGNSS::getNAVSTATUS(uint16_t maxWait)
   if (packetUBXNAVSTATUS->automaticFlags.flags.bits.automatic && packetUBXNAVSTATUS->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_STATUS);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVSTATUS->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXNAVSTATUS->automaticFlags.flags.bits.automatic && !packetUBXNAVSTATUS->automaticFlags.flags.bits.implicitUpdate)
@@ -9340,7 +9340,7 @@ bool DevUBLOXGNSS::getDOP(uint16_t maxWait)
   if (packetUBXNAVDOP->automaticFlags.flags.bits.automatic && packetUBXNAVDOP->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_DOP);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVDOP->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXNAVDOP->automaticFlags.flags.bits.automatic && !packetUBXNAVDOP->automaticFlags.flags.bits.implicitUpdate)
@@ -9506,7 +9506,7 @@ bool DevUBLOXGNSS::getNAVEOE(uint16_t maxWait)
   if (packetUBXNAVEOE->automaticFlags.flags.bits.automatic && packetUBXNAVEOE->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_EOE);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVEOE->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXNAVEOE->automaticFlags.flags.bits.automatic && !packetUBXNAVEOE->automaticFlags.flags.bits.implicitUpdate)
@@ -9679,7 +9679,7 @@ bool DevUBLOXGNSS::getNAVATT(uint16_t maxWait)
   if (packetUBXNAVATT->automaticFlags.flags.bits.automatic && packetUBXNAVATT->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_ATT);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVATT->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXNAVATT->automaticFlags.flags.bits.automatic && !packetUBXNAVATT->automaticFlags.flags.bits.implicitUpdate)
@@ -9851,7 +9851,7 @@ bool DevUBLOXGNSS::getPVT(uint16_t maxWait)
   if (packetUBXNAVPVT->automaticFlags.flags.bits.automatic && packetUBXNAVPVT->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_PVT);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVPVT->moduleQueried.moduleQueried1.bits.all;
   }
   else if (packetUBXNAVPVT->automaticFlags.flags.bits.automatic && !packetUBXNAVPVT->automaticFlags.flags.bits.implicitUpdate)
@@ -10022,7 +10022,7 @@ bool DevUBLOXGNSS::getNAVODO(uint16_t maxWait)
   if (packetUBXNAVODO->automaticFlags.flags.bits.automatic && packetUBXNAVODO->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_ODO);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVODO->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXNAVODO->automaticFlags.flags.bits.automatic && !packetUBXNAVODO->automaticFlags.flags.bits.implicitUpdate)
@@ -10191,7 +10191,7 @@ bool DevUBLOXGNSS::getNAVVELECEF(uint16_t maxWait)
   if (packetUBXNAVVELECEF->automaticFlags.flags.bits.automatic && packetUBXNAVVELECEF->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_VELECEF);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVVELECEF->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXNAVVELECEF->automaticFlags.flags.bits.automatic && !packetUBXNAVVELECEF->automaticFlags.flags.bits.implicitUpdate)
@@ -10360,7 +10360,7 @@ bool DevUBLOXGNSS::getNAVVELNED(uint16_t maxWait)
   if (packetUBXNAVVELNED->automaticFlags.flags.bits.automatic && packetUBXNAVVELNED->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_VELNED);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVVELNED->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXNAVVELNED->automaticFlags.flags.bits.automatic && !packetUBXNAVVELNED->automaticFlags.flags.bits.implicitUpdate)
@@ -10526,7 +10526,7 @@ bool DevUBLOXGNSS::getNAVHPPOSECEF(uint16_t maxWait)
   if (packetUBXNAVHPPOSECEF->automaticFlags.flags.bits.automatic && packetUBXNAVHPPOSECEF->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_HPPOSECEF);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVHPPOSECEF->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXNAVHPPOSECEF->automaticFlags.flags.bits.automatic && !packetUBXNAVHPPOSECEF->automaticFlags.flags.bits.implicitUpdate)
@@ -10695,7 +10695,7 @@ bool DevUBLOXGNSS::getHPPOSLLH(uint16_t maxWait)
   if (packetUBXNAVHPPOSLLH->automaticFlags.flags.bits.automatic && packetUBXNAVHPPOSLLH->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_HPPOSLLH);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVHPPOSLLH->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXNAVHPPOSLLH->automaticFlags.flags.bits.automatic && !packetUBXNAVHPPOSLLH->automaticFlags.flags.bits.implicitUpdate)
@@ -10864,7 +10864,7 @@ bool DevUBLOXGNSS::getNAVPVAT(uint16_t maxWait)
 
   if (packetUBXNAVPVAT->automaticFlags.flags.bits.automatic && packetUBXNAVPVAT->automaticFlags.flags.bits.implicitUpdate)
   {
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_PVAT);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVPVAT->moduleQueried.moduleQueried1.bits.all;
   }
   else if (packetUBXNAVPVAT->automaticFlags.flags.bits.automatic && !packetUBXNAVPVAT->automaticFlags.flags.bits.implicitUpdate)
@@ -11036,7 +11036,7 @@ bool DevUBLOXGNSS::getNAVTIMEUTC(uint16_t maxWait)
   if (packetUBXNAVTIMEUTC->automaticFlags.flags.bits.automatic && packetUBXNAVTIMEUTC->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_TIMEUTC);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVTIMEUTC->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXNAVTIMEUTC->automaticFlags.flags.bits.automatic && !packetUBXNAVTIMEUTC->automaticFlags.flags.bits.implicitUpdate)
@@ -11202,7 +11202,7 @@ bool DevUBLOXGNSS::getNAVCLOCK(uint16_t maxWait)
   if (packetUBXNAVCLOCK->automaticFlags.flags.bits.automatic && packetUBXNAVCLOCK->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_CLOCK);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVCLOCK->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXNAVCLOCK->automaticFlags.flags.bits.automatic && !packetUBXNAVCLOCK->automaticFlags.flags.bits.implicitUpdate)
@@ -11424,7 +11424,7 @@ bool DevUBLOXGNSS::getSurveyStatus(uint16_t maxWait)
   if (packetUBXNAVSVIN->automaticFlags.flags.bits.automatic && packetUBXNAVSVIN->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_SVIN);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVSVIN->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXNAVSVIN->automaticFlags.flags.bits.automatic && !packetUBXNAVSVIN->automaticFlags.flags.bits.implicitUpdate)
@@ -11596,7 +11596,7 @@ bool DevUBLOXGNSS::getNAVSAT(uint16_t maxWait)
   if (packetUBXNAVSAT->automaticFlags.flags.bits.automatic && packetUBXNAVSAT->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_SAT);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVSAT->moduleQueried;
   }
   else if (packetUBXNAVSAT->automaticFlags.flags.bits.automatic && !packetUBXNAVSAT->automaticFlags.flags.bits.implicitUpdate)
@@ -11771,7 +11771,7 @@ bool DevUBLOXGNSS::getRELPOSNED(uint16_t maxWait)
   if (packetUBXNAVRELPOSNED->automaticFlags.flags.bits.automatic && packetUBXNAVRELPOSNED->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_RELPOSNED);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVRELPOSNED->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXNAVRELPOSNED->automaticFlags.flags.bits.automatic && !packetUBXNAVRELPOSNED->automaticFlags.flags.bits.implicitUpdate)
@@ -11940,7 +11940,7 @@ bool DevUBLOXGNSS::getAOPSTATUS(uint16_t maxWait)
   if (packetUBXNAVAOPSTATUS->automaticFlags.flags.bits.automatic && packetUBXNAVAOPSTATUS->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_NAV, UBX_NAV_AOPSTATUS);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXNAVAOPSTATUS->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXNAVAOPSTATUS->automaticFlags.flags.bits.automatic && !packetUBXNAVAOPSTATUS->automaticFlags.flags.bits.implicitUpdate)
@@ -12281,7 +12281,7 @@ bool DevUBLOXGNSS::getRXMSFRBX(uint16_t maxWait)
   if (packetUBXRXMSFRBX->automaticFlags.flags.bits.automatic && packetUBXRXMSFRBX->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_RXM, UBX_RXM_SFRBX);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXRXMSFRBX->moduleQueried;
   }
   else if (packetUBXRXMSFRBX->automaticFlags.flags.bits.automatic && !packetUBXRXMSFRBX->automaticFlags.flags.bits.implicitUpdate)
@@ -12437,7 +12437,7 @@ bool DevUBLOXGNSS::getRXMRAWX(uint16_t maxWait)
   if (packetUBXRXMRAWX->automaticFlags.flags.bits.automatic && packetUBXRXMRAWX->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_RXM, UBX_RXM_RAWX);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXRXMRAWX->moduleQueried;
   }
   else if (packetUBXRXMRAWX->automaticFlags.flags.bits.automatic && !packetUBXRXMRAWX->automaticFlags.flags.bits.implicitUpdate)
@@ -12606,7 +12606,7 @@ bool DevUBLOXGNSS::getRXMMEASX(uint16_t maxWait)
   if (packetUBXRXMMEASX->automaticFlags.flags.bits.automatic && packetUBXRXMMEASX->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_RXM, UBX_RXM_MEASX);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXRXMMEASX->moduleQueried;
   }
   else if (packetUBXRXMMEASX->automaticFlags.flags.bits.automatic && !packetUBXRXMMEASX->automaticFlags.flags.bits.implicitUpdate)
@@ -12776,7 +12776,7 @@ bool DevUBLOXGNSS::getTIMTM2(uint16_t maxWait)
   if (packetUBXTIMTM2->automaticFlags.flags.bits.automatic && packetUBXTIMTM2->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_TIM, UBX_TIM_TM2);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXTIMTM2->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXTIMTM2->automaticFlags.flags.bits.automatic && !packetUBXTIMTM2->automaticFlags.flags.bits.implicitUpdate)
@@ -12951,7 +12951,7 @@ bool DevUBLOXGNSS::getESFALG(uint16_t maxWait)
   if (packetUBXESFALG->automaticFlags.flags.bits.automatic && packetUBXESFALG->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_ESF, UBX_ESF_ALG);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXESFALG->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXESFALG->automaticFlags.flags.bits.automatic && !packetUBXESFALG->automaticFlags.flags.bits.implicitUpdate)
@@ -13127,7 +13127,7 @@ bool DevUBLOXGNSS::getESFSTATUS(uint16_t maxWait)
   if (packetUBXESFSTATUS->automaticFlags.flags.bits.automatic && packetUBXESFSTATUS->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_ESF, UBX_ESF_STATUS);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXESFSTATUS->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXESFSTATUS->automaticFlags.flags.bits.automatic && !packetUBXESFSTATUS->automaticFlags.flags.bits.implicitUpdate)
@@ -13304,7 +13304,7 @@ bool DevUBLOXGNSS::getESFINS(uint16_t maxWait)
   if (packetUBXESFINS->automaticFlags.flags.bits.automatic && packetUBXESFINS->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_ESF, UBX_ESF_INS);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXESFINS->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXESFINS->automaticFlags.flags.bits.automatic && !packetUBXESFINS->automaticFlags.flags.bits.implicitUpdate)
@@ -13721,7 +13721,7 @@ bool DevUBLOXGNSS::getHNRATT(uint16_t maxWait)
   if (packetUBXHNRATT->automaticFlags.flags.bits.automatic && packetUBXHNRATT->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_HNR, UBX_HNR_ATT);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXHNRATT->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXHNRATT->automaticFlags.flags.bits.automatic && !packetUBXHNRATT->automaticFlags.flags.bits.implicitUpdate)
@@ -13902,7 +13902,7 @@ bool DevUBLOXGNSS::getHNRINS(uint16_t maxWait)
   if (packetUBXHNRINS->automaticFlags.flags.bits.automatic && packetUBXHNRINS->automaticFlags.flags.bits.implicitUpdate)
   {
     // The GPS is automatically reporting, we just check whether we got unread data
-    checkUbloxInternal(&packetCfg, UBX_CLASS_HNR, UBX_HNR_INS);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXHNRINS->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXHNRINS->automaticFlags.flags.bits.automatic && !packetUBXHNRINS->automaticFlags.flags.bits.implicitUpdate)
@@ -14077,7 +14077,7 @@ bool DevUBLOXGNSS::getHNRPVT(uint16_t maxWait)
 
   if (packetUBXHNRPVT->automaticFlags.flags.bits.automatic && packetUBXHNRPVT->automaticFlags.flags.bits.implicitUpdate)
   {
-    checkUbloxInternal(&packetCfg, UBX_CLASS_HNR, UBX_HNR_PVT);
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
     return packetUBXHNRPVT->moduleQueried.moduleQueried.bits.all;
   }
   else if (packetUBXHNRPVT->automaticFlags.flags.bits.automatic && !packetUBXHNRPVT->automaticFlags.flags.bits.implicitUpdate)
@@ -14285,7 +14285,7 @@ uint8_t DevUBLOXGNSS::getLatestNMEAGPGGA(NMEA_GGA_data_t *data)
   if (storageNMEAGPGGA == nullptr) // Bail if the RAM allocation failed
     return (false);
 
-  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Use a fake UBX class and ID.
+  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
 
   memcpy(data, &storageNMEAGPGGA->completeCopy, sizeof(NMEA_GGA_data_t)); // Copy the complete copy
 
@@ -14362,7 +14362,7 @@ uint8_t DevUBLOXGNSS::getLatestNMEAGNGGA(NMEA_GGA_data_t *data)
   if (storageNMEAGNGGA == nullptr) // Bail if the RAM allocation failed
     return (false);
 
-  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Use a fake UBX class and ID.
+  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
 
   memcpy(data, &storageNMEAGNGGA->completeCopy, sizeof(NMEA_GGA_data_t)); // Copy the complete copy
 
@@ -14444,7 +14444,7 @@ uint8_t DevUBLOXGNSS::getLatestNMEAGPVTG(NMEA_VTG_data_t *data)
   if (storageNMEAGPVTG == nullptr) // Bail if the RAM allocation failed
     return (false);
 
-  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Use a fake UBX class and ID.
+  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
 
   memcpy(data, &storageNMEAGPVTG->completeCopy, sizeof(NMEA_VTG_data_t)); // Copy the complete copy
 
@@ -14521,7 +14521,7 @@ uint8_t DevUBLOXGNSS::getLatestNMEAGNVTG(NMEA_VTG_data_t *data)
   if (storageNMEAGNVTG == nullptr) // Bail if the RAM allocation failed
     return (false);
 
-  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Use a fake UBX class and ID.
+  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
 
   memcpy(data, &storageNMEAGNVTG->completeCopy, sizeof(NMEA_VTG_data_t)); // Copy the complete copy
 
@@ -14603,7 +14603,7 @@ uint8_t DevUBLOXGNSS::getLatestNMEAGPRMC(NMEA_RMC_data_t *data)
   if (storageNMEAGPRMC == nullptr) // Bail if the RAM allocation failed
     return (false);
 
-  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Use a fake UBX class and ID.
+  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
 
   memcpy(data, &storageNMEAGPRMC->completeCopy, sizeof(NMEA_RMC_data_t)); // Copy the complete copy
 
@@ -14680,7 +14680,7 @@ uint8_t DevUBLOXGNSS::getLatestNMEAGNRMC(NMEA_RMC_data_t *data)
   if (storageNMEAGNRMC == nullptr) // Bail if the RAM allocation failed
     return (false);
 
-  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Use a fake UBX class and ID.
+  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
 
   memcpy(data, &storageNMEAGNRMC->completeCopy, sizeof(NMEA_RMC_data_t)); // Copy the complete copy
 
@@ -14762,7 +14762,7 @@ uint8_t DevUBLOXGNSS::getLatestNMEAGPZDA(NMEA_ZDA_data_t *data)
   if (storageNMEAGPZDA == nullptr) // Bail if the RAM allocation failed
     return (false);
 
-  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Use a fake UBX class and ID.
+  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
 
   memcpy(data, &storageNMEAGPZDA->completeCopy, sizeof(NMEA_ZDA_data_t)); // Copy the complete copy
 
@@ -14839,7 +14839,7 @@ uint8_t DevUBLOXGNSS::getLatestNMEAGNZDA(NMEA_ZDA_data_t *data)
   if (storageNMEAGNZDA == nullptr) // Bail if the RAM allocation failed
     return (false);
 
-  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Use a fake UBX class and ID.
+  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
 
   memcpy(data, &storageNMEAGNZDA->completeCopy, sizeof(NMEA_ZDA_data_t)); // Copy the complete copy
 
