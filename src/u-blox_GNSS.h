@@ -138,9 +138,11 @@ protected:
   bool _UART2 = false; // Default to UART1
 
   // These lock / unlock functions can be used if you have multiple tasks writing to the bus. 
-  // The idea is that in a RTOS you override this class and the two functions in which you take and give a mutex.
+  // The idea is that in a RTOS you override this class and the functions in which you take and give a mutex.
+  virtual bool createLock(void) { return true; }
   virtual bool lock(void) { return true; }
   virtual void unlock(void) { }
+  virtual void deleteLock(void) { }
 
 public:
   void connectedToUART2(bool connected = true) { _UART2 = connected; }

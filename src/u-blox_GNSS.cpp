@@ -63,6 +63,8 @@ DevUBLOXGNSS::DevUBLOXGNSS(void)
   _logNMEA.all = 0;                             // Default to passing no NMEA messages to the file buffer
   _processNMEA.all = SFE_UBLOX_FILTER_NMEA_ALL; // Default to passing all NMEA messages to processNMEA
   _logRTCM.all = 0;                             // Default to passing no RTCM messages to the file buffer
+
+  createLock(); // Create the lock semaphore - if needed
 }
 
 DevUBLOXGNSS::~DevUBLOXGNSS(void)
@@ -88,6 +90,8 @@ DevUBLOXGNSS::~DevUBLOXGNSS(void)
     delete[] spiBuffer; // Created with new[]
     spiBuffer = nullptr;
   }
+
+  deleteLock(); // Delete the lock semaphore - if required
 }
 
 // Stop all automatic message processing. Free all used RAM
