@@ -237,7 +237,9 @@ const uint8_t UBX_MON_VER = 0x04;   // Receiver/Software Version. Used for obtai
 // The following are used to configure the NAV UBX messages (navigation results messages). Descriptions from UBX messages overview (ZED_F9P Interface Description Document page 35-36)
 const uint8_t UBX_NAV_ATT = 0x05;       // Vehicle "Attitude" Solution
 const uint8_t UBX_NAV_CLOCK = 0x22;     // Clock Solution
+const uint8_t UBX_NAV_COV = 0x36;     // Covariance matrices
 const uint8_t UBX_NAV_DOP = 0x04;       // Dilution of precision
+const uint8_t UBX_NAV_EELL = 0x3D;       // Position error ellipse parameters
 const uint8_t UBX_NAV_EOE = 0x61;       // End of Epoch
 const uint8_t UBX_NAV_GEOFENCE = 0x39;  // Geofencing status. Used to poll the geofence status
 const uint8_t UBX_NAV_HPPOSECEF = 0x13; // High Precision Position Solution in ECEF. Used to find our positional accuracy (high precision).
@@ -252,6 +254,8 @@ const uint8_t UBX_NAV_PVAT = 0x17;      // Navigation position velocity attitude
 const uint8_t UBX_NAV_RELPOSNED = 0x3C; // Relative Positioning Information in NED frame
 const uint8_t UBX_NAV_RESETODO = 0x10;  // Reset odometer
 const uint8_t UBX_NAV_SAT = 0x35;       // Satellite Information
+const uint8_t UBX_NAV_SBAS = 0x32;       // SBAS subsystem
+const uint8_t UBX_NAV_SLAS = 0x42;       // QZSS L1S SLAS status data
 const uint8_t UBX_NAV_SIG = 0x43;       // Signal Information
 const uint8_t UBX_NAV_STATUS = 0x03;    // Receiver Navigation Status
 const uint8_t UBX_NAV_SVIN = 0x3B;      // Survey-in data. Used for checking Survey In status
@@ -264,6 +268,7 @@ const uint8_t UBX_NAV_TIMEUTC = 0x21;   // UTC Time Solution
 const uint8_t UBX_NAV_VELECEF = 0x11;   // Velocity Solution in ECEF
 const uint8_t UBX_NAV_VELNED = 0x12;    // Velocity Solution in NED
 const uint8_t UBX_NAV_AOPSTATUS = 0x60; // AssistNow Autonomous status
+
 
 // Class: RXM
 // The following are used to configure the RXM UBX messages (receiver manager messages). Descriptions from UBX messages overview (ZED_F9P Interface Description Document page 36)
