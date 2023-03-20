@@ -7286,6 +7286,7 @@ bool DevUBLOXGNSS::setStaticPosition(int32_t ecefXOrLat, int8_t ecefXOrLatHP, in
   unsignedSigned32 converter32;
   unsignedSigned8 converter8;
   bool result = newCfgValset(layer);
+  result &= addCfgValset8(UBLOX_CFG_TMODE_MODE, SVIN_MODE_FIXED);
   result &= addCfgValset8(UBLOX_CFG_TMODE_POS_TYPE, (uint8_t)latLong);
   converter32.signed32 = ecefXOrLat;
   result &= addCfgValset32(latLong ? UBLOX_CFG_TMODE_LAT : UBLOX_CFG_TMODE_ECEF_X, converter32.unsigned32);

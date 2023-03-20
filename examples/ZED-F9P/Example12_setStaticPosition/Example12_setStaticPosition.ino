@@ -52,17 +52,29 @@ void setup()
   //-1280208.308,-4716803.847,4086665.811 is SparkFun HQ in ECEF coordinates so...
 
   //Units are cm so 1234 = 12.34m
-  //success &= myGNSS.setStaticPosition(-128020831, -471680385, 408666581, false); // False at end enables ECEF input
+  //
+  //If you were setting up a full GNSS station, you would want to save these settings to Battery-Backed RAM.
+  //Because setting an incorrect static position will disable the ability to get a lock, we will save to RAM layer only in this example - not RAM_BBR.  
+  //success &= myGNSS.setStaticPosition(-128020831, -471680385, 408666581, false, VAL_LAYER_RAM); // False at end enables ECEF input
 
   // Units are cm with a high precision extension so -1234.5678 should be called: (-123456, -78)
-  success &= myGNSS.setStaticPosition(-128020830, -80, -471680384, -70, 408666581, 10, false); // ECEF with high precision 0.1mm parts
+  //
+  //If you were setting up a full GNSS station, you would want to save these settings to Battery-Backed RAM.
+  //Because setting an incorrect static position will disable the ability to get a lock, we will save to RAM layer only in this example - not RAM_BBR.  
+  success &= myGNSS.setStaticPosition(-128020830, -80, -471680384, -70, 408666581, 10, false, VAL_LAYER_RAM); // ECEF with high precision 0.1mm parts
 
   // We can also set via lat/long
   // 40.09029751,-105.18507900,1560.238
-  //success &= myGNSS.setStaticPosition(400902975, -1051850790, 156024, true); // True at end enables lat/long input
+  //
+  //If you were setting up a full GNSS station, you would want to save these settings to Battery-Backed RAM.
+  //Because setting an incorrect static position will disable the ability to get a lock, we will save to RAM layer only in this example - not RAM_BBR.  
+  //success &= myGNSS.setStaticPosition(400902975, -1051850790, 156024, true, VAL_LAYER_RAM); // True at end enables lat/long input
 
   // For High Precision Lat/Lon/Alt the units are: degrees^-7, degrees^-9, degrees^-7, degrees^-9, cm, 0.1mm
-  //success &= myGNSS.setStaticPosition(400902975, 10, -1051850790, 0, 156023, 80, true);
+  //
+  //If you were setting up a full GNSS station, you would want to save these settings to Battery-Backed RAM.
+  //Because setting an incorrect static position will disable the ability to get a lock, we will save to RAM layer only in this example - not RAM_BBR.  
+  //success &= myGNSS.setStaticPosition(400902975, 10, -1051850790, 0, 156023, 80, true, VAL_LAYER_RAM);
 
   if (!success) Serial.println(F("At least one call to setStaticPosition failed!"));
 
