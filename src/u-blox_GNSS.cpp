@@ -7790,6 +7790,72 @@ bool DevUBLOXGNSS::resetOdometer(uint16_t maxWait)
   return (sendCommand(&packetCfg, maxWait, true) == SFE_UBLOX_STATUS_DATA_SENT); // We are only expecting an ACK
 }
 
+// Enable / disable the odometer
+bool DevUBLOXGNSS::enableOdometer(bool enable, uint8_t layer, uint16_t maxWait)
+{
+  return setVal8(UBLOX_CFG_ODO_USE_ODO, (uint8_t)enable, layer, maxWait);
+}
+  
+// Read the odometer configuration
+bool DevUBLOXGNSS::getOdometerConfig(uint8_t *flags, uint8_t *odoCfg, uint8_t *cogMaxSpeed, uint8_t *cogMaxPosAcc, uint8_t *velLpGain, uint8_t *cogLpGain, uint8_t layer, uint16_t maxWait)
+{
+  bool result = newCfgValget(layer);
+  result &= addCfgValget(UBLOX_CFG_ODO_USE_ODO);
+  result &= addCfgValget(UBLOX_CFG_ODO_USE_COG);
+  result &= addCfgValget(UBLOX_CFG_ODO_OUTLPVEL);
+  result &= addCfgValget(UBLOX_CFG_ODO_OUTLPCOG);
+  result &= addCfgValget(UBLOX_CFG_ODO_PROFILE);
+  result &= addCfgValget(UBLOX_CFG_ODO_COGMAXSPEED);
+  result &= addCfgValget(UBLOX_CFG_ODO_COGMAXPOSACC);
+  result &= addCfgValget(UBLOX_CFG_ODO_VELLPGAIN);
+  result &= addCfgValget(UBLOX_CFG_ODO_COGLPGAIN);
+  result &= sendCfgValget(maxWait);
+
+  if (result)
+  {
+    uint8_t flagsBit = 0;
+    uint8_t flagsByte = 0;
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_USE_ODO, &flagsBit, 1);
+    if (flagsBit)
+      flagsByte |= UBX_CFG_ODO_USE_ODO;
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_USE_COG, &flagsBit, 1);
+    if (flagsBit)
+      flagsByte |= UBX_CFG_ODO_USE_COG;
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_OUTLPVEL, &flagsBit, 1);
+    if (flagsBit)
+      flagsByte |= UBX_CFG_ODO_OUT_LP_VEL;
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_OUTLPCOG, &flagsBit, 1);
+    if (flagsBit)
+      flagsByte |= UBX_CFG_ODO_OUT_LP_COG;
+    *flags = flagsByte;
+
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_PROFILE, odoCfg, 1);
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_COGMAXSPEED, cogMaxSpeed, 1);
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_COGMAXPOSACC, cogMaxPosAcc, 1);
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_VELLPGAIN, velLpGain, 1);
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_COGLPGAIN, cogLpGain, 1);
+  }
+
+  return result;
+}
+
+// Configure the odometer
+bool DevUBLOXGNSS::setOdometerConfig(uint8_t flags, uint8_t odoCfg, uint8_t cogMaxSpeed, uint8_t cogMaxPosAcc, uint8_t velLpGain, uint8_t cogLpGain, uint8_t layer, uint16_t maxWait)
+{
+  bool result = newCfgValset(layer);
+  result &= addCfgValset8(UBLOX_CFG_ODO_USE_ODO, flags & UBX_CFG_ODO_USE_ODO ? 1 : 0);
+  result &= addCfgValset8(UBLOX_CFG_ODO_USE_COG, flags & UBX_CFG_ODO_USE_COG ? 1 : 0);
+  result &= addCfgValset8(UBLOX_CFG_ODO_OUTLPVEL, flags & UBX_CFG_ODO_OUT_LP_VEL ? 1 : 0);
+  result &= addCfgValset8(UBLOX_CFG_ODO_OUTLPCOG, flags & UBX_CFG_ODO_OUT_LP_COG ? 1 : 0);
+  result &= addCfgValset8(UBLOX_CFG_ODO_PROFILE, odoCfg);
+  result &= addCfgValset8(UBLOX_CFG_ODO_COGMAXSPEED, cogMaxSpeed);
+  result &= addCfgValset8(UBLOX_CFG_ODO_COGMAXPOSACC, cogMaxPosAcc);
+  result &= addCfgValset8(UBLOX_CFG_ODO_VELLPGAIN, velLpGain);
+  result &= addCfgValset8(UBLOX_CFG_ODO_COGLPGAIN, cogLpGain);
+  result &= sendCfgValset(maxWait);
+  return result;
+}
+
 uint32_t DevUBLOXGNSS::getEnableGNSSConfigKey(sfe_ublox_gnss_ids_e id)
 {
   const uint32_t gnssConfigKeys[(uint8_t)SFE_UBLOX_GNSS_ID_UNKNOWN] = {
@@ -15675,6 +15741,8 @@ int32_t DevUBLOXGNSS::getAltitude(uint16_t maxWait)
 // Get the current altitude in mm according to mean sea level
 // Ellipsoid model: https://www.esri.com/news/arcuser/0703/geoid1of3.html
 // Difference between Ellipsoid Model and Mean Sea Level: https://eos-gnss.com/elevation-for-beginners/
+// Also see: https://portal.u-blox.com/s/question/0D52p00008HKDSkCAP/what-geoid-model-is-used-and-where-is-this-calculated
+// and: https://cddis.nasa.gov/926/egm96/egm96.html on 10x10 degree grid
 int32_t DevUBLOXGNSS::getAltitudeMSL(uint16_t maxWait)
 {
   if (packetUBXNAVPVT == nullptr)

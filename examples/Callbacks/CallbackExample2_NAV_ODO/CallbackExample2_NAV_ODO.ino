@@ -2,7 +2,7 @@
   Configuring the GNSS to automatically send odometer reports over I2C and display the data using a callback
   By: Paul Clark
   SparkFun Electronics
-  Date: December 30th, 2020
+  Date: March 20th, 2023
   License: MIT. See license file for more information.
 
   This example shows how to configure the u-blox GNSS to send odometer reports automatically
@@ -74,6 +74,27 @@ void setup()
   myGNSS.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the communications port settings to flash and BBR
 
   myGNSS.setNavigationFrequency(1); //Produce one solution per second
+
+  //By default, the odometer is disabled. We need to enable it.
+  //We can enable it using the default settings:
+  myGNSS.enableOdometer();
+
+  //Or we can configure it using our own settings, by performing a read-modify-write:
+  uint8_t flags;        // Odometer/Low-speed COG filter flags
+  uint8_t odoCfg;       // Odometer filter settings
+  uint8_t cogMaxSpeed;  // Speed below which course-over-ground (COG) is computed with the low-speed COG filter : m/s * 0.1
+  uint8_t cogMaxPosAcc; // Maximum acceptable position accuracy for computing COG with the low-speed COG filter
+  uint8_t velLpGain;    // Velocity low-pass filter level
+  uint8_t cogLpGain;    // COG low-pass filter level
+
+  if (myGNSS.getOdometerConfig(&flags, &odoCfg, &cogMaxSpeed, &cogMaxPosAcc, &velLpGain, &cogLpGain))
+  {
+    flags = UBX_CFG_ODO_USE_ODO; // Enable the odometer
+    odoCfg = UBX_CFG_ODO_CAR; // Use the car profile (others are RUN, CYCLE, SWIM, CUSTOM)
+    myGNSS.setOdometerConfig(flags, odoCfg, cogMaxSpeed, cogMaxPosAcc, velLpGain, cogLpGain); // Set the configuration
+  }
+  else
+    Serial.println("Could not read odometer config!");
 
   //myGNSS.resetOdometer(); //Uncomment this line to reset the odometer
 

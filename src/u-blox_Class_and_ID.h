@@ -338,6 +338,22 @@ const uint8_t COM_TYPE_NMEA = (1 << 1);
 const uint8_t COM_TYPE_RTCM3 = (1 << 5);
 const uint8_t COM_TYPE_SPARTN = (1 << 6);
 
+// Odometer configuration - flags
+const uint8_t UBX_CFG_ODO_USE_ODO = (1 << 0);
+const uint8_t UBX_CFG_ODO_USE_COG = (1 << 1);
+const uint8_t UBX_CFG_ODO_OUT_LP_VEL = (1 << 2);
+const uint8_t UBX_CFG_ODO_OUT_LP_COG = (1 << 3);
+
+// Odometer configuration - odoCfg
+enum odoCfg_e
+{
+  UBX_CFG_ODO_RUN = 0,
+  UBX_CFG_ODO_CYCLE,
+  UBX_CFG_ODO_SWIM,
+  UBX_CFG_ODO_CAR,
+  UBX_CFG_ODO_CUSTOM,
+};
+
 // Configuration Sub-Section mask definitions for saveConfigSelective (UBX-CFG-CFG)
 const uint32_t VAL_CFG_SUBSEC_IOPORT = 0x00000001;   // ioPort - communications port settings (causes IO system reset!)
 const uint32_t VAL_CFG_SUBSEC_MSGCONF = 0x00000002;  // msgConf - message configuration
