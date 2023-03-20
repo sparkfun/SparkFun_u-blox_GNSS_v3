@@ -328,8 +328,10 @@ const uint8_t UBX_ESF_RESETALG = 0x13;
 const uint8_t UBX_ESF_ALG = 0x14;
 const uint8_t UBX_ESF_INS = 0x15; // 36 bytes
 
+// CFG-TMODE: Time mode configuration
 const uint8_t SVIN_MODE_DISABLE = 0x00;
-const uint8_t SVIN_MODE_ENABLE = 0x01;
+const uint8_t SVIN_MODE_ENABLE = 0x01; // Survey-In
+const uint8_t SVIN_MODE_FIXED = 0x02;
 
 // The following consts are used to configure the various ports and streams for those ports. See -CFG-PRT.
 const uint8_t COM_PORT_I2C = 0;

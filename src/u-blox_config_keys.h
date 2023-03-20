@@ -1140,7 +1140,7 @@ const uint32_t UBLOX_CFG_SPIOUTPROT_RTCM3X = UBX_CFG_L | 0x107a0004; // Flag to 
 
 // CFG-TMODE: Time mode configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_TMODE_MODE = UBX_CFG_E1 | 0x20030001;           // Receiver mode
+const uint32_t UBLOX_CFG_TMODE_MODE = UBX_CFG_E1 | 0x20030001;           // Receiver mode: 0-Disabled, 1-Survey-In, 2-Fixed
 const uint32_t UBLOX_CFG_TMODE_POS_TYPE = UBX_CFG_E1 | 0x20030002;       // Determines whether the ARP position is given in ECEF or LAT/LON/HEIGHT?
 const uint32_t UBLOX_CFG_TMODE_ECEF_X = UBX_CFG_I4 | 0x40030003;         // ECEF X coordinate of the ARP position.
 const uint32_t UBLOX_CFG_TMODE_ECEF_Y = UBX_CFG_I4 | 0x40030004;         // ECEF Y coordinate of the ARP position.
