@@ -131,6 +131,7 @@ typedef struct
       uint32_t UBX_NMEA_VLW : 1;
       uint32_t UBX_NMEA_VTG : 1;
       uint32_t UBX_NMEA_ZDA : 1;
+      uint32_t UBX_NMEA_THS : 1;
     } bits;
   };
 } sfe_ublox_nmea_filtering_t;
@@ -159,7 +160,8 @@ typedef enum
   SFE_UBLOX_FILTER_NMEA_TXT = 0x00040000,
   SFE_UBLOX_FILTER_NMEA_VLW = 0x00080000,
   SFE_UBLOX_FILTER_NMEA_VTG = 0x00100000,
-  SFE_UBLOX_FILTER_NMEA_ZDA = 0x00200000
+  SFE_UBLOX_FILTER_NMEA_ZDA = 0x00200000,
+  SFE_UBLOX_FILTER_NMEA_THS = 0x00400000,
 } sfe_ublox_nmea_filtering_e;
 
 // Define a struct to allow selective logging of RTCM messages

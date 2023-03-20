@@ -138,9 +138,11 @@ protected:
   bool _UART2 = false; // Default to UART1
 
   // These lock / unlock functions can be used if you have multiple tasks writing to the bus. 
-  // The idea is that in a RTOS you override this class and the two functions in which you take and give a mutex.
+  // The idea is that in a RTOS you override this class and the functions in which you take and give a mutex.
+  virtual bool createLock(void) { return true; }
   virtual bool lock(void) { return true; }
   virtual void unlock(void) { }
+  virtual void deleteLock(void) { }
 
 public:
   void connectedToUART2(bool connected = true) { _UART2 = connected; }
@@ -391,8 +393,11 @@ public:
   bool setDynamicModel(dynModel newDynamicModel = DYN_MODEL_PORTABLE, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
   uint8_t getDynamicModel(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the dynamic model - returns 255 if the sendCommand fails
 
-  // Reset the odometer
+  // Reset / enable / configure the odometer
   bool resetOdometer(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Reset the odometer
+  bool enableOdometer(bool enable = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable / disable the odometer
+  bool getOdometerConfig(uint8_t *flags, uint8_t *odoCfg, uint8_t *cogMaxSpeed, uint8_t *cogMaxPosAcc, uint8_t *velLpGain, uint8_t *cogLpGain, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Read the odometer configuration
+  bool setOdometerConfig(uint8_t flags, uint8_t odoCfg, uint8_t cogMaxSpeed, uint8_t cogMaxPosAcc, uint8_t velLpGain, uint8_t cogLpGain, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Configure the odometer
 
   // Enable/Disable individual GNSS systems using UBX-CFG-GNSS
   // Note: you must leave at least one major GNSS enabled! If in doubt, enable GPS before disabling the others

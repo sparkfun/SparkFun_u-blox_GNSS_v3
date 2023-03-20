@@ -130,6 +130,7 @@ const uint8_t UBX_NMEA_GST = 0x07; // GxGST (GNSS Pseudo Range Error Statistics)
 const uint8_t UBX_NMEA_GSV = 0x03; // GxGSV (GNSS satellites in view)
 const uint8_t UBX_NMEA_RLM = 0x0B; // GxRMC (Return link message (RLM))
 const uint8_t UBX_NMEA_RMC = 0x04; // GxRMC (Recommended minimum data)
+const uint8_t UBX_NMEA_THS = 0x0E; // GxTHS (True heading and status)
 const uint8_t UBX_NMEA_TXT = 0x41; // GxTXT (text transmission)
 const uint8_t UBX_NMEA_VLW = 0x0F; // GxVLW (dual ground/water distance)
 const uint8_t UBX_NMEA_VTG = 0x05; // GxVTG (course over ground and Ground speed)
@@ -237,7 +238,9 @@ const uint8_t UBX_MON_VER = 0x04;   // Receiver/Software Version. Used for obtai
 // The following are used to configure the NAV UBX messages (navigation results messages). Descriptions from UBX messages overview (ZED_F9P Interface Description Document page 35-36)
 const uint8_t UBX_NAV_ATT = 0x05;       // Vehicle "Attitude" Solution
 const uint8_t UBX_NAV_CLOCK = 0x22;     // Clock Solution
+const uint8_t UBX_NAV_COV = 0x36;       // Covariance matrices
 const uint8_t UBX_NAV_DOP = 0x04;       // Dilution of precision
+const uint8_t UBX_NAV_EELL = 0x3D;      // Position error ellipse parameters
 const uint8_t UBX_NAV_EOE = 0x61;       // End of Epoch
 const uint8_t UBX_NAV_GEOFENCE = 0x39;  // Geofencing status. Used to poll the geofence status
 const uint8_t UBX_NAV_HPPOSECEF = 0x13; // High Precision Position Solution in ECEF. Used to find our positional accuracy (high precision).
@@ -252,6 +255,8 @@ const uint8_t UBX_NAV_PVAT = 0x17;      // Navigation position velocity attitude
 const uint8_t UBX_NAV_RELPOSNED = 0x3C; // Relative Positioning Information in NED frame
 const uint8_t UBX_NAV_RESETODO = 0x10;  // Reset odometer
 const uint8_t UBX_NAV_SAT = 0x35;       // Satellite Information
+const uint8_t UBX_NAV_SBAS = 0x32;      // SBAS subsystem
+const uint8_t UBX_NAV_SLAS = 0x42;      // QZSS L1S SLAS status data
 const uint8_t UBX_NAV_SIG = 0x43;       // Signal Information
 const uint8_t UBX_NAV_STATUS = 0x03;    // Receiver Navigation Status
 const uint8_t UBX_NAV_SVIN = 0x3B;      // Survey-in data. Used for checking Survey In status
@@ -337,6 +342,22 @@ const uint8_t COM_TYPE_UBX = (1 << 0);
 const uint8_t COM_TYPE_NMEA = (1 << 1);
 const uint8_t COM_TYPE_RTCM3 = (1 << 5);
 const uint8_t COM_TYPE_SPARTN = (1 << 6);
+
+// Odometer configuration - flags
+const uint8_t UBX_CFG_ODO_USE_ODO = (1 << 0);
+const uint8_t UBX_CFG_ODO_USE_COG = (1 << 1);
+const uint8_t UBX_CFG_ODO_OUT_LP_VEL = (1 << 2);
+const uint8_t UBX_CFG_ODO_OUT_LP_COG = (1 << 3);
+
+// Odometer configuration - odoCfg
+enum odoCfg_e
+{
+  UBX_CFG_ODO_RUN = 0,
+  UBX_CFG_ODO_CYCLE,
+  UBX_CFG_ODO_SWIM,
+  UBX_CFG_ODO_CAR,
+  UBX_CFG_ODO_CUSTOM,
+};
 
 // Configuration Sub-Section mask definitions for saveConfigSelective (UBX-CFG-CFG)
 const uint32_t VAL_CFG_SUBSEC_IOPORT = 0x00000001;   // ioPort - communications port settings (causes IO system reset!)

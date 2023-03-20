@@ -63,6 +63,8 @@ DevUBLOXGNSS::DevUBLOXGNSS(void)
   _logNMEA.all = 0;                             // Default to passing no NMEA messages to the file buffer
   _processNMEA.all = SFE_UBLOX_FILTER_NMEA_ALL; // Default to passing all NMEA messages to processNMEA
   _logRTCM.all = 0;                             // Default to passing no RTCM messages to the file buffer
+
+  createLock(); // Create the lock semaphore - if needed
 }
 
 DevUBLOXGNSS::~DevUBLOXGNSS(void)
@@ -88,6 +90,8 @@ DevUBLOXGNSS::~DevUBLOXGNSS(void)
     delete[] spiBuffer; // Created with new[]
     spiBuffer = nullptr;
   }
+
+  deleteLock(); // Delete the lock semaphore - if required
 }
 
 // Stop all automatic message processing. Free all used RAM
@@ -2140,6 +2144,8 @@ bool DevUBLOXGNSS::logThisNMEA()
     logMe = true;
   if ((nmeaAddressField[3] == 'R') && (nmeaAddressField[4] == 'M') && (nmeaAddressField[5] == 'C') && (_logNMEA.bits.UBX_NMEA_RMC == 1))
     logMe = true;
+  if ((nmeaAddressField[3] == 'T') && (nmeaAddressField[4] == 'H') && (nmeaAddressField[5] == 'S') && (_logNMEA.bits.UBX_NMEA_THS == 1))
+    logMe = true;
   if ((nmeaAddressField[3] == 'T') && (nmeaAddressField[4] == 'X') && (nmeaAddressField[5] == 'T') && (_logNMEA.bits.UBX_NMEA_TXT == 1))
     logMe = true;
   if ((nmeaAddressField[3] == 'V') && (nmeaAddressField[4] == 'L') && (nmeaAddressField[5] == 'W') && (_logNMEA.bits.UBX_NMEA_VLW == 1))
@@ -2198,6 +2204,8 @@ bool DevUBLOXGNSS::isNMEAHeaderValid()
     return (true);
   if ((nmeaAddressField[3] == 'R') && (nmeaAddressField[4] == 'M') && (nmeaAddressField[5] == 'C'))
     return (true);
+  if ((nmeaAddressField[3] == 'T') && (nmeaAddressField[4] == 'H') && (nmeaAddressField[5] == 'S'))
+    return (true);
   if ((nmeaAddressField[3] == 'T') && (nmeaAddressField[4] == 'X') && (nmeaAddressField[5] == 'T'))
     return (true);
   if ((nmeaAddressField[3] == 'V') && (nmeaAddressField[4] == 'L') && (nmeaAddressField[5] == 'W'))
@@ -2250,6 +2258,8 @@ bool DevUBLOXGNSS::processThisNMEA()
   if ((nmeaAddressField[3] == 'R') && (nmeaAddressField[4] == 'L') && (nmeaAddressField[5] == 'M') && (_processNMEA.bits.UBX_NMEA_RLM == 1))
     return (true);
   if ((nmeaAddressField[3] == 'R') && (nmeaAddressField[4] == 'M') && (nmeaAddressField[5] == 'C') && (_processNMEA.bits.UBX_NMEA_RMC == 1))
+    return (true);
+  if ((nmeaAddressField[3] == 'T') && (nmeaAddressField[4] == 'H') && (nmeaAddressField[5] == 'S') && (_processNMEA.bits.UBX_NMEA_THS == 1))
     return (true);
   if ((nmeaAddressField[3] == 'T') && (nmeaAddressField[4] == 'X') && (nmeaAddressField[5] == 'T') && (_processNMEA.bits.UBX_NMEA_TXT == 1))
     return (true);
@@ -7784,6 +7794,72 @@ bool DevUBLOXGNSS::resetOdometer(uint16_t maxWait)
 
   // This is a special case as we are only expecting an ACK but this is not a CFG message
   return (sendCommand(&packetCfg, maxWait, true) == SFE_UBLOX_STATUS_DATA_SENT); // We are only expecting an ACK
+}
+
+// Enable / disable the odometer
+bool DevUBLOXGNSS::enableOdometer(bool enable, uint8_t layer, uint16_t maxWait)
+{
+  return setVal8(UBLOX_CFG_ODO_USE_ODO, (uint8_t)enable, layer, maxWait);
+}
+  
+// Read the odometer configuration
+bool DevUBLOXGNSS::getOdometerConfig(uint8_t *flags, uint8_t *odoCfg, uint8_t *cogMaxSpeed, uint8_t *cogMaxPosAcc, uint8_t *velLpGain, uint8_t *cogLpGain, uint8_t layer, uint16_t maxWait)
+{
+  bool result = newCfgValget(layer);
+  result &= addCfgValget(UBLOX_CFG_ODO_USE_ODO);
+  result &= addCfgValget(UBLOX_CFG_ODO_USE_COG);
+  result &= addCfgValget(UBLOX_CFG_ODO_OUTLPVEL);
+  result &= addCfgValget(UBLOX_CFG_ODO_OUTLPCOG);
+  result &= addCfgValget(UBLOX_CFG_ODO_PROFILE);
+  result &= addCfgValget(UBLOX_CFG_ODO_COGMAXSPEED);
+  result &= addCfgValget(UBLOX_CFG_ODO_COGMAXPOSACC);
+  result &= addCfgValget(UBLOX_CFG_ODO_VELLPGAIN);
+  result &= addCfgValget(UBLOX_CFG_ODO_COGLPGAIN);
+  result &= sendCfgValget(maxWait);
+
+  if (result)
+  {
+    uint8_t flagsBit = 0;
+    uint8_t flagsByte = 0;
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_USE_ODO, &flagsBit, 1);
+    if (flagsBit)
+      flagsByte |= UBX_CFG_ODO_USE_ODO;
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_USE_COG, &flagsBit, 1);
+    if (flagsBit)
+      flagsByte |= UBX_CFG_ODO_USE_COG;
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_OUTLPVEL, &flagsBit, 1);
+    if (flagsBit)
+      flagsByte |= UBX_CFG_ODO_OUT_LP_VEL;
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_OUTLPCOG, &flagsBit, 1);
+    if (flagsBit)
+      flagsByte |= UBX_CFG_ODO_OUT_LP_COG;
+    *flags = flagsByte;
+
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_PROFILE, odoCfg, 1);
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_COGMAXSPEED, cogMaxSpeed, 1);
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_COGMAXPOSACC, cogMaxPosAcc, 1);
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_VELLPGAIN, velLpGain, 1);
+    result &= extractConfigValueByKey(&packetCfg, UBLOX_CFG_ODO_COGLPGAIN, cogLpGain, 1);
+  }
+
+  return result;
+}
+
+// Configure the odometer
+bool DevUBLOXGNSS::setOdometerConfig(uint8_t flags, uint8_t odoCfg, uint8_t cogMaxSpeed, uint8_t cogMaxPosAcc, uint8_t velLpGain, uint8_t cogLpGain, uint8_t layer, uint16_t maxWait)
+{
+  bool result = newCfgValset(layer);
+  result &= addCfgValset8(UBLOX_CFG_ODO_USE_ODO, flags & UBX_CFG_ODO_USE_ODO ? 1 : 0);
+  result &= addCfgValset8(UBLOX_CFG_ODO_USE_COG, flags & UBX_CFG_ODO_USE_COG ? 1 : 0);
+  result &= addCfgValset8(UBLOX_CFG_ODO_OUTLPVEL, flags & UBX_CFG_ODO_OUT_LP_VEL ? 1 : 0);
+  result &= addCfgValset8(UBLOX_CFG_ODO_OUTLPCOG, flags & UBX_CFG_ODO_OUT_LP_COG ? 1 : 0);
+  result &= addCfgValset8(UBLOX_CFG_ODO_PROFILE, odoCfg);
+  result &= addCfgValset8(UBLOX_CFG_ODO_COGMAXSPEED, cogMaxSpeed);
+  result &= addCfgValset8(UBLOX_CFG_ODO_COGMAXPOSACC, cogMaxPosAcc);
+  result &= addCfgValset8(UBLOX_CFG_ODO_VELLPGAIN, velLpGain);
+  result &= addCfgValset8(UBLOX_CFG_ODO_COGLPGAIN, cogLpGain);
+  result &= sendCfgValset(maxWait);
+  return result;
 }
 
 uint32_t DevUBLOXGNSS::getEnableGNSSConfigKey(sfe_ublox_gnss_ids_e id)
@@ -15671,6 +15747,8 @@ int32_t DevUBLOXGNSS::getAltitude(uint16_t maxWait)
 // Get the current altitude in mm according to mean sea level
 // Ellipsoid model: https://www.esri.com/news/arcuser/0703/geoid1of3.html
 // Difference between Ellipsoid Model and Mean Sea Level: https://eos-gnss.com/elevation-for-beginners/
+// Also see: https://portal.u-blox.com/s/question/0D52p00008HKDSkCAP/what-geoid-model-is-used-and-where-is-this-calculated
+// and: https://cddis.nasa.gov/926/egm96/egm96.html on 10x10 degree grid
 int32_t DevUBLOXGNSS::getAltitudeMSL(uint16_t maxWait)
 {
   if (packetUBXNAVPVT == nullptr)
