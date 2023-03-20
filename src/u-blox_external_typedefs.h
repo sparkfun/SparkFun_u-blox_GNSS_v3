@@ -131,6 +131,7 @@ typedef struct
       uint32_t UBX_NMEA_VLW : 1;
       uint32_t UBX_NMEA_VTG : 1;
       uint32_t UBX_NMEA_ZDA : 1;
+      uint32_t UBX_NMEA_THS : 1;
     } bits;
   };
 } sfe_ublox_nmea_filtering_t;
