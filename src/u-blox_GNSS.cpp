@@ -63,8 +63,6 @@ DevUBLOXGNSS::DevUBLOXGNSS(void)
   _logNMEA.all = 0;                             // Default to passing no NMEA messages to the file buffer
   _processNMEA.all = SFE_UBLOX_FILTER_NMEA_ALL; // Default to passing all NMEA messages to processNMEA
   _logRTCM.all = 0;                             // Default to passing no RTCM messages to the file buffer
-
-  createLock(); // Create the lock semaphore - if needed
 }
 
 DevUBLOXGNSS::~DevUBLOXGNSS(void)
@@ -90,8 +88,6 @@ DevUBLOXGNSS::~DevUBLOXGNSS(void)
     delete[] spiBuffer; // Created with new[]
     spiBuffer = nullptr;
   }
-
-  deleteLock(); // Delete the lock semaphore - if required
 }
 
 // Stop all automatic message processing. Free all used RAM
@@ -619,6 +615,8 @@ void DevUBLOXGNSS::end(void)
     delete sfe_ublox_ubx_logging_list_head;
     sfe_ublox_ubx_logging_list_head = nullptr;
   }
+
+  deleteLock(); // Delete the lock semaphore - if required
 }
 
 // Allow the user to change packetCfgPayloadSize. Handy if you want to process big messages like RAWX
@@ -754,6 +752,8 @@ uint8_t DevUBLOXGNSS::readBytes(uint8_t *data, uint8_t length)
 
 bool DevUBLOXGNSS::init(uint16_t maxWait, bool assumeSuccess)
 {
+  createLock(); // Create the lock semaphore - if needed
+
   _signsOfLife = false; // Clear the _signsOfLife flag. It will be set true if valid traffic is seen.
 
   // New in v2.0: allocate memory for the packetCfg payload here - if required. (The user may have called setPacketCfgPayloadSize already)
