@@ -137,12 +137,12 @@ protected:
   // Needed to select the correct config items when enabling a periodic message
   bool _UART2 = false; // Default to UART1
 
-  // These lock / unlock functions can be used if you have multiple tasks writing to the bus. 
+  // These lock / unlock functions can be used if you have multiple tasks writing to the bus.
   // The idea is that in a RTOS you override this class and the functions in which you take and give a mutex.
   virtual bool createLock(void) { return true; }
   virtual bool lock(void) { return true; }
-  virtual void unlock(void) { }
-  virtual void deleteLock(void) { }
+  virtual void unlock(void) {}
+  virtual void deleteLock(void) {}
 
 public:
   void connectedToUART2(bool connected = true) { _UART2 = connected; }
@@ -189,10 +189,10 @@ public:
 // Boards like the RedBoard Turbo use SerialUSB (not Serial).
 // But other boards like the SAMD51 Thing Plus use Serial (not SerialUSB).
 // These lines let the code compile cleanly on as many SAMD boards as possible.
-#if defined(ARDUINO_ARCH_SAMD)                                                         // Is this a SAMD board?
-#if defined(USB_VID)                                                                   // Is the USB Vendor ID defined?
-#if (USB_VID == 0x1B4F)                                                                // Is this a SparkFun board?
-#if !defined(ARDUINO_SAMD51_THING_PLUS) & !defined(ARDUINO_SAMD51_MICROMOD)            // If it is not a SAMD51 Thing Plus or SAMD51 MicroMod
+#if defined(ARDUINO_ARCH_SAMD)                                                        // Is this a SAMD board?
+#if defined(USB_VID)                                                                  // Is the USB Vendor ID defined?
+#if (USB_VID == 0x1B4F)                                                               // Is this a SparkFun board?
+#if !defined(ARDUINO_SAMD51_THING_PLUS) & !defined(ARDUINO_SAMD51_MICROMOD)           // If it is not a SAMD51 Thing Plus or SAMD51 MicroMod
   void enableDebugging(Print &debugPort = SerialUSB, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
 #else
   void enableDebugging(Print &debugPort = Serial, bool printLimitedDebug = false); // Given a port to print to, enable debug messages. Default to all, not limited.
@@ -375,6 +375,7 @@ public:
   bool getModuleInfo(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);             // Queries module, extracts info
 protected:
   bool prepareModuleInfo(uint16_t maxWait);
+
 public:
   moduleSWVersion_t *moduleSWVersion = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
 
@@ -394,10 +395,10 @@ public:
   uint8_t getDynamicModel(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the dynamic model - returns 255 if the sendCommand fails
 
   // Reset / enable / configure the odometer
-  bool resetOdometer(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Reset the odometer
-  bool enableOdometer(bool enable = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable / disable the odometer
+  bool resetOdometer(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                                                                          // Reset the odometer
+  bool enableOdometer(bool enable = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                  // Enable / disable the odometer
   bool getOdometerConfig(uint8_t *flags, uint8_t *odoCfg, uint8_t *cogMaxSpeed, uint8_t *cogMaxPosAcc, uint8_t *velLpGain, uint8_t *cogLpGain, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Read the odometer configuration
-  bool setOdometerConfig(uint8_t flags, uint8_t odoCfg, uint8_t cogMaxSpeed, uint8_t cogMaxPosAcc, uint8_t velLpGain, uint8_t cogLpGain, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Configure the odometer
+  bool setOdometerConfig(uint8_t flags, uint8_t odoCfg, uint8_t cogMaxSpeed, uint8_t cogMaxPosAcc, uint8_t velLpGain, uint8_t cogLpGain, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Configure the odometer
 
   // Enable/Disable individual GNSS systems using UBX-CFG-GNSS
   // Note: you must leave at least one major GNSS enabled! If in doubt, enable GPS before disabling the others
@@ -500,6 +501,7 @@ public:
           if (maxWidth < sizeof(int8_t))
             return false;
           *value = (int8_t)extractSignedChar(pkt, ptr);
+          return (true);
           break;
         case UBX_CFG_U2:
         case UBX_CFG_E2:
@@ -942,6 +944,15 @@ public:
   void flushTIMTM2();                                                                                                                                              // Mark all the data as read/stale
   void logTIMTM2(bool enabled = true);                                                                                                                             // Log data to file buffer
 
+  bool getTIMTP(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                    // TIM TP
+  bool setAutoTIMTP(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                               // Enable/disable automatic TIM TP reports at the navigation frequency
+  bool setAutoTIMTP(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                          // Enable/disable automatic TIM TP reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
+  bool setAutoTIMTPrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);               // Set the rate for automatic TIM TP reports
+  bool setAutoTIMTPcallbackPtr(void (*callbackPointerPtr)(UBX_TIM_TP_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic TP reports at the navigation frequency. Data is accessed from the callback.
+  bool assumeAutoTIMTP(bool enabled, bool implicitUpdate = true);                                                                                                // In case no config access to the GPS is possible and TIM TP is send cyclically already
+  void flushTIMTP();                                                                                                                                             // Mark all the data as read/stale
+  void logTIMTP(bool enabled = true);                                                                                                                            // Log data to file buffer
+
 #ifndef SFE_UBLOX_DISABLE_ESF
   // Sensor fusion (dead reckoning) (ESF)
 
@@ -1160,6 +1171,13 @@ public:
   uint8_t getAOPSTATUSuseAOP(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the UBX-NAV-AOPSTATUS useAOP flag. Don't confuse this with getAopCfg - which returns the aopCfg byte from UBX-CFG-NAVX5
   uint8_t getAOPSTATUSstatus(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the UBX-NAV-AOPSTATUS status field. A host application can determine the optimal time to shut down the receiver by monitoring the status field for a steady 0.
 
+  // Helper functions for TIM TP
+
+  uint32_t getTIMTPtowMS(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                          // Returns the UBX-TIM-TP towMS time pulse of week (ms)
+  uint32_t getTIMTPtowSubMS(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                       // Returns the UBX-TIM-TP submillisecond part of towMS (ms * 2^-32)
+  uint16_t getTIMTPweek(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Returns the UBX-TIM-TP time pulse week according to time base
+  uint32_t getTIMTPAsEpoch(uint32_t &microsecond, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Convert TIM TP to Unix Epoch - CAUTION! Assumes the time base is UTC and the week number is GPS
+
 #ifndef SFE_UBLOX_DISABLE_ESF
   // Helper functions for ESF
 
@@ -1272,6 +1290,7 @@ public:
 #endif
 
   UBX_TIM_TM2_t *packetUBXTIMTM2 = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
+  UBX_TIM_TP_t *packetUBXTIMTP = nullptr;   // Pointer to struct. RAM will be allocated for this if/when necessary
 
 #ifndef SFE_UBLOX_DISABLE_ESF
   UBX_ESF_ALG_t *packetUBXESFALG = nullptr;       // Pointer to struct. RAM will be allocated for this if/when necessary
@@ -1353,6 +1372,7 @@ protected:
   bool initPacketUBXRXMRAWX();          // Allocate RAM for packetUBXRXMRAWX and initialize it
   bool initPacketUBXRXMMEASX();         // Allocate RAM for packetUBXRXMMEASX and initialize it
   bool initPacketUBXTIMTM2();           // Allocate RAM for packetUBXTIMTM2 and initialize it
+  bool initPacketUBXTIMTP();            // Allocate RAM for packetUBXTIMTP and initialize it
   bool initPacketUBXESFALG();           // Allocate RAM for packetUBXESFALG and initialize it
   bool initPacketUBXESFSTATUS();        // Allocate RAM for packetUBXESFSTATUS and initialize it
   bool initPacketUBXESFINS();           // Allocate RAM for packetUBXESFINS and initialize it
@@ -1461,20 +1481,20 @@ protected:
 #endif
 
   // RTCM logging
-  sfe_ublox_rtcm_filtering_t _logRTCM;     // Flags to indicate which NMEA messages should be added to the file buffer for logging
+  sfe_ublox_rtcm_filtering_t _logRTCM; // Flags to indicate which NMEA messages should be added to the file buffer for logging
 
 #ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
-  RTCM_FRAME_t *_storageRTCM = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
+  RTCM_FRAME_t *_storageRTCM = nullptr;              // Pointer to struct. RAM will be allocated for this if/when necessary
   void crc24q(uint8_t incoming, uint32_t *checksum); // Add incoming to checksum as per CRC-24Q
 #endif
 
-  //Define the maximum possible message length for packetAuto and enableUBXlogging
-  //UBX_NAV_SAT_MAX_LEN is just > UBX_RXM_RAWX_MAX_LEN
+  // Define the maximum possible message length for packetAuto and enableUBXlogging
+  // UBX_NAV_SAT_MAX_LEN is just > UBX_RXM_RAWX_MAX_LEN
   const uint16_t SFE_UBX_MAX_LENGTH = UBX_NAV_SAT_MAX_LEN;
 
   // UBX logging
   sfe_ublox_ubx_logging_list_t *sfe_ublox_ubx_logging_list_head = nullptr; // Linked list of which messages to log
-  bool logThisUBX(uint8_t UBX_CLASS, uint8_t UBX_ID); // Returns true if this UBX should be added to the logging buffer
+  bool logThisUBX(uint8_t UBX_CLASS, uint8_t UBX_ID);                      // Returns true if this UBX should be added to the logging buffer
 
   // Flag to prevent reentry into checkCallbacks
   // Prevent badness if the user accidentally calls checkCallbacks from inside a callback

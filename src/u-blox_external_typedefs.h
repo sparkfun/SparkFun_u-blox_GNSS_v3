@@ -332,3 +332,7 @@ const uint16_t SFE_UBLOX_DAYS_SINCE_MONTH[2][12] =
         {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335}, // Leap Year (Year % 4 == 0)
         {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334}  // Normal Year
 };
+
+const uint32_t SFE_UBLOX_JAN_1ST_2020_WEEK = 2086; // GPS Week Number for Jan 1st 2020
+const uint32_t SFE_UBLOX_EPOCH_WEEK_2086 = 1577836800 - 259200; // Epoch for the start of GPS week 2086
+const uint32_t SFE_UBLOX_SECS_PER_WEEK = 60 * 60 * 24 * 7; // Seconds per week

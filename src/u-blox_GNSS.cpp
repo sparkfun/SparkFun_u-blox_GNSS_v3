@@ -63,8 +63,6 @@ DevUBLOXGNSS::DevUBLOXGNSS(void)
   _logNMEA.all = 0;                             // Default to passing no NMEA messages to the file buffer
   _processNMEA.all = SFE_UBLOX_FILTER_NMEA_ALL; // Default to passing all NMEA messages to processNMEA
   _logRTCM.all = 0;                             // Default to passing no RTCM messages to the file buffer
-
-  createLock(); // Create the lock semaphore - if needed
 }
 
 DevUBLOXGNSS::~DevUBLOXGNSS(void)
@@ -90,8 +88,6 @@ DevUBLOXGNSS::~DevUBLOXGNSS(void)
     delete[] spiBuffer; // Created with new[]
     spiBuffer = nullptr;
   }
-
-  deleteLock(); // Delete the lock semaphore - if required
 }
 
 // Stop all automatic message processing. Free all used RAM
@@ -403,6 +399,16 @@ void DevUBLOXGNSS::end(void)
     packetUBXTIMTM2 = nullptr;
   }
 
+  if (packetUBXTIMTP != nullptr)
+  {
+    if (packetUBXTIMTP->callbackData != nullptr)
+    {
+      delete packetUBXTIMTP->callbackData;
+    }
+    delete packetUBXTIMTP;
+    packetUBXTIMTP = nullptr;
+  }
+
 #ifndef SFE_UBLOX_DISABLE_ESF
   if (packetUBXESFALG != nullptr)
   {
@@ -619,6 +625,8 @@ void DevUBLOXGNSS::end(void)
     delete sfe_ublox_ubx_logging_list_head;
     sfe_ublox_ubx_logging_list_head = nullptr;
   }
+
+  deleteLock(); // Delete the lock semaphore - if required
 }
 
 // Allow the user to change packetCfgPayloadSize. Handy if you want to process big messages like RAWX
@@ -754,6 +762,8 @@ uint8_t DevUBLOXGNSS::readBytes(uint8_t *data, uint8_t length)
 
 bool DevUBLOXGNSS::init(uint16_t maxWait, bool assumeSuccess)
 {
+  createLock(); // Create the lock semaphore - if needed
+
   _signsOfLife = false; // Clear the _signsOfLife flag. It will be set true if valid traffic is seen.
 
   // New in v2.0: allocate memory for the packetCfg payload here - if required. (The user may have called setPacketCfgPayloadSize already)
@@ -1396,6 +1406,12 @@ bool DevUBLOXGNSS::autoLookup(uint8_t Class, uint8_t ID, uint16_t *maxSize)
       if (maxSize != nullptr)
         *maxSize = UBX_TIM_TM2_LEN;
       return (packetUBXTIMTM2 != nullptr);
+    }
+    else if (ID == UBX_TIM_TP)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_TIM_TP_LEN;
+      return (packetUBXTIMTP != nullptr);
     }
     break;
   case UBX_CLASS_ESF:
@@ -4158,6 +4174,36 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         }
       }
     }
+    else if (msg->id == UBX_TIM_TP && msg->len == UBX_TIM_TP_LEN)
+    {
+      // Parse various byte fields into storage - but only if we have memory allocated for it
+      if (packetUBXTIMTP != nullptr)
+      {
+        packetUBXTIMTP->data.towMS = extractLong(msg, 0);
+        packetUBXTIMTP->data.towSubMS = extractLong(msg, 4);
+        packetUBXTIMTP->data.qErr = extractSignedLong(msg, 8);
+        packetUBXTIMTP->data.week = extractInt(msg, 12);
+        packetUBXTIMTP->data.flags.all = extractByte(msg, 14);
+        packetUBXTIMTP->data.refInfo.all = extractByte(msg, 15);
+
+        // Mark all datums as fresh (not read before)
+        packetUBXTIMTP->moduleQueried.moduleQueried.all = 0xFFFFFFFF;
+
+        // Check if we need to copy the data for the callback
+        if ((packetUBXTIMTP->callbackData != nullptr)                                  // If RAM has been allocated for the copy of the data
+            && (packetUBXTIMTP->automaticFlags.flags.bits.callbackCopyValid == false)) // AND the data is stale
+        {
+          memcpy(&packetUBXTIMTP->callbackData->towMS, &packetUBXTIMTP->data.towMS, sizeof(UBX_TIM_TP_data_t));
+          packetUBXTIMTP->automaticFlags.flags.bits.callbackCopyValid = true;
+        }
+
+        // Check if we need to copy the data into the file buffer
+        if (packetUBXTIMTP->automaticFlags.flags.bits.addToFileBuffer)
+        {
+          addedToFileBuffer = storePacket(msg);
+        }
+      }
+    }
     break;
 #ifndef SFE_UBLOX_DISABLE_ESF
   case UBX_CLASS_ESF:
@@ -5640,6 +5686,17 @@ void DevUBLOXGNSS::checkCallbacks(void)
           packetUBXTIMTM2->callbackPointerPtr(packetUBXTIMTM2->callbackData); // Call the callback
         }
         packetUBXTIMTM2->automaticFlags.flags.bits.callbackCopyValid = false; // Mark the data as stale
+      }
+
+  if (packetUBXTIMTP != nullptr)                                               // If RAM has been allocated for message storage
+    if (packetUBXTIMTP->callbackData != nullptr)                               // If RAM has been allocated for the copy of the data
+      if (packetUBXTIMTP->automaticFlags.flags.bits.callbackCopyValid == true) // If the copy of the data is valid
+      {
+        if (packetUBXTIMTP->callbackPointerPtr != nullptr) // If the pointer to the callback has been defined
+        {
+          packetUBXTIMTP->callbackPointerPtr(packetUBXTIMTP->callbackData); // Call the callback
+        }
+        packetUBXTIMTP->automaticFlags.flags.bits.callbackCopyValid = false; // Mark the data as stale
       }
 
 #ifndef SFE_UBLOX_DISABLE_ESF
@@ -13010,6 +13067,172 @@ void DevUBLOXGNSS::logTIMTM2(bool enabled)
   packetUBXTIMTM2->automaticFlags.flags.bits.addToFileBuffer = (uint8_t)enabled;
 }
 
+// ***** TIM TP automatic support
+
+bool DevUBLOXGNSS::getTIMTP(uint16_t maxWait)
+{
+  if (packetUBXTIMTP == nullptr)
+    initPacketUBXTIMTP();        // Check that RAM has been allocated for the TP data
+  if (packetUBXTIMTP == nullptr) // Bail if the RAM allocation failed
+    return (false);
+
+  if (packetUBXTIMTP->automaticFlags.flags.bits.automatic && packetUBXTIMTP->automaticFlags.flags.bits.implicitUpdate)
+  {
+    // The GPS is automatically reporting, we just check whether we got unread data
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
+    return packetUBXTIMTP->moduleQueried.moduleQueried.bits.all;
+  }
+  else if (packetUBXTIMTP->automaticFlags.flags.bits.automatic && !packetUBXTIMTP->automaticFlags.flags.bits.implicitUpdate)
+  {
+    // Someone else has to call checkUblox for us...
+    return (false);
+  }
+  else
+  {
+    // The GPS is not automatically reporting navigation position so we have to poll explicitly
+    packetCfg.cls = UBX_CLASS_TIM;
+    packetCfg.id = UBX_TIM_TP;
+    packetCfg.len = 0;
+    packetCfg.startingSpot = 0;
+
+    // The data is parsed as part of processing the response
+    sfe_ublox_status_e retVal = sendCommand(&packetCfg, maxWait);
+
+    if (retVal == SFE_UBLOX_STATUS_DATA_RECEIVED)
+      return (true);
+
+    if (retVal == SFE_UBLOX_STATUS_DATA_OVERWRITTEN)
+    {
+      return (true);
+    }
+
+    return (false);
+  }
+}
+
+// Enable or disable automatic message generation by the GNSS. This changes the way getTIMTP works.
+bool DevUBLOXGNSS::setAutoTIMTP(bool enable, uint8_t layer, uint16_t maxWait)
+{
+  return setAutoTIMTPrate(enable ? 1 : 0, true, layer, maxWait);
+}
+
+// Enable or disable automatic message generation by the GNSS. This changes the way getTIMTP works.
+bool DevUBLOXGNSS::setAutoTIMTP(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
+{
+  return setAutoTIMTPrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
+}
+
+// Enable or disable automatic message generation by the GNSS. This changes the way getTIMTP works.
+bool DevUBLOXGNSS::setAutoTIMTPrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
+{
+  if (packetUBXTIMTP == nullptr)
+    initPacketUBXTIMTP();        // Check that RAM has been allocated for the data
+  if (packetUBXTIMTP == nullptr) // Only attempt this if RAM allocation was successful
+    return false;
+
+  if (rate > 127)
+    rate = 127;
+
+  uint32_t key = UBLOX_CFG_MSGOUT_UBX_TIM_TP_I2C;
+  if (_commType == COMM_TYPE_SPI)
+    key = UBLOX_CFG_MSGOUT_UBX_TIM_TP_SPI;
+  else if (_commType == COMM_TYPE_SERIAL)
+  {
+    if (!_UART2)
+      key = UBLOX_CFG_MSGOUT_UBX_TIM_TP_UART1;
+    else
+      key = UBLOX_CFG_MSGOUT_UBX_TIM_TP_UART2;
+  }
+
+  bool ok = setVal8(key, rate, layer, maxWait);
+  if (ok)
+  {
+    packetUBXTIMTP->automaticFlags.flags.bits.automatic = (rate > 0);
+    packetUBXTIMTP->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
+  }
+  packetUBXTIMTP->moduleQueried.moduleQueried.bits.all = false;
+  return ok;
+}
+
+// Enable automatic message generation by the GNSS.
+bool DevUBLOXGNSS::setAutoTIMTPcallbackPtr(void (*callbackPointerPtr)(UBX_TIM_TP_data_t *), uint8_t layer, uint16_t maxWait)
+{
+  // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
+  bool result = setAutoTIMTP(true, false, layer, maxWait);
+  if (!result)
+    return (result); // Bail if setAuto failed
+
+  if (packetUBXTIMTP->callbackData == nullptr) // Check if RAM has been allocated for the callback copy
+  {
+    packetUBXTIMTP->callbackData = new UBX_TIM_TP_data_t; // Allocate RAM for the main struct
+  }
+
+  if (packetUBXTIMTP->callbackData == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("setAutoTIMTPcallbackPtr: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+
+  packetUBXTIMTP->callbackPointerPtr = callbackPointerPtr;
+  return (true);
+}
+
+// In case no config access to the GNSS is possible and TIM TP is send cyclically already
+// set config to suitable parameters
+bool DevUBLOXGNSS::assumeAutoTIMTP(bool enabled, bool implicitUpdate)
+{
+  if (packetUBXTIMTP == nullptr)
+    initPacketUBXTIMTP();        // Check that RAM has been allocated for the data
+  if (packetUBXTIMTP == nullptr) // Only attempt this if RAM allocation was successful
+    return false;
+
+  bool changes = packetUBXTIMTP->automaticFlags.flags.bits.automatic != enabled || packetUBXTIMTP->automaticFlags.flags.bits.implicitUpdate != implicitUpdate;
+  if (changes)
+  {
+    packetUBXTIMTP->automaticFlags.flags.bits.automatic = enabled;
+    packetUBXTIMTP->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
+  }
+  return changes;
+}
+
+// PRIVATE: Allocate RAM for packetUBXTIMTP and initialize it
+bool DevUBLOXGNSS::initPacketUBXTIMTP()
+{
+  packetUBXTIMTP = new UBX_TIM_TP_t; // Allocate RAM for the main struct
+  if (packetUBXTIMTP == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("initPacketUBXTIMTP: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+  packetUBXTIMTP->automaticFlags.flags.all = 0;
+  packetUBXTIMTP->callbackPointerPtr = nullptr;
+  packetUBXTIMTP->callbackData = nullptr;
+  packetUBXTIMTP->moduleQueried.moduleQueried.all = 0;
+  return (true);
+}
+
+// Mark all the data as read/stale
+void DevUBLOXGNSS::flushTIMTP()
+{
+  if (packetUBXTIMTP == nullptr)
+    return;                                             // Bail if RAM has not been allocated (otherwise we could be writing anywhere!)
+  packetUBXTIMTP->moduleQueried.moduleQueried.all = 0; // Mark all datums as stale (read before)
+}
+
+// Log this data in file buffer
+void DevUBLOXGNSS::logTIMTP(bool enabled)
+{
+  if (packetUBXTIMTP == nullptr)
+    return; // Bail if RAM has not been allocated (otherwise we could be writing anywhere!)
+  packetUBXTIMTP->automaticFlags.flags.bits.addToFileBuffer = (uint8_t)enabled;
+}
+
 #ifndef SFE_UBLOX_DISABLE_ESF
 // ***** ESF ALG automatic support
 
@@ -16543,6 +16766,84 @@ uint8_t DevUBLOXGNSS::getAOPSTATUSstatus(uint16_t maxWait)
   packetUBXNAVAOPSTATUS->moduleQueried.moduleQueried.bits.status = false; // Since we are about to give this to user, mark this data as stale
   packetUBXNAVAOPSTATUS->moduleQueried.moduleQueried.bits.all = false;
   return (packetUBXNAVAOPSTATUS->data.status);
+}
+
+// ***** TIM TP Helper Functions
+
+uint32_t DevUBLOXGNSS::getTIMTPtowMS(uint16_t maxWait)
+{
+  if (packetUBXTIMTP == nullptr)
+    initPacketUBXTIMTP();        // Check that RAM has been allocated for the TP data
+  if (packetUBXTIMTP == nullptr) // Bail if the RAM allocation failed
+    return 0;
+
+  if (packetUBXTIMTP->moduleQueried.moduleQueried.bits.towMS == false)
+    getTIMTP(maxWait);
+  packetUBXTIMTP->moduleQueried.moduleQueried.bits.towMS = false; // Since we are about to give this to user, mark this data as stale
+  packetUBXTIMTP->moduleQueried.moduleQueried.bits.all = false;
+  return (packetUBXTIMTP->data.towMS);
+}
+
+uint32_t DevUBLOXGNSS::getTIMTPtowSubMS(uint16_t maxWait)
+{
+  if (packetUBXTIMTP == nullptr)
+    initPacketUBXTIMTP();        // Check that RAM has been allocated for the TP data
+  if (packetUBXTIMTP == nullptr) // Bail if the RAM allocation failed
+    return 0;
+
+  if (packetUBXTIMTP->moduleQueried.moduleQueried.bits.towSubMS == false)
+    getTIMTP(maxWait);
+  packetUBXTIMTP->moduleQueried.moduleQueried.bits.towSubMS = false; // Since we are about to give this to user, mark this data as stale
+  packetUBXTIMTP->moduleQueried.moduleQueried.bits.all = false;
+  return (packetUBXTIMTP->data.towSubMS);
+}
+
+uint16_t DevUBLOXGNSS::getTIMTPweek(uint16_t maxWait)
+{
+  if (packetUBXTIMTP == nullptr)
+    initPacketUBXTIMTP();        // Check that RAM has been allocated for the TP data
+  if (packetUBXTIMTP == nullptr) // Bail if the RAM allocation failed
+    return 0;
+
+  if (packetUBXTIMTP->moduleQueried.moduleQueried.bits.week == false)
+    getTIMTP(maxWait);
+  packetUBXTIMTP->moduleQueried.moduleQueried.bits.week = false; // Since we are about to give this to user, mark this data as stale
+  packetUBXTIMTP->moduleQueried.moduleQueried.bits.all = false;
+  return (packetUBXTIMTP->data.week);
+}
+
+// Convert TIM TP to Unix epoch including microseconds
+// CAUTION! Assumes the time base is UTC and the week number is GPS
+uint32_t DevUBLOXGNSS::getTIMTPAsEpoch(uint32_t &microsecond, uint16_t maxWait)
+{
+  if (packetUBXNAVPVT == nullptr)
+    initPacketUBXNAVPVT();        // Check that RAM has been allocated for the PVT data
+  if (packetUBXNAVPVT == nullptr) // Bail if the RAM allocation failed
+    return 0;
+
+  if (packetUBXTIMTP->moduleQueried.moduleQueried.bits.week == false)
+    getTIMTP(maxWait);
+  packetUBXTIMTP->moduleQueried.moduleQueried.bits.week = false; // Since we are about to give this to user, mark this data as stale
+  packetUBXTIMTP->moduleQueried.moduleQueried.bits.towMS = false;
+  packetUBXTIMTP->moduleQueried.moduleQueried.bits.towSubMS = false;
+  packetUBXTIMTP->moduleQueried.moduleQueried.bits.all = false;
+
+  uint32_t tow = packetUBXTIMTP->data.week - SFE_UBLOX_JAN_1ST_2020_WEEK; // Calculate the number of weeks since Jan 1st 2020
+  tow *= SFE_UBLOX_SECS_PER_WEEK; // Convert weeks to seconds
+  tow += SFE_UBLOX_EPOCH_WEEK_2086; // Add the TOW for Jan 1st 2020
+  tow += packetUBXTIMTP->data.towMS / 1000; // Add the TOW for the next TP
+
+  uint32_t us = packetUBXTIMTP->data.towMS % 1000; // Extract the milliseconds
+  us *= 1000; // Convert to microseconds
+
+  double subMS = packetUBXTIMTP->data.towSubMS; // Get towSubMS (ms * 2^-32)
+  subMS *= pow(2.0, -32.0); // Convert to milliseconds
+  subMS *= 1000; // Convert to microseconds
+
+  us += (uint32_t)subMS; // Add subMS
+
+  microsecond = us;
+  return tow;
 }
 
 #ifndef SFE_UBLOX_DISABLE_ESF
