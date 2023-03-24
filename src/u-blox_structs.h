@@ -1920,6 +1920,74 @@ typedef struct
   UBX_TIM_TM2_data_t *callbackData;
 } UBX_TIM_TM2_t;
 
+// UBX-TIM-TP (0x0D 0x01): Time pulse time data
+// Contains the Time-Pulse-Of-Week for the _next_ time pulse
+// (PVT etc. provide the time of the _previous_ time pulse)
+const uint16_t UBX_TIM_TP_LEN = 16;
+
+typedef struct
+{
+  uint32_t towMS;    // Time pulse time of week according to time base : ms
+  uint32_t towSubMS; // Submillisecond part of towMS : ms * 2^-32
+  int32_t qErr;      // Quantization error of time pulse : ps
+  uint16_t week;     // Time pulse week number according to time base : weeks
+  union
+  {
+    uint8_t all;
+    struct
+    {
+      uint8_t timeBase : 1;    // 0=GNSS; 1=UTC
+      uint8_t utc : 1;         // 0=UTC not available; 1=UTC available
+      uint8_t raim : 2;        // 0=RAIM information not available; 1=RAIM not active; 2=RAIM Active
+      uint8_t qErrInvalid : 1; // 0=Quantization error invalid; 1=valid
+    } bits;
+  } flags;
+  union
+  {
+    uint8_t all;
+    struct
+    {
+      uint8_t timeRefGnss : 4; // GNSS Reference: 0=GPS; 1=GLONASS; 2=BeiDou; 3=Galileo; 4=NavIC; 15=Unknown
+      uint8_t utcStandard : 4; // UTC Standard ID - if timeBase = 1: 0=not available; 1=CRL; 2=NIST; 3=USNO;
+                               // 4=BIPM; 5=Eu; 6=SU; 7=NTSC; 8=NPLI; 15=Unknown
+    } bits;
+  } refInfo;
+} UBX_TIM_TP_data_t;
+
+typedef struct
+{
+  union
+  {
+    uint32_t all;
+    struct
+    {
+      uint32_t all : 1;
+
+      uint32_t towMS : 1;
+      uint32_t towSubMS : 1;
+      uint32_t qErr : 1;
+      uint32_t week : 1;
+
+      uint32_t timeBase : 1;
+      uint32_t utc : 1;
+      uint32_t raim : 1;
+      uint32_t qErrInvalid : 1;
+
+      uint32_t timeRefGnss : 1;
+      uint32_t utcStandard : 1;
+    } bits;
+  } moduleQueried;
+} UBX_TIM_TP_moduleQueried_t;
+
+typedef struct
+{
+  ubxAutomaticFlags automaticFlags;
+  UBX_TIM_TP_data_t data;
+  UBX_TIM_TP_moduleQueried_t moduleQueried;
+  void (*callbackPointerPtr)(UBX_TIM_TP_data_t *);
+  UBX_TIM_TP_data_t *callbackData;
+} UBX_TIM_TP_t;
+
 // ESF-specific structs
 
 // UBX-ESF-ALG (0x10 0x14): IMU alignment information
