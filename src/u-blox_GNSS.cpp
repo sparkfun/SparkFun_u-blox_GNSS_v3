@@ -16840,7 +16840,7 @@ uint32_t DevUBLOXGNSS::getTIMTPAsEpoch(uint32_t &microsecond, uint16_t maxWait)
   subMS *= pow(2.0, -32.0); // Convert to milliseconds
   subMS *= 1000; // Convert to microseconds
 
-  us += (int32_t)subMS; // Add subMS
+  us += (uint32_t)subMS; // Add subMS
 
   microsecond = us;
   return tow;
