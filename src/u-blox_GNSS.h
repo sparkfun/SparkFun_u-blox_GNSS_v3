@@ -500,6 +500,7 @@ public:
           if (maxWidth < sizeof(int8_t))
             return false;
           *value = (int8_t)extractSignedChar(pkt, ptr);
+          return (true);
           break;
         case UBX_CFG_U2:
         case UBX_CFG_E2:
