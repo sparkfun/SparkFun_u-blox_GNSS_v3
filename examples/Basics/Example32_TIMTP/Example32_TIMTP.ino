@@ -101,7 +101,7 @@ void loop()
     uint32_t epochPVT = myGNSS.getUnixEpoch(microsPVT); //Read the time of week as Unix Epoch
 
     Serial.print("NAV PVT as Epoch: ");
-    Serial.print(epochPVT); //Print the time of the next pulse
+    Serial.print(epochPVT); //Print the time of the previous pulse
     Serial.print(".");
     if (microsPVT < 100000) Serial.print("0"); //Pad the zeros if needed
     if (microsPVT < 10000) Serial.print("0");
