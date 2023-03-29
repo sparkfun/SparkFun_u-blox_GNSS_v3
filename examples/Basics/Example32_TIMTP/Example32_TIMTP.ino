@@ -1,6 +1,5 @@
 /*
   Displaying the TIM TP timing information for the _next_ TP time pulse
-  (PVT provides the time of the _previous_ pulse)
   By: Paul Clark
   SparkFun Electronics
   Date: March 24th, 2023
@@ -8,7 +7,8 @@
 
   This example shows how to query a u-blox module for the TIM TP time-pulse-of-week.
   This contains the timing information for the _next_ time pulse. I.e. it is output
-  _ahead_ of time. PVT contains the time of the _previous_ pulse.
+  _ahead_ of time. PVT provides the time of the navigation solution which is usually
+  aligned with the _previous_ pulse.
 
   Feel like supporting open source hardware?
   Buy a board from SparkFun!
@@ -78,7 +78,8 @@ void loop()
   //      Then getPVT will poll NAV PVT, wait and return true when the NAV PVT data arrives.
   //      The TIM TP data will then be one second old.
   //      Because TIM TP provides the time of the _next_ time pulse and NAV PVT provides
-  //      the time of the _previous_ time pulse, the two Epochs should be the same!
+  //      the time of the navigation solution close to the _previous_ time pulse,
+  //      the two Epochs should be the same!
   if (myGNSS.getTIMTP() && myGNSS.getPVT())
   {
     // Read the time pulse of week as Unix Epoch
@@ -101,7 +102,7 @@ void loop()
     uint32_t epochPVT = myGNSS.getUnixEpoch(microsPVT); //Read the time of week as Unix Epoch
 
     Serial.print("NAV PVT as Epoch: ");
-    Serial.print(epochPVT); //Print the time of the previous pulse
+    Serial.print(epochPVT); //Print the time of the previous navigation solution
     Serial.print(".");
     if (microsPVT < 100000) Serial.print("0"); //Pad the zeros if needed
     if (microsPVT < 10000) Serial.print("0");
