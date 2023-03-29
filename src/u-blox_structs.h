@@ -1922,7 +1922,8 @@ typedef struct
 
 // UBX-TIM-TP (0x0D 0x01): Time pulse time data
 // Contains the Time-Pulse-Of-Week for the _next_ time pulse
-// (PVT etc. provide the time of the _previous_ time pulse)
+// (PVT provides the time of the navigation solution which is usually
+// aligned with the _previous_ pulse)
 const uint16_t UBX_TIM_TP_LEN = 16;
 
 typedef struct
