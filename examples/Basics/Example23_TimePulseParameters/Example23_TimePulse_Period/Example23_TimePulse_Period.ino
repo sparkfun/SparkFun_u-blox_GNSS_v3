@@ -63,18 +63,18 @@ void setup()
   // Let's say that we want our 1 pulse every 30 seconds to be as accurate as possible. So, let's tell the module
   // to generate no signal while it is _locking_ to GNSS time. We want the signal to start only when the module is
   // _locked_ to GNSS time.
-  myGNSS.addCfgValset32(UBLOX_CFG_TP_PERIOD_TP1, 0); // Set the period to zero
-  myGNSS.addCfgValset32(UBLOX_CFG_TP_LEN_TP1, 0); // Set the pulse length to zero
+  myGNSS.addCfgValset(UBLOX_CFG_TP_PERIOD_TP1, 0); // Set the period to zero
+  myGNSS.addCfgValset(UBLOX_CFG_TP_LEN_TP1, 0); // Set the pulse length to zero
   
   // When the module is _locked_ to GNSS time, make it generate a 1 second pulse every 30 seconds
-  myGNSS.addCfgValset32(UBLOX_CFG_TP_PERIOD_LOCK_TP1, 30000000); // Set the period to 30,000,000 us
-  myGNSS.addCfgValset32(UBLOX_CFG_TP_LEN_LOCK_TP1, 1000000); // Set the pulse length to 1,000,000 us
+  myGNSS.addCfgValset(UBLOX_CFG_TP_PERIOD_LOCK_TP1, 30000000); // Set the period to 30,000,000 us
+  myGNSS.addCfgValset(UBLOX_CFG_TP_LEN_LOCK_TP1, 1000000); // Set the pulse length to 1,000,000 us
 
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_TP1_ENA, 1); // Make sure the enable flag is set to enable the time pulse. (Set to 0 to disable.)
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_USE_LOCKED_TP1, 1); // Tell the module to use PERIOD while locking and PERIOD_LOCK when locked to GNSS time
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_PULSE_DEF, 0); // Tell the module that we want to set the period (not the frequency). PERIOD = 0. FREQ = 1.
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_PULSE_LENGTH_DEF, 1); // Tell the module to set the pulse length (not the pulse ratio / duty). RATIO = 0. LENGTH = 1.
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_POL_TP1, 1); // Tell the module that we want the rising edge at the top of second. Falling Edge = 0. Rising Edge = 1.
+  myGNSS.addCfgValset(UBLOX_CFG_TP_TP1_ENA, 1); // Make sure the enable flag is set to enable the time pulse. (Set to 0 to disable.)
+  myGNSS.addCfgValset(UBLOX_CFG_TP_USE_LOCKED_TP1, 1); // Tell the module to use PERIOD while locking and PERIOD_LOCK when locked to GNSS time
+  myGNSS.addCfgValset(UBLOX_CFG_TP_PULSE_DEF, 0); // Tell the module that we want to set the period (not the frequency). PERIOD = 0. FREQ = 1.
+  myGNSS.addCfgValset(UBLOX_CFG_TP_PULSE_LENGTH_DEF, 1); // Tell the module to set the pulse length (not the pulse ratio / duty). RATIO = 0. LENGTH = 1.
+  myGNSS.addCfgValset(UBLOX_CFG_TP_POL_TP1, 1); // Tell the module that we want the rising edge at the top of second. Falling Edge = 0. Rising Edge = 1.
 
   // Now set the time pulse parameters
   if (myGNSS.sendCfgValset() == false)

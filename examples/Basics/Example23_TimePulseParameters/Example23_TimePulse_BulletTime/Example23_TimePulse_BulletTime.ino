@@ -63,13 +63,13 @@ void setup()
   // Let's say that we want our pulse-per-second to be as accurate as possible. So, let's tell the module
   // to generate no signal while it is _locking_ to GNSS time. We want the signal to start only when the module is
   // _locked_ to GNSS time.
-  myGNSS.addCfgValset32(UBLOX_CFG_TP_PERIOD_TP1, 0); // Set the period to zero
-  myGNSS.addCfgValset32(UBLOX_CFG_TP_LEN_TP1, 0); // Set the pulse length to zero
+  myGNSS.addCfgValset(UBLOX_CFG_TP_PERIOD_TP1, 0); // Set the period to zero
+  myGNSS.addCfgValset(UBLOX_CFG_TP_LEN_TP1, 0); // Set the pulse length to zero
 
   // When the module is _locked_ to GNSS time, make it generate a 0.1 second pulse once per second
-  myGNSS.addCfgValset32(UBLOX_CFG_TP_PERIOD_LOCK_TP1, 1000000); // Set the period to 1,000,000 us
-  myGNSS.addCfgValset32(UBLOX_CFG_TP_LEN_LOCK_TP1, 100000); // Set the pulse length to 0.1s (100,000 us)
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_POL_TP1, 1); // Set the polarity to "1" (high for 0.1s, low for 0.9s, rising edge at top of second)
+  myGNSS.addCfgValset(UBLOX_CFG_TP_PERIOD_LOCK_TP1, 1000000); // Set the period to 1,000,000 us
+  myGNSS.addCfgValset(UBLOX_CFG_TP_LEN_LOCK_TP1, 100000); // Set the pulse length to 0.1s (100,000 us)
+  myGNSS.addCfgValset(UBLOX_CFG_TP_POL_TP1, 1); // Set the polarity to "1" (high for 0.1s, low for 0.9s, rising edge at top of second)
 
   // We can use CFG_TP_USER_DELAY to delay the pulse for each camera. The delay needs to be negative for this example.
   // We can delay the pulse by +/- 2^31 nanoseconds (+/- 2.147 seconds).
@@ -85,12 +85,12 @@ void setup()
   //converter32.signed32 = -700000000; // Camera 8: delay the pulse by 0.7s (700,000,000 ns)
   //converter32.signed32 = -800000000; // Camera 9: delay the pulse by 0.8s (800,000,000 ns)
   //converter32.signed32 = -900000000; // Camera 10: delay the pulse by 0.9s (900,000,000 ns)
-  myGNSS.addCfgValset32(UBLOX_CFG_TP_USER_DELAY_TP1, converter32.unsigned32); // Avoid any ambiguity by using converter32 to convert from signed to unsigned
+  myGNSS.addCfgValset(UBLOX_CFG_TP_USER_DELAY_TP1, converter32.unsigned32); // Avoid any ambiguity by using converter32 to convert from signed to unsigned
 
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_TP1_ENA, 1); // Make sure the enable flag is set to enable the time pulse. (Set to 0 to disable.)
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_USE_LOCKED_TP1, 1); // Tell the module to use PERIOD while locking and PERIOD_LOCK when locked to GNSS time
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_PULSE_DEF, 0); // Tell the module that we want to set the period (not the frequency). PERIOD = 0. FREQ = 1.
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_PULSE_LENGTH_DEF, 1); // Tell the module to set the pulse length (not the pulse ratio / duty). RATIO = 0. LENGTH = 1.
+  myGNSS.addCfgValset(UBLOX_CFG_TP_TP1_ENA, 1); // Make sure the enable flag is set to enable the time pulse. (Set to 0 to disable.)
+  myGNSS.addCfgValset(UBLOX_CFG_TP_USE_LOCKED_TP1, 1); // Tell the module to use PERIOD while locking and PERIOD_LOCK when locked to GNSS time
+  myGNSS.addCfgValset(UBLOX_CFG_TP_PULSE_DEF, 0); // Tell the module that we want to set the period (not the frequency). PERIOD = 0. FREQ = 1.
+  myGNSS.addCfgValset(UBLOX_CFG_TP_PULSE_LENGTH_DEF, 1); // Tell the module to set the pulse length (not the pulse ratio / duty). RATIO = 0. LENGTH = 1.
 
   // Now set the time pulse parameters
   if (myGNSS.sendCfgValset() == false)
