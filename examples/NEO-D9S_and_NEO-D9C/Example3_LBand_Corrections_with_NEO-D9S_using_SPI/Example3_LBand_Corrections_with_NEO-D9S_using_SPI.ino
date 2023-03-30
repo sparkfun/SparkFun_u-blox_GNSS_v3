@@ -139,7 +139,7 @@ void printPVTdata(UBX_NAV_PVT_data_t *ubxDataStruct)
 void printRXMCOR(UBX_RXM_COR_data_t *ubxDataStruct)
 {
   Serial.print(F("UBX-RXM-COR:  ebno: "));
-  Serial.print(ubxDataStruct->ebno);
+  Serial.print((double)ubxDataStruct->ebno / 8, 3); //Convert to dB
 
   Serial.print(F("  protocol: "));
   if (ubxDataStruct->statusInfo.bits.protocol == 1)
@@ -261,16 +261,16 @@ void setup()
     myLBand.checkUblox(); // Discard any old PMP data in the buffer
   
     myLBand.newCfgValset();
-    myLBand.addCfgValset32(UBLOX_CFG_PMP_CENTER_FREQUENCY,   myLBandFreq); // Default 1539812500 Hz
-    myLBand.addCfgValset16(UBLOX_CFG_PMP_SEARCH_WINDOW,      2200);        // Default 2200 Hz
-    myLBand.addCfgValset8(UBLOX_CFG_PMP_USE_SERVICE_ID,      0);           // Default 1 
-    myLBand.addCfgValset16(UBLOX_CFG_PMP_SERVICE_ID,         21845);       // Default 50821
-    myLBand.addCfgValset16(UBLOX_CFG_PMP_DATA_RATE,          2400);        // Default 2400 bps
-    myLBand.addCfgValset8(UBLOX_CFG_PMP_USE_DESCRAMBLER,     1);           // Default 1
-    myLBand.addCfgValset16(UBLOX_CFG_PMP_DESCRAMBLER_INIT,   26969);       // Default 23560
-    myLBand.addCfgValset8(UBLOX_CFG_PMP_USE_PRESCRAMBLING,   0);           // Default 0
-    myLBand.addCfgValset64(UBLOX_CFG_PMP_UNIQUE_WORD,        16238547128276412563ull);
-    myLBand.addCfgValset8(UBLOX_CFG_MSGOUT_UBX_RXM_PMP_SPI, 1); // Ensure UBX-RXM-PMP is enabled on the SPI port
+    myLBand.addCfgValset(UBLOX_CFG_PMP_CENTER_FREQUENCY,    myLBandFreq); // Default 1539812500 Hz
+    myLBand.addCfgValset(UBLOX_CFG_PMP_SEARCH_WINDOW,       2200);        // Default 2200 Hz
+    myLBand.addCfgValset(UBLOX_CFG_PMP_USE_SERVICE_ID,      0);           // Default 1 
+    myLBand.addCfgValset(UBLOX_CFG_PMP_SERVICE_ID,          21845);       // Default 50821
+    myLBand.addCfgValset(UBLOX_CFG_PMP_DATA_RATE,           2400);        // Default 2400 bps
+    myLBand.addCfgValset(UBLOX_CFG_PMP_USE_DESCRAMBLER,     1);           // Default 1
+    myLBand.addCfgValset(UBLOX_CFG_PMP_DESCRAMBLER_INIT,    26969);       // Default 23560
+    myLBand.addCfgValset(UBLOX_CFG_PMP_USE_PRESCRAMBLING,   0);           // Default 0
+    myLBand.addCfgValset(UBLOX_CFG_PMP_UNIQUE_WORD,         16238547128276412563ull);
+    myLBand.addCfgValset(UBLOX_CFG_MSGOUT_UBX_RXM_PMP_SPI, 1); // Ensure UBX-RXM-PMP is enabled on the SPI port
     ok = myLBand.sendCfgValset(2100);
     
     Serial.print(F("L-Band: configuration "));
