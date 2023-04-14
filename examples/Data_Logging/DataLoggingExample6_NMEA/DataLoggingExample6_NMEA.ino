@@ -137,9 +137,9 @@ void setup()
   myGNSS.logNAVPVT(); // Enable NAV PVT data logging
 
   myGNSS.newCfgValset(VAL_LAYER_RAM_BBR); // Use cfgValset to disable / enable individual NMEA messages
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_GGA_I2C, 1); // Ensure the GxGGA (Global positioning system fix data) message is enabled. Send every measurement.
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_GSA_I2C, 1); // Ensure the GxGSA (GNSS DOP and Active satellites) message is enabled. Send every measurement.
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_GSV_I2C, 1); // Ensure the GxGSV (GNSS satellites in view) message is enabled. Send every measurement.
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_GGA_I2C, 1); // Ensure the GxGGA (Global positioning system fix data) message is enabled. Send every measurement.
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_GSA_I2C, 1); // Ensure the GxGSA (GNSS DOP and Active satellites) message is enabled. Send every measurement.
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_GSV_I2C, 1); // Ensure the GxGSV (GNSS satellites in view) message is enabled. Send every measurement.
   myGNSS.sendCfgValset(); // Send the configuration VALSET
 
   myGNSS.setNMEALoggingMask(SFE_UBLOX_FILTER_NMEA_ALL); // Enable logging of all enabled NMEA messages

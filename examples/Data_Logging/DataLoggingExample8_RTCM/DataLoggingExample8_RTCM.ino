@@ -135,9 +135,9 @@ void setup()
 
   myGNSS.newCfgValset(VAL_LAYER_RAM_BBR); // Use cfgValset to disable / enable individual NMEA messages
 
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_GGA_I2C, 1); // Ensure the GxGGA (Global positioning system fix data) message is enabled. Send every measurement.
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_GSA_I2C, 1); // Ensure the GxGSA (GNSS DOP and Active satellites) message is enabled. Send every measurement.
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_GSV_I2C, 1); // Ensure the GxGSV (GNSS satellites in view) message is enabled. Send every measurement.
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_GGA_I2C, 1); // Ensure the GxGGA (Global positioning system fix data) message is enabled. Send every measurement.
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_GSA_I2C, 1); // Ensure the GxGSA (GNSS DOP and Active satellites) message is enabled. Send every measurement.
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_GSV_I2C, 1); // Ensure the GxGSV (GNSS satellites in view) message is enabled. Send every measurement.
 
   myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_RTCM_3X_TYPE4072_0_I2C, 1); // Enable the RTCM 4072-0 message (Reference station PVT (u-blox proprietary)) on I2C
   myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_RTCM_3X_TYPE4072_1_I2C, 1); // Enable the RTCM 4072-1 message (Additional reference station information (u-blox proprietary)) on I2C

@@ -165,7 +165,7 @@ void printPVTdata(UBX_NAV_PVT_data_t *ubxDataStruct)
 void printRXMCOR(UBX_RXM_COR_data_t *ubxDataStruct)
 {
   Serial.print(F("UBX-RXM-COR:  ebno: "));
-  Serial.print(ubxDataStruct->ebno);
+  Serial.print((double)ubxDataStruct->ebno / 8, 3); //Convert to dB
 
   Serial.print(F("  protocol: "));
   if (ubxDataStruct->statusInfo.bits.protocol == 1)
@@ -237,6 +237,29 @@ void setup()
   }
   Serial.println(F("u-blox GNSS module connected"));
 
+  //Check the ZED firmware version - SPARTN is only supported on ZED-F9P from HPG 1.30 and ZED-F9R from HPS 1.21 onwards
+  if (myGNSS.getModuleInfo())
+  {
+    Serial.print(F("FWVER: "));
+    Serial.print(myGNSS.getFirmwareVersionHigh()); // Returns uint8_t
+    Serial.print(F("."));
+    Serial.println(myGNSS.getFirmwareVersionLow()); // Returns uint8_t
+    
+    Serial.print(F("Firmware: "));
+    Serial.println(myGNSS.getFirmwareType()); // Returns HPG, SPG etc. as (const char *)
+
+    if (strcmp(myGNSS.getFirmwareType(), "HPG") == 0)
+      if ((myGNSS.getFirmwareVersionHigh() == 1) && (myGNSS.getFirmwareVersionLow() < 30))
+        Serial.println("Your module is running old firmware which may not support SPARTN. Please upgrade.");
+        
+    if (strcmp(myGNSS.getFirmwareType(), "HPS") == 0)
+      if ((myGNSS.getFirmwareVersionHigh() == 1) && (myGNSS.getFirmwareVersionLow() < 21))
+        Serial.println("Your module is running old firmware which may not support SPARTN. Please upgrade.");
+  }
+  else
+    Serial.println(F("Error: could not read module info!"));
+
+  //Now configure the module
   uint8_t ok = myGNSS.setUART1Output(COM_TYPE_UBX); //Turn off NMEA noise
   if (ok) ok = myGNSS.setUART2Input(COM_TYPE_UBX | COM_TYPE_RTCM3 | COM_TYPE_SPARTN); //Be sure SPARTN input is enabled on UART2
   if (ok) ok = myGNSS.setDGNSSConfiguration(SFE_UBLOX_DGNSS_MODE_FIXED); // Set the differential mode - ambiguities are fixed whenever possible
@@ -269,19 +292,19 @@ void setup()
   Serial.println(F("u-blox NEO-D9C connected"));
 
   myQZSS.newCfgValset(); // Create a new Configuration Interface message - this defaults to VAL_LAYER_RAM_BBR (change in RAM and BBR)
-  myQZSS.addCfgValset8(UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_I2C,   1);     // Output QZSS-L6 message on the I2C port 
+  myQZSS.addCfgValset(UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_I2C,   1);     // Output QZSS-L6 message on the I2C port 
   ok = myQZSS.sendCfgValset(); // Apply the settings
 
   myQZSS.newCfgValset(); // Create a new Configuration Interface message - this defaults to VAL_LAYER_RAM_BBR (change in RAM and BBR)
-  myQZSS.addCfgValset8(UBLOX_CFG_UART1OUTPROT_UBX,            1);     // Enable UBX output on UART1
-  myQZSS.addCfgValset8(UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_UART1, 1);     // Output QZSS-L6 message on UART1
-  myQZSS.addCfgValset32(UBLOX_CFG_UART1_BAUDRATE,             38400); // Match UART1 baudrate with ZED
+  myQZSS.addCfgValset(UBLOX_CFG_UART1OUTPROT_UBX,            1);     // Enable UBX output on UART1
+  myQZSS.addCfgValset(UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_UART1, 1);     // Output QZSS-L6 message on UART1
+  myQZSS.addCfgValset(UBLOX_CFG_UART1_BAUDRATE,              38400); // Match UART1 baudrate with ZED
   ok = myQZSS.sendCfgValset(); // Apply the settings
 
   myQZSS.newCfgValset(); // Create a new Configuration Interface message - this defaults to VAL_LAYER_RAM_BBR (change in RAM and BBR)
-  myQZSS.addCfgValset8(UBLOX_CFG_UART2OUTPROT_UBX,            1);     // Enable UBX output on UART2
-  myQZSS.addCfgValset8(UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_UART2, 1);     // Output QZSS-L6 message on UART2
-  myQZSS.addCfgValset32(UBLOX_CFG_UART2_BAUDRATE,             38400); // Match UART2 baudrate with ZED
+  myQZSS.addCfgValset(UBLOX_CFG_UART2OUTPROT_UBX,            1);     // Enable UBX output on UART2
+  myQZSS.addCfgValset(UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_UART2, 1);     // Output QZSS-L6 message on UART2
+  myQZSS.addCfgValset(UBLOX_CFG_UART2_BAUDRATE,              38400); // Match UART2 baudrate with ZED
   ok = myQZSS.sendCfgValset(); // Apply the settings
 
   Serial.print(F("QZSS-L6: UART2 configuration "));

@@ -107,12 +107,12 @@ void setup()
 
   myQZSS.newCfgValset(); // Create a new Configuration Interface message - this defaults to VAL_LAYER_RAM_BBR (change in RAM and BBR)
 
-  myQZSS.addCfgValset8(UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_I2C,   1);     // Output QZSS-L6 message on the I2C port 
-  myQZSS.addCfgValset8(UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_UART1, 1);     // Output QZSS-L6 message on UART1
-  myQZSS.addCfgValset32(UBLOX_CFG_UART1_BAUDRATE,             38400); // Match UART1 baudrate with ZED
-  myQZSS.addCfgValset8(UBLOX_CFG_UART2OUTPROT_UBX,            1);     // Enable UBX output on UART2
-  myQZSS.addCfgValset8(UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_UART2, 1);     // Output QZSS-L6 message on UART2
-  myQZSS.addCfgValset32(UBLOX_CFG_UART2_BAUDRATE,             38400); // Match UART2 baudrate with ZED
+  myQZSS.addCfgValset(UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_I2C,   1);     // Output QZSS-L6 message on the I2C port 
+  myQZSS.addCfgValset(UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_UART1, 1);     // Output QZSS-L6 message on UART1
+  myQZSS.addCfgValset(UBLOX_CFG_UART1_BAUDRATE,              38400); // Match UART1 baudrate with ZED
+  myQZSS.addCfgValset(UBLOX_CFG_UART2OUTPROT_UBX,            1);     // Enable UBX output on UART2
+  myQZSS.addCfgValset(UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_UART2, 1);     // Output QZSS-L6 message on UART2
+  myQZSS.addCfgValset(UBLOX_CFG_UART2_BAUDRATE,              38400); // Match UART2 baudrate with ZED
 
   bool ok = myQZSS.sendCfgValset(); // Apply the settings
 

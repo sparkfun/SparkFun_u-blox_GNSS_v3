@@ -8737,7 +8737,8 @@ bool DevUBLOXGNSS::addCfgValsetN(uint32_t key, uint8_t *value, uint8_t N)
     if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
       _debugSerial.println(F("addCfgValsetN: autosend"));
 #endif
-    sendCommand(&packetCfg);
+    if (sendCommand(&packetCfg) != SFE_UBLOX_STATUS_DATA_SENT) // We are only expecting an ACK
+      return false;
     packetCfg.len = 4; // 4 byte header
     packetCfg.startingSpot = 0;
     _numCfgKeys = 0;

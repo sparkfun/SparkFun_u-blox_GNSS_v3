@@ -237,11 +237,11 @@ void setup()
 
 #ifndef ubxOnly
   myGNSS.newCfgValset(VAL_LAYER_RAM);
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_GGA_SPI, navRate); // Ensure the GxGGA (Global positioning system fix data) message is enabled. Send every second.
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_GSA_SPI, navRate); // Ensure the GxGSA (GNSS DOP and Active satellites) message is enabled. Send every second.
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_GSV_SPI, navRate); // Ensure the GxGSV (GNSS satellites in view) message is enabled. Send every second.
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_GST_SPI, navRate); // Ensure the GxGST (Position error statistics) message is enabled. Send every second.
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_RMC_SPI, navRate); // Ensure the GxRMC (Recommended minimum: position, velocity and time) message is enabled. Send every second.
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_GGA_SPI, navRate); // Ensure the GxGGA (Global positioning system fix data) message is enabled. Send every second.
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_GSA_SPI, navRate); // Ensure the GxGSA (GNSS DOP and Active satellites) message is enabled. Send every second.
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_GSV_SPI, navRate); // Ensure the GxGSV (GNSS satellites in view) message is enabled. Send every second.
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_GST_SPI, navRate); // Ensure the GxGST (Position error statistics) message is enabled. Send every second.
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_RMC_SPI, navRate); // Ensure the GxRMC (Recommended minimum: position, velocity and time) message is enabled. Send every second.
   myGNSS.sendCfgValset();
   myGNSS.setNMEALoggingMask(SFE_UBLOX_FILTER_NMEA_GGA | SFE_UBLOX_FILTER_NMEA_GSA | SFE_UBLOX_FILTER_NMEA_GSV | SFE_UBLOX_FILTER_NMEA_GST | SFE_UBLOX_FILTER_NMEA_RMC); // Log only these NMEA messages
 #endif
@@ -330,8 +330,8 @@ void loop()
     myGNSS.setNavigationFrequency(1); // Set navigation rate to 1Hz
 
     myGNSS.newCfgValset(VAL_LAYER_RAM);
-    myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_UBX_RXM_RAWX_SPI, 0);
-    myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_UBX_RXM_SFRBX_SPI, 0);
+    myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_UBX_RXM_RAWX_SPI, 0);
+    myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_UBX_RXM_SFRBX_SPI, 0);
     myGNSS.sendCfgValset();
 
     myGNSS.setSPIOutput(COM_TYPE_UBX | COM_TYPE_NMEA); // Re-enable NMEA

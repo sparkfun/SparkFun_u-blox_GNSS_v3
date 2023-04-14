@@ -50,6 +50,8 @@ void setup()
 
   Wire.begin(); //Start I2C
 
+  //myGNSS.enableDebugging(); //Uncomment this line to enable helpful debug messages on Serial
+
   if (myGNSS.begin() == false) //Connect to the Ublox module using Wire port
   {
     Serial.println(F("u-blox GPS not detected at default I2C address. Please check wiring. Freezing."));
@@ -58,7 +60,7 @@ void setup()
  
   Serial.println(F("u-blox module connected"));
   myGNSS.setI2COutput(COM_TYPE_UBX); //Turn off NMEA noise
-  myGNSS.setI2CInput(COM_TYPE_UBX | COM_TYPE_NMEA | COM_TYPE_SPARTN);
+  myGNSS.setI2CInput(COM_TYPE_UBX | COM_TYPE_NMEA);
    
   myGNSS.setNavigationFrequency(1); //Set output in Hz.
   
@@ -106,6 +108,8 @@ void mqttMessageHandler(int messageSize)
   Serial.print(mqttClient.messageTopic());
   Serial.println(F(" topic to ZED"));
 
+  uint16_t mqttTotal = 0;
+
   while (mqttClient.available())
   {
     uint16_t mqttCount = 0;
@@ -122,11 +126,16 @@ void mqttMessageHandler(int messageSize)
 
     if (mqttCount > 0)
     {
-      //Push KEYS or SPARTN data to GNSS module over I2C
+      //Push AssistNow data to GNSS module over I2C
       myGNSS.pushRawData(mqttData, mqttCount, false);
       lastReceived_ms = millis();
+      mqttTotal += mqttCount;
     }
   }
+
+  Serial.print(F("Pushed "));
+  Serial.print(mqttTotal);
+  Serial.println(F(" bytes to ZED"));
 
   delete[] mqttData;
 }

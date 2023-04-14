@@ -44,8 +44,8 @@ void printRXMPMP(UBX_RXM_PMP_data_t *pmpData)
   Serial.print(F("numBytesUserData :   "));
   Serial.println(pmpData->numBytesUserData);
   
-  Serial.print(F("serviceIdentifier:   "));
-  Serial.println(pmpData->serviceIdentifier);
+  Serial.print(F("serviceIdentifier:   0x"));
+  Serial.println(pmpData->serviceIdentifier, HEX);
   
   Serial.print(F("uniqueWordBitErrors: "));
   Serial.println(pmpData->uniqueWordBitErrors);
@@ -53,8 +53,9 @@ void printRXMPMP(UBX_RXM_PMP_data_t *pmpData)
   Serial.print(F("fecBits:             "));
   Serial.println(pmpData->fecBits);
   
-  Serial.print(F("ebno:                "));
-  Serial.println(pmpData->ebno);
+  Serial.print(F("ebno (dB):           "));
+  double ebno = pmpData->ebno * 0.125; //Convert ebno to dB : multiply by 2^-3
+  Serial.println(ebno, 3);
 
   Serial.println();
 }
@@ -81,21 +82,21 @@ void setup()
   Serial.println(F("u-blox NEO-D9S connected"));
 
   myLBand.newCfgValset(); // Create a new Configuration Interface message - this defaults to VAL_LAYER_RAM_BBR (change in RAM and BBR)
-  myLBand.addCfgValset32(UBLOX_CFG_PMP_CENTER_FREQUENCY,   myLBandFreq); // Default 1539812500 Hz
-  myLBand.addCfgValset16(UBLOX_CFG_PMP_SEARCH_WINDOW,      2200);        // Default 2200 Hz
-  myLBand.addCfgValset8(UBLOX_CFG_PMP_USE_SERVICE_ID,      0);           // Default 1 
-  myLBand.addCfgValset16(UBLOX_CFG_PMP_SERVICE_ID,         21845);       // Default 50821
-  myLBand.addCfgValset16(UBLOX_CFG_PMP_DATA_RATE,          2400);        // Default 2400 bps
-  myLBand.addCfgValset8(UBLOX_CFG_PMP_USE_DESCRAMBLER,     1);           // Default 1
-  myLBand.addCfgValset16(UBLOX_CFG_PMP_DESCRAMBLER_INIT,   26969);       // Default 23560
-  myLBand.addCfgValset8(UBLOX_CFG_PMP_USE_PRESCRAMBLING,   0);           // Default 0
-  myLBand.addCfgValset64(UBLOX_CFG_PMP_UNIQUE_WORD,        16238547128276412563ull); 
-  myLBand.addCfgValset8(UBLOX_CFG_MSGOUT_UBX_RXM_PMP_I2C,   1); // Ensure UBX-RXM-PMP is enabled on the I2C port 
-  myLBand.addCfgValset8(UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART1, 1); // Output UBX-RXM-PMP on UART1
-  myLBand.addCfgValset8(UBLOX_CFG_UART2OUTPROT_UBX, 1);         // Enable UBX output on UART2
-  myLBand.addCfgValset8(UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART2, 1); // Output UBX-RXM-PMP on UART2
-  myLBand.addCfgValset32(UBLOX_CFG_UART1_BAUDRATE,         38400); // match baudrate with ZED default
-  myLBand.addCfgValset32(UBLOX_CFG_UART2_BAUDRATE,         38400); // match baudrate with ZED default
+  myLBand.addCfgValset(UBLOX_CFG_PMP_CENTER_FREQUENCY,     myLBandFreq); // Default 1539812500 Hz
+  myLBand.addCfgValset(UBLOX_CFG_PMP_SEARCH_WINDOW,        2200);        // Default 2200 Hz
+  myLBand.addCfgValset(UBLOX_CFG_PMP_USE_SERVICE_ID,       0);           // Default 1 
+  myLBand.addCfgValset(UBLOX_CFG_PMP_SERVICE_ID,           21845);       // Default 50821
+  myLBand.addCfgValset(UBLOX_CFG_PMP_DATA_RATE,            2400);        // Default 2400 bps
+  myLBand.addCfgValset(UBLOX_CFG_PMP_USE_DESCRAMBLER,      1);           // Default 1
+  myLBand.addCfgValset(UBLOX_CFG_PMP_DESCRAMBLER_INIT,     26969);       // Default 23560
+  myLBand.addCfgValset(UBLOX_CFG_PMP_USE_PRESCRAMBLING,    0);           // Default 0
+  myLBand.addCfgValset(UBLOX_CFG_PMP_UNIQUE_WORD,          16238547128276412563ull); 
+  myLBand.addCfgValset(UBLOX_CFG_MSGOUT_UBX_RXM_PMP_I2C,   1); // Ensure UBX-RXM-PMP is enabled on the I2C port 
+  myLBand.addCfgValset(UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART1, 1); // Output UBX-RXM-PMP on UART1
+  myLBand.addCfgValset(UBLOX_CFG_UART2OUTPROT_UBX,         1); // Enable UBX output on UART2
+  myLBand.addCfgValset(UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART2, 1); // Output UBX-RXM-PMP on UART2
+  myLBand.addCfgValset(UBLOX_CFG_UART1_BAUDRATE,           38400); // match baudrate with ZED default
+  myLBand.addCfgValset(UBLOX_CFG_UART2_BAUDRATE,           38400); // match baudrate with ZED default
   bool ok = myLBand.sendCfgValset(); // Apply the settings
 
   Serial.print(F("L-Band: configuration "));

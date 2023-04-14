@@ -60,18 +60,18 @@ void setup()
   myGNSS.newCfgValset(VAL_LAYER_RAM); // Create a new Configuration Interface VALSET message. Apply the changes in RAM only (not BBR).
 
   // While the module is _locking_ to GNSS time, make it generate 2kHz
-  myGNSS.addCfgValset32(UBLOX_CFG_TP_FREQ_TP1, 2000); // Set the frequency to 2000Hz
-  myGNSS.addCfgValsetDouble(UBLOX_CFG_TP_DUTY_TP1, 100.0 / 3.0); // Set the pulse ratio / duty to 33.333% to produce 33.333:66.666 mark:space
+  myGNSS.addCfgValset(UBLOX_CFG_TP_FREQ_TP1, 2000); // Set the frequency to 2000Hz
+  myGNSS.addCfgValset(UBLOX_CFG_TP_DUTY_TP1, 100.0 / 3.0); // Set the pulse ratio / duty to 33.333% to produce 33.333:66.666 mark:space
 
   // When the module is _locked_ to GNSS time, make it generate 1kHz
-  myGNSS.addCfgValset32(UBLOX_CFG_TP_FREQ_LOCK_TP1, 1000); // Set the frequency to 1000Hz
-  myGNSS.addCfgValsetDouble(UBLOX_CFG_TP_DUTY_LOCK_TP1, 50.0); // Set the pulse ratio / duty to 50% to produce 50:50 mark:space
+  myGNSS.addCfgValset(UBLOX_CFG_TP_FREQ_LOCK_TP1, 1000); // Set the frequency to 1000Hz
+  myGNSS.addCfgValset(UBLOX_CFG_TP_DUTY_LOCK_TP1, 50.0); // Set the pulse ratio / duty to 50% to produce 50:50 mark:space
 
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_TP1_ENA, 1); // Make sure the enable flag is set to enable the time pulse. (Set to 0 to disable.)
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_USE_LOCKED_TP1, 1); // Tell the module to use FREQ while locking and FREQ_LOCK when locked to GNSS time
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_PULSE_DEF, 1); // Tell the module that we want to set the frequency (not the period). PERIOD = 0. FREQ = 1.
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_PULSE_LENGTH_DEF, 0); // Tell the module to set the pulse ratio / duty (not the pulse length). RATIO = 0. LENGTH = 1.
-  myGNSS.addCfgValset8(UBLOX_CFG_TP_POL_TP1, 1); // Tell the module that we want the rising edge at the top of second. Falling Edge = 0. Rising Edge = 1.
+  myGNSS.addCfgValset(UBLOX_CFG_TP_TP1_ENA, 1); // Make sure the enable flag is set to enable the time pulse. (Set to 0 to disable.)
+  myGNSS.addCfgValset(UBLOX_CFG_TP_USE_LOCKED_TP1, 1); // Tell the module to use FREQ while locking and FREQ_LOCK when locked to GNSS time
+  myGNSS.addCfgValset(UBLOX_CFG_TP_PULSE_DEF, 1); // Tell the module that we want to set the frequency (not the period). PERIOD = 0. FREQ = 1.
+  myGNSS.addCfgValset(UBLOX_CFG_TP_PULSE_LENGTH_DEF, 0); // Tell the module to set the pulse ratio / duty (not the pulse length). RATIO = 0. LENGTH = 1.
+  myGNSS.addCfgValset(UBLOX_CFG_TP_POL_TP1, 1); // Tell the module that we want the rising edge at the top of second. Falling Edge = 0. Rising Edge = 1.
 
   // Now set the time pulse parameters
   if (myGNSS.sendCfgValset() == false)

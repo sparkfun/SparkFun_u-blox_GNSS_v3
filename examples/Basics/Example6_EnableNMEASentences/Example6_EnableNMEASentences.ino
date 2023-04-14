@@ -51,13 +51,13 @@ void setup()
 
   //Disable or enable various NMEA sentences over the UART1 interface
   myGNSS.newCfgValset(VAL_LAYER_RAM); // Use cfgValset to disable / enable individual NMEA messages. Change the configuration in the RAM layer only (don't save to BBR)
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_GLL_UART1, 0); //Several of these are on by default so let's disable them
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_GSA_UART1, 0);
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_GSV_UART1, 0);
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_RMC_UART1, 0);
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_ZDA_UART1, 0);
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_VTG_UART1, 1); //Only leaving GGA & VTG enabled at current navigation rate
-  myGNSS.addCfgValset8(UBLOX_CFG_MSGOUT_NMEA_ID_GGA_UART1, 1);
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_GLL_UART1, 0); //Several of these are on by default so let's disable them
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_GSA_UART1, 0);
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_GSV_UART1, 0);
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_RMC_UART1, 0);
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_ZDA_UART1, 0);
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_VTG_UART1, 1); //Only leaving GGA & VTG enabled at current navigation rate
+  myGNSS.addCfgValset(UBLOX_CFG_MSGOUT_NMEA_ID_GGA_UART1, 1);
   if (myGNSS.sendCfgValset()) // Send the configuration VALSET
     Serial.println(F("NMEA messages were configured successfully"));
   else
