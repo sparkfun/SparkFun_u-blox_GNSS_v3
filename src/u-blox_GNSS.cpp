@@ -1157,6 +1157,12 @@ bool DevUBLOXGNSS::checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClass,
         //Something has gone very wrong. Sensor did not respond - or a bus error happened...
         if (_resetCurrentSentenceOnBusError)
           currentSentence = SFE_UBLOX_SENTENCE_TYPE_NONE; //Reset the sentence to being looking for a new start char
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+        if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+        {
+          _debugSerial.println(F("checkUbloxI2C: bus error? bytesReturned != bytesToRead"));
+        }
+#endif
         return (false);
       }
 
