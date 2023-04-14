@@ -217,6 +217,29 @@ void setup()
   }
   Serial.println(F("u-blox GNSS module connected"));
 
+  //Check the ZED firmware version - SPARTN is only supported on ZED-F9P from HPG 1.30 and ZED-F9R from HPS 1.21 onwards
+  if (myGNSS.getModuleInfo())
+  {
+    Serial.print(F("FWVER: "));
+    Serial.print(myGNSS.getFirmwareVersionHigh()); // Returns uint8_t
+    Serial.print(F("."));
+    Serial.println(myGNSS.getFirmwareVersionLow()); // Returns uint8_t
+    
+    Serial.print(F("Firmware: "));
+    Serial.println(myGNSS.getFirmwareType()); // Returns HPG, SPG etc. as (const char *)
+
+    if (strcmp(myGNSS.getFirmwareType(), "HPG") == 0)
+      if ((myGNSS.getFirmwareVersionHigh() == 1) && (myGNSS.getFirmwareVersionLow() < 30))
+        Serial.println("Your module is running old firmware which may not support SPARTN. Please upgrade.");
+        
+    if (strcmp(myGNSS.getFirmwareType(), "HPS") == 0)
+      if ((myGNSS.getFirmwareVersionHigh() == 1) && (myGNSS.getFirmwareVersionLow() < 21))
+        Serial.println("Your module is running old firmware which may not support SPARTN. Please upgrade.");
+  }
+  else
+    Serial.println(F("Error: could not read module info!"));
+
+  //Now configure the module
   uint8_t ok = myGNSS.setI2COutput(COM_TYPE_UBX); //Turn off NMEA noise
   if (ok) ok = myGNSS.setI2CInput(COM_TYPE_UBX | COM_TYPE_NMEA | COM_TYPE_SPARTN); //Be sure SPARTN input is enabled
   if (ok) ok = myGNSS.setUART2Input(COM_TYPE_UBX | COM_TYPE_NMEA | COM_TYPE_SPARTN); //Be sure SPARTN input is enabled
