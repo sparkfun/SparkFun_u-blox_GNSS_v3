@@ -1530,6 +1530,10 @@ protected:
   size_t _autoSendAtSpaceRemaining = 0;
 
 public:
+
+  //Flag to indicate if currentSentence should be reset on a (I2C) bus error
+  bool _resetCurrentSentenceOnBusError = true;
+
   typedef union
   {
     uint64_t unsigned64;

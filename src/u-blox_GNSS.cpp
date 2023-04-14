@@ -1153,7 +1153,12 @@ bool DevUBLOXGNSS::checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClass,
         }
       }
       else
-        return (false); // Sensor did not respond
+      {
+        //Something has gone very wrong. Sensor did not respond - or a bus error happened...
+        if (_resetCurrentSentenceOnBusError)
+          currentSentence = SFE_UBLOX_SENTENCE_TYPE_NONE; //Reset the sentence to being looking for a new start char
+        return (false);
+      }
 
       bytesAvailable -= bytesToRead;
     }
