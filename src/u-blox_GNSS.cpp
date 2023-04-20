@@ -113,6 +113,13 @@ void DevUBLOXGNSS::end(void)
     fileBufferMaxAvail = 0;
   }
 
+  if (rtcmBuffer != nullptr) // Check if RAM has been allocated for the RTCM buffer
+  {
+    delete[] rtcmBuffer; // Created with new[]
+    rtcmBuffer = nullptr;
+    rtcmBufferSize = 0; // Reset file buffer size. User will have to call setFileBufferSize again
+  }
+
   if (cfgValgetValueSizes != nullptr)
   {
     delete[] cfgValgetValueSizes;
@@ -719,7 +726,8 @@ uint16_t DevUBLOXGNSS::available()
 // Not Applicable for SPI and Serial
 bool DevUBLOXGNSS::ping()
 {
-  if (!lock()) return false;
+  if (!lock())
+    return false;
   bool ok = _sfeBus->ping();
   unlock();
   return ok;
@@ -772,6 +780,10 @@ bool DevUBLOXGNSS::init(uint16_t maxWait, bool assumeSuccess)
 
   // New in v2.0: allocate memory for the file buffer - if required. (The user should have called setFileBufferSize already)
   createFileBuffer();
+
+  // Create storage for RTCM data - only useful on systems where the GNSS is interfaced via SPI and you may want to write
+  // data to another SPI device (e.g. Ethernet) in a safe way, avoiding processRTCM (which would be called _during_ checkUblox).
+  createRTCMBuffer();
 
   if (_commType == COMM_TYPE_SPI)
   {
@@ -1072,7 +1084,8 @@ bool DevUBLOXGNSS::checkUblox(uint8_t requestedClass, uint8_t requestedID)
 // PRIVATE: Called regularly to check for available bytes on the user' specified port
 bool DevUBLOXGNSS::checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
-  if (!lock()) return false;
+  if (!lock())
+    return false;
 
   bool ok = false;
   if (_commType == COMM_TYPE_I2C)
@@ -1153,7 +1166,18 @@ bool DevUBLOXGNSS::checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClass,
         }
       }
       else
-        return (false); // Sensor did not respond
+      {
+        // Something has gone very wrong. Sensor did not respond - or a bus error happened...
+        if (_resetCurrentSentenceOnBusError)
+          currentSentence = SFE_UBLOX_SENTENCE_TYPE_NONE; // Reset the sentence to being looking for a new start char
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+        if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+        {
+          _debugSerial.println(F("checkUbloxI2C: bus error? bytesReturned != bytesToRead"));
+        }
+#endif
+        return (false);
+      }
 
       bytesAvailable -= bytesToRead;
     }
@@ -1725,8 +1749,8 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
       // Now that we have received two payload bytes, we can check for a matching ACK/NACK
       if ((activePacketBuffer == SFE_UBLOX_PACKET_PACKETBUF) // If we are not already processing a data packet
           && (packetBuf.cls == UBX_CLASS_ACK)                // and if this is an ACK/NACK
-          && (packetBuf.payload[0] == storedClass)        // and if the class matches
-          && (packetBuf.payload[1] == storedID))          // and if the ID matches
+          && (packetBuf.payload[0] == storedClass)           // and if the class matches
+          && (packetBuf.payload[1] == storedID))             // and if the ID matches
       {
         if (packetBuf.len == 2) // Check if .len is 2
         {
@@ -1860,14 +1884,14 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
 #endif
       if (logThisNMEA())
       {
-        //This check is probably redundant.
-        //currentSentence is set to SFE_UBLOX_SENTENCE_TYPE_NONE below if nmeaByteCounter == maxNMEAByteCount
+        // This check is probably redundant.
+        // currentSentence is set to SFE_UBLOX_SENTENCE_TYPE_NONE below if nmeaByteCounter == maxNMEAByteCount
         if (_storageNMEA->length < maxNMEAByteCount) // Check we have room for it
         {
           _storageNMEA->data[_storageNMEA->length] = incoming; // Store the byte
           _storageNMEA->length = _storageNMEA->length + 1;
         }
-      }        
+      }
       if (processThisNMEA())
       {
         processNMEA(incoming); // Pass incoming to processNMEA
@@ -1973,7 +1997,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
         while ((charsChecked < maxNMEAByteCount) && (charsChecked < (_storageNMEA->length - 4)) && (thisChar != '*'))
         {
           thisChar = _storageNMEA->data[charsChecked]; // Get a char from the storage
-          if (thisChar != '*')                        // Ex-or the char into the checksum - but not if it is the '*'
+          if (thisChar != '*')                         // Ex-or the char into the checksum - but not if it is the '*'
             nmeaChecksum ^= thisChar;
           charsChecked++; // Increment the counter
         }
@@ -1989,8 +2013,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
           {
             storeFileBytes(_storageNMEA->data, _storageNMEA->length); // Add NMEA to the file buffer
           }
-          else
-          if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+          else if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
           {
             _debugSerial.println(F("process: _storageNMEA checksum fail!"));
           }
@@ -2029,7 +2052,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
       // Add incoming header and data bytes to the checksum
       if ((rtcmFrameCounter < 3) || ((rtcmFrameCounter >= 3) && (rtcmFrameCounter < (_storageRTCM->messageLength + 3))))
         crc24q(incoming, &_storageRTCM->rollingChecksum);
-      
+
       // Check if all bytes have been received
       if ((rtcmFrameCounter >= 3) && (rtcmFrameCounter == _storageRTCM->messageLength + 5))
       {
@@ -2038,7 +2061,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
         expectedChecksum |= _storageRTCM->dataMessage[_storageRTCM->messageLength + 4];
         expectedChecksum <<= 8;
         expectedChecksum |= _storageRTCM->dataMessage[_storageRTCM->messageLength + 5];
-        
+
         if (expectedChecksum == _storageRTCM->rollingChecksum) // Does the checksum match?
         {
           // Extract the message type and check if it should be logged
@@ -2064,38 +2087,69 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
           }
 #endif
 
-          if (!logThisRTCM) logThisRTCM = (messageType == 1001) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1001 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1002) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1002 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1003) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1003 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1004) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1004 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1005) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1005 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1006) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1006 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1007) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1007 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1009) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1009 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1010) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1010 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1011) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1011 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1012) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1012 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1033) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1033 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1074) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1074 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1075) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1075 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1077) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1077 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1084) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1084 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1085) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1085 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1087) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1087 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1094) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1094 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1095) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1095 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1097) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1097 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1124) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1124 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1125) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1125 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1127) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1127 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 1230) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1230 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 4072) && (messageSubType == 0) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE4072_0 == 1));
-          if (!logThisRTCM) logThisRTCM = (messageType == 4072) && (messageSubType == 1) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE4072_1 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1001) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1001 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1002) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1002 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1003) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1003 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1004) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1004 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1005) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1005 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1006) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1006 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1007) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1007 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1009) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1009 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1010) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1010 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1011) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1011 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1012) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1012 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1033) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1033 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1074) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1074 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1075) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1075 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1077) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1077 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1084) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1084 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1085) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1085 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1087) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1087 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1094) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1094 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1095) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1095 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1097) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1097 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1124) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1124 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1125) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1125 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1127) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1127 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 1230) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE1230 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 4072) && (messageSubType == 0) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE4072_0 == 1));
+          if (!logThisRTCM)
+            logThisRTCM = (messageType == 4072) && (messageSubType == 1) && ((_logRTCM.bits.all == 1) || (_logRTCM.bits.UBX_RTCM_TYPE4072_1 == 1));
 
           if (logThisRTCM) // Should we log this message?
           {
             storeFileBytes(_storageRTCM->dataMessage, _storageRTCM->messageLength + 6);
           }
+
+          // If there is space in the RTCM buffer, store the data there too
+          if (rtcmBufferSpaceAvailable() >= _storageRTCM->messageLength + 6)
+            storeRTCMBytes(_storageRTCM->dataMessage, _storageRTCM->messageLength + 6);
         }
         else
         {
@@ -2171,7 +2225,7 @@ bool DevUBLOXGNSS::logThisNMEA()
   if ((nmeaAddressField[3] == 'Z') && (nmeaAddressField[4] == 'D') && (nmeaAddressField[5] == 'A') && (_logNMEA.bits.UBX_NMEA_ZDA == 1))
     logMe = true;
 
-  if (logMe) // Message should be logged. 
+  if (logMe)                   // Message should be logged.
     logMe = initStorageNMEA(); // Check we have non-Auto storage for it
   return (logMe);
 }
@@ -4691,7 +4745,8 @@ void DevUBLOXGNSS::addToChecksum(uint8_t incoming)
 // Given a packet and payload, send everything including CRC bytes via I2C port
 sfe_ublox_status_e DevUBLOXGNSS::sendCommand(ubxPacket *outgoingUBX, uint16_t maxWait, bool expectACKonly)
 {
-  if (!lock()) return SFE_UBLOX_STATUS_FAIL;
+  if (!lock())
+    return SFE_UBLOX_STATUS_FAIL;
 
   sfe_ublox_status_e retVal = SFE_UBLOX_STATUS_SUCCESS;
 
@@ -4728,9 +4783,9 @@ sfe_ublox_status_e DevUBLOXGNSS::sendCommand(ubxPacket *outgoingUBX, uint16_t ma
   {
     sendSpiCommand(outgoingUBX);
   }
-  
+
   unlock();
-  
+
   if (maxWait > 0)
   {
     // Depending on what we just sent, either we need to look for an ACK or not
@@ -5894,7 +5949,8 @@ bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool cal
   if (numDataBytes == 0)
     return false; // Indicate to the user that there was no data to push
 
-  if (!lock()) return false;
+  if (!lock())
+    return false;
 
   bool ok = false;
   if (_commType == COMM_TYPE_SERIAL)
@@ -5917,7 +5973,9 @@ bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool cal
       _pushThisSingleByte = *dataBytes;
       _pushSingleByte = true;
       ok = false; // Indicate to the user that their data has not been pushed yet
-    } else {
+    }
+    else
+    {
 
       // I2C: split the data up into packets of i2cTransactionSize
       size_t bytesLeftToWrite = numDataBytes;
@@ -6005,7 +6063,7 @@ bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool cal
   }
 
   unlock();
-  
+
   return ok;
 }
 
@@ -6138,7 +6196,7 @@ size_t DevUBLOXGNSS::pushAssistNowDataInternal(size_t offset, bool skipTime, con
           bool keepGoing = true;
           while (keepGoing && (millis() < (startTime + maxWait))) // Keep checking for the ACK until we time out
           {
-            checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID. We could be pushing this from another thread...
+            checkUbloxInternal(&packetCfg, 0, 0);               // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID. We could be pushing this from another thread...
             if (packetUBXMGAACK->head != packetUBXMGAACK->tail) // Does the MGA ACK ringbuffer contain any ACK's?
             {
               bool dataAckd = true;                                                                                        // Check if we've received the correct ACK
@@ -7045,6 +7103,164 @@ void DevUBLOXGNSS::writeToFileBuffer(uint8_t *theBytes, uint16_t numBytes)
     fileBufferMaxAvail = bytesInBuffer;
 }
 
+// Support for RTCM buffering
+
+// Set the RTCM buffer size. This must be called _before_ .begin
+void DevUBLOXGNSS::setRTCMBufferSize(uint16_t bufferSize)
+{
+  rtcmBufferSize = bufferSize;
+}
+
+// Return the RTCM buffer size
+uint16_t DevUBLOXGNSS::getRTCMBufferSize(void)
+{
+  return (rtcmBufferSize);
+}
+
+// Extract numBytes of data from the RTCM buffer. Copy it to destination.
+// It is the user's responsibility to ensure destination is large enough.
+// Returns the number of bytes extracted - which may be less than numBytes.
+uint16_t DevUBLOXGNSS::extractRTCMBufferData(uint8_t *destination, uint16_t numBytes)
+{
+  // Check how many bytes are available in the buffer
+  uint16_t bytesAvailable = rtcmBufferSpaceUsed();
+  if (numBytes > bytesAvailable) // Limit numBytes if required
+    numBytes = bytesAvailable;
+
+  // Start copying at rtcmBufferTail. Wrap-around if required.
+  uint16_t bytesBeforeWrapAround = rtcmBufferSize - rtcmBufferTail; // How much space is available 'above' Tail?
+  if (bytesBeforeWrapAround > numBytes)                             // Will we need to wrap-around?
+  {
+    bytesBeforeWrapAround = numBytes; // We need to wrap-around
+  }
+  memcpy(destination, &rtcmBuffer[rtcmBufferTail], bytesBeforeWrapAround); // Copy the data out of the buffer
+
+  // Is there any data leftover which we need to copy from the 'bottom' of the buffer?
+  uint16_t bytesLeftToCopy = numBytes - bytesBeforeWrapAround; // Calculate if there are any bytes left to copy
+  if (bytesLeftToCopy > 0)                                     // If there are bytes left to copy
+  {
+    memcpy(&destination[bytesBeforeWrapAround], &rtcmBuffer[0], bytesLeftToCopy); // Copy the remaining data out of the buffer
+    rtcmBufferTail = bytesLeftToCopy;                                             // Update Tail. The next byte to be read will be read from here.
+  }
+  else
+  {
+    rtcmBufferTail += numBytes; // Only update Tail. The next byte to be read will be read from here.
+  }
+
+  return (numBytes); // Return the number of bytes extracted
+}
+
+// Returns the number of bytes available in RTCM buffer which are waiting to be read
+uint16_t DevUBLOXGNSS::rtcmBufferAvailable(void)
+{
+  return (rtcmBufferSpaceUsed());
+}
+
+// Clear the RTCM buffer - discard all contents
+void DevUBLOXGNSS::clearRTCMBuffer(void)
+{
+  if (rtcmBufferSize == 0) // Bail if the user has not called setRTCMBufferSize (probably redundant)
+    return;
+  rtcmBufferTail = rtcmBufferHead;
+}
+
+// PRIVATE: Create the RTCM buffer. Called by .begin
+bool DevUBLOXGNSS::createRTCMBuffer(void)
+{
+  if (rtcmBufferSize == 0) // Bail if the user has not called setRTCMBufferSize
+  {
+    return (false);
+  }
+
+  if (rtcmBuffer != nullptr) // Bail if RAM has already been allocated for the buffer
+  {                          // This will happen if you call .begin more than once - without calling .end first
+    return (false);
+  }
+
+  rtcmBuffer = new uint8_t[rtcmBufferSize]; // Allocate RAM for the buffer
+
+  if (rtcmBuffer == nullptr) // Check if the new (alloc) was successful
+  {
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+    {
+      _debugSerial.println(F("createRTCMBuffer: RAM alloc failed!"));
+    }
+    rtcmBufferSize = 0; // Set buffer size so user can check with getRTCMBufferSize (rtcmBuffer is protected)
+    return (false);
+  }
+
+  rtcmBufferHead = 0; // Initialize head and tail
+  rtcmBufferTail = 0;
+
+  return (true);
+}
+
+// PRIVATE: Check how much space is available in the buffer
+uint16_t DevUBLOXGNSS::rtcmBufferSpaceAvailable(void)
+{
+  return (rtcmBufferSize - rtcmBufferSpaceUsed());
+}
+
+// PRIVATE: Check how much space is used in the buffer
+uint16_t DevUBLOXGNSS::rtcmBufferSpaceUsed(void)
+{
+  if (rtcmBufferHead >= rtcmBufferTail) // Check if wrap-around has occurred
+  {
+    // Wrap-around has not occurred so do a simple subtraction
+    return (rtcmBufferHead - rtcmBufferTail);
+  }
+  else
+  {
+    // Wrap-around has occurred so do a simple subtraction but add in the rtcmBufferSize
+    return ((uint16_t)(((uint32_t)rtcmBufferHead + (uint32_t)rtcmBufferSize) - (uint32_t)rtcmBufferTail));
+  }
+}
+
+// PRIVATE: Add theBytes to the RTCM buffer
+bool DevUBLOXGNSS::storeRTCMBytes(uint8_t *theBytes, uint16_t numBytes)
+{
+  // First, check that the file buffer has been created
+  if ((rtcmBuffer == nullptr) || (rtcmBufferSize == 0))
+  {
+    return (false);
+  }
+
+  // Now, check if there is enough space in the buffer for all of the data
+  if (numBytes > rtcmBufferSpaceAvailable())
+  {
+    return (false);
+  }
+
+  // There is room for all the data in the buffer so copy the data into the buffer
+  writeToRTCMBuffer(theBytes, numBytes);
+
+  return (true);
+}
+
+// PRIVATE: Write theBytes to the RTCM buffer
+void DevUBLOXGNSS::writeToRTCMBuffer(uint8_t *theBytes, uint16_t numBytes)
+{
+  // Start writing at fileBufferHead. Wrap-around if required.
+  uint16_t bytesBeforeWrapAround = rtcmBufferSize - rtcmBufferHead; // How much space is available 'above' Head?
+  if (bytesBeforeWrapAround > numBytes)                             // Is there enough room for all the data?
+  {
+    bytesBeforeWrapAround = numBytes; // There is enough room for all the data
+  }
+  memcpy(&rtcmBuffer[rtcmBufferHead], theBytes, bytesBeforeWrapAround); // Copy the data into the buffer
+
+  // Is there any data leftover which we need to copy to the 'bottom' of the buffer?
+  uint16_t bytesLeftToCopy = numBytes - bytesBeforeWrapAround; // Calculate if there are any bytes left to copy
+  if (bytesLeftToCopy > 0)                                     // If there are bytes left to copy
+  {
+    memcpy(&rtcmBuffer[0], &theBytes[bytesBeforeWrapAround], bytesLeftToCopy); // Copy the remaining data into the buffer
+    rtcmBufferHead = bytesLeftToCopy;                                          // Update Head. The next byte written will be written here.
+  }
+  else
+  {
+    rtcmBufferHead += numBytes; // Only update Head. The next byte written will be written here.
+  }
+}
+
 //=-=-=-=-=-=-=-= Specific commands =-=-=-=-=-=-=-==-=-=-=-=-=-=-=
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -7407,7 +7623,7 @@ uint8_t DevUBLOXGNSS::getFirmwareVersionLow(uint16_t maxWait)
 // Get the firmware type
 const char *DevUBLOXGNSS::getFirmwareType(uint16_t maxWait)
 {
-  static const char unknownFirmware[4] = { 'T', 'B', 'D', '\0' };
+  static const char unknownFirmware[4] = {'T', 'B', 'D', '\0'};
   if (!prepareModuleInfo(maxWait))
     return unknownFirmware;
   return ((const char *)moduleSWVersion->firmwareType);
@@ -7416,7 +7632,7 @@ const char *DevUBLOXGNSS::getFirmwareType(uint16_t maxWait)
 // Get the module name
 const char *DevUBLOXGNSS::getModuleName(uint16_t maxWait)
 {
-  static const char unknownModule[4] = { 'T', 'B', 'D', '\0' };
+  static const char unknownModule[4] = {'T', 'B', 'D', '\0'};
   if (!prepareModuleInfo(maxWait))
     return unknownModule;
   return ((const char *)moduleSWVersion->moduleName);
@@ -7511,7 +7727,7 @@ bool DevUBLOXGNSS::getModuleInfo(uint16_t maxWait)
       while ((i < moduleNameMaxLen) && (*ptr != '\0') && (*ptr != ' ')) // Copy the module name
         moduleSWVersion->moduleName[i++] = *ptr++;
       moduleSWVersion->moduleName[i] = '\0'; // NULL-terminate
-      fwProtMod |= 0x04; // Record that we got the MOD
+      fwProtMod |= 0x04;                     // Record that we got the MOD
     }
   }
 
@@ -7859,7 +8075,7 @@ bool DevUBLOXGNSS::enableOdometer(bool enable, uint8_t layer, uint16_t maxWait)
 {
   return setVal8(UBLOX_CFG_ODO_USE_ODO, (uint8_t)enable, layer, maxWait);
 }
-  
+
 // Read the odometer configuration
 bool DevUBLOXGNSS::getOdometerConfig(uint8_t *flags, uint8_t *odoCfg, uint8_t *cogMaxSpeed, uint8_t *cogMaxPosAcc, uint8_t *velLpGain, uint8_t *cogLpGain, uint8_t layer, uint16_t maxWait)
 {
@@ -13222,7 +13438,7 @@ bool DevUBLOXGNSS::initPacketUBXTIMTP()
 void DevUBLOXGNSS::flushTIMTP()
 {
   if (packetUBXTIMTP == nullptr)
-    return;                                             // Bail if RAM has not been allocated (otherwise we could be writing anywhere!)
+    return;                                            // Bail if RAM has not been allocated (otherwise we could be writing anywhere!)
   packetUBXTIMTP->moduleQueried.moduleQueried.all = 0; // Mark all datums as stale (read before)
 }
 
@@ -16830,16 +17046,16 @@ uint32_t DevUBLOXGNSS::getTIMTPAsEpoch(uint32_t &microsecond, uint16_t maxWait)
   packetUBXTIMTP->moduleQueried.moduleQueried.bits.all = false;
 
   uint32_t tow = packetUBXTIMTP->data.week - SFE_UBLOX_JAN_1ST_2020_WEEK; // Calculate the number of weeks since Jan 1st 2020
-  tow *= SFE_UBLOX_SECS_PER_WEEK; // Convert weeks to seconds
-  tow += SFE_UBLOX_EPOCH_WEEK_2086; // Add the TOW for Jan 1st 2020
-  tow += packetUBXTIMTP->data.towMS / 1000; // Add the TOW for the next TP
+  tow *= SFE_UBLOX_SECS_PER_WEEK;                                         // Convert weeks to seconds
+  tow += SFE_UBLOX_EPOCH_WEEK_2086;                                       // Add the TOW for Jan 1st 2020
+  tow += packetUBXTIMTP->data.towMS / 1000;                               // Add the TOW for the next TP
 
   uint32_t us = packetUBXTIMTP->data.towMS % 1000; // Extract the milliseconds
-  us *= 1000; // Convert to microseconds
+  us *= 1000;                                      // Convert to microseconds
 
   double subMS = packetUBXTIMTP->data.towSubMS; // Get towSubMS (ms * 2^-32)
-  subMS *= pow(2.0, -32.0); // Convert to milliseconds
-  subMS *= 1000; // Convert to microseconds
+  subMS *= pow(2.0, -32.0);                     // Convert to milliseconds
+  subMS *= 1000;                                // Convert to microseconds
 
   us += (uint32_t)subMS; // Add subMS
 

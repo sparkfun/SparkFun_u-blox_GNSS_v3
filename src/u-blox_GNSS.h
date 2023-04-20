@@ -176,10 +176,19 @@ public:
   void setSpiTransactionSize(uint8_t transactionSize);
   uint8_t getSpiTransactionSize(void);
 
-  // Control the size of the spi buffer. If the buffer isn't big enough, we'll start to lose bytes
-  // That we receive if the buffer is full!
+  // Control the size of the SPI transfer buffer. If the buffer isn't big enough, we'll start to lose bytes
   void setSpiBufferSize(size_t bufferSize);
   size_t getSpiBufferSize(void);
+
+  // A dedicated buffer for RTCM data - separate to the logging buffer
+  // RTCM data can be stored here and then extracted - avoiding processRTCM
+  // This is useful on SPI systems, avoiding bus collisions between checkUblox/processRTCM
+  // and pushing the RTCM data to (e.g.) Ethernet
+  void setRTCMBufferSize(uint16_t bufferSize);                             // Set the size of the RTCM buffer. This must be called _before_ .begin.
+  uint16_t getRTCMBufferSize(void);                                        // Return the size of the RTCM buffer
+  uint16_t extractRTCMBufferData(uint8_t *destination, uint16_t numBytes); // Extract numBytes of data from the RTCM buffer. Copy it to destination. It is the user's responsibility to ensure destination is large enough.
+  uint16_t rtcmBufferAvailable(void);                                      // Returns the number of bytes available in the RTCM buffer which are waiting to be read
+  void clearRTCMBuffer(void);                                              // Empty the RTCM buffer - discard all contents
 
   // Control the size of maxNMEAByteCount
   void setMaxNMEAByteCount(int8_t newMax);
@@ -1513,6 +1522,17 @@ protected:
   bool storeFileBytes(uint8_t *theBytes, uint16_t numBytes);    // Add theBytes to the file buffer
   void writeToFileBuffer(uint8_t *theBytes, uint16_t numBytes); // Write theBytes to the file buffer
 
+  // Support for RTCM buffering
+  uint8_t *rtcmBuffer = nullptr;                                // Pointer to the RTCM buffer. RAM is allocated for this if required in .begin
+  uint16_t rtcmBufferSize = 0;                                  // The size of the RTCM buffer. This can be changed by calling setRTCMBufferSize _before_ .begin
+  uint16_t rtcmBufferHead = 0;                                  // The incoming byte is written into the buffer at this location
+  uint16_t rtcmBufferTail = 0;                                  // The next byte to be read from the buffer will be read from this location
+  bool createRTCMBuffer(void);                                  // Create the RTCM buffer. Called by .begin
+  uint16_t rtcmBufferSpaceAvailable(void);                      // Check how much space is available in the buffer
+  uint16_t rtcmBufferSpaceUsed(void);                           // Check how much space is used in the buffer
+  bool storeRTCMBytes(uint8_t *theBytes, uint16_t numBytes);    // Add theBytes to the buffer
+  void writeToRTCMBuffer(uint8_t *theBytes, uint16_t numBytes); // Write theBytes to the buffer
+
   // .begin will return true if the assumeSuccess parameter is true and if _signsOfLife is true
   // _signsOfLife is set to true when: a valid UBX message is seen; a valig NMEA header is seen.
   bool _signsOfLife;
@@ -1530,6 +1550,9 @@ protected:
   size_t _autoSendAtSpaceRemaining = 0;
 
 public:
+  // Flag to indicate if currentSentence should be reset on a (I2C) bus error
+  bool _resetCurrentSentenceOnBusError = true;
+
   typedef union
   {
     uint64_t unsigned64;
