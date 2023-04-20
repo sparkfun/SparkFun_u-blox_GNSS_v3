@@ -149,6 +149,12 @@ getMaxFileBufferAvail	KEYWORD2
 clearFileBuffer	KEYWORD2
 clearMaxFileBufferAvail	KEYWORD2
 
+setRTCMBufferSize	KEYWORD2
+getRTCMBufferSize	KEYWORD2
+extractRTCMBufferData	KEYWORD2
+rtcmBufferAvailable	KEYWORD2
+clearRTCMBuffer	KEYWORD2
+
 setI2COutput	KEYWORD2
 setUART1Output	KEYWORD2
 setUART2Output	KEYWORD2
