@@ -461,3 +461,13 @@ enum sfe_ublox_dgnss_mode_e
   SFE_UBLOX_DGNSS_MODE_FLOAT = 2, // No attempts are made to fix ambiguities
   SFE_UBLOX_DGNSS_MODE_FIXED      // Ambiguities are fixed whenever possible
 };
+
+// MON HW Antenna Status
+enum sfe_ublox_antenna_status_e
+{
+  SFE_UBLOX_ANTENNA_STATUS_INIT,
+  SFE_UBLOX_ANTENNA_STATUS_DONTKNOW,
+  SFE_UBLOX_ANTENNA_STATUS_OK,
+  SFE_UBLOX_ANTENNA_STATUS_SHORT,
+  SFE_UBLOX_ANTENNA_STATUS_OPEN
+};

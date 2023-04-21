@@ -1784,8 +1784,50 @@ typedef struct
   uint8_t reserved2[2]; // Reserved
   uint32_t pinIrq;      // Mask of pins value using the PIO Irq
   uint32_t pullH;       // Mask of pins value using the PIO pull high resistor
-  uint8_t pullL;        // Mask of pins value using the PIO pull low resistor
+  uint32_t pullL;        // Mask of pins value using the PIO pull low resistor
 } UBX_MON_HW_data_t;
+
+typedef struct
+{
+  union
+  {
+    uint32_t all;
+    struct
+    {
+      uint32_t all : 1;
+
+      uint32_t pinSel : 1;
+      uint32_t pinBank : 1;
+      uint32_t pinDir : 1;
+      uint32_t pinVal : 1;
+      uint32_t noisePerMS : 1;
+      uint32_t agcCnt : 1;
+      uint32_t aStatus : 1;
+      uint32_t aPower : 1;
+
+      uint32_t rtcCalib : 1;
+      uint32_t safeBoot : 1;
+      uint32_t jammingState : 1;
+      uint32_t xtalAbsent : 1;
+
+      uint32_t usedMask : 1;
+      uint32_t VP : 1;
+      uint32_t jamInd : 1;
+      uint32_t pinIrq : 1;
+      uint32_t pullH : 1;
+      uint32_t pinL : 1;
+    } bits;
+  } moduleQueried;
+} UBX_MON_HW_moduleQueried_t;
+
+typedef struct
+{
+  ubxAutomaticFlags automaticFlags;
+  UBX_MON_HW_data_t data;
+  UBX_MON_HW_moduleQueried_t moduleQueried;
+  void (*callbackPointerPtr)(UBX_MON_HW_data_t *);
+  UBX_MON_HW_data_t *callbackData;
+} UBX_MON_HW_t;
 
 // UBX-MON-HW2 (0x0A 0x0B): Extended hardware status
 const uint16_t UBX_MON_HW2_LEN = 28;
