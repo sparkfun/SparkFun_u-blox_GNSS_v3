@@ -416,6 +416,16 @@ void DevUBLOXGNSS::end(void)
     packetUBXTIMTP = nullptr;
   }
 
+  if (packetUBXMONHW != nullptr)
+  {
+    if (packetUBXMONHW->callbackData != nullptr)
+    {
+      delete packetUBXMONHW->callbackData;
+    }
+    delete packetUBXMONHW;
+    packetUBXMONHW = nullptr;
+  }
+
 #ifndef SFE_UBLOX_DISABLE_ESF
   if (packetUBXESFALG != nullptr)
   {
@@ -1436,6 +1446,14 @@ bool DevUBLOXGNSS::autoLookup(uint8_t Class, uint8_t ID, uint16_t *maxSize)
       if (maxSize != nullptr)
         *maxSize = UBX_TIM_TP_LEN;
       return (packetUBXTIMTP != nullptr);
+    }
+    break;
+  case UBX_CLASS_MON:
+    if (ID == UBX_MON_HW)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_MON_HW_LEN;
+      return (packetUBXMONHW != nullptr);
     }
     break;
   case UBX_CLASS_ESF:
@@ -4259,6 +4277,48 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
       }
     }
     break;
+  case UBX_CLASS_MON:
+    if (msg->id == UBX_MON_HW && msg->len == UBX_MON_HW_LEN)
+    {
+      // Parse various byte fields into storage - but only if we have memory allocated for it
+      if (packetUBXMONHW != nullptr)
+      {
+        packetUBXMONHW->data.pinSel = extractLong(msg, 0);
+        packetUBXMONHW->data.pinBank = extractLong(msg, 4);
+        packetUBXMONHW->data.pinDir = extractLong(msg, 8);
+        packetUBXMONHW->data.pinVal = extractLong(msg, 12);
+        packetUBXMONHW->data.noisePerMS = extractInt(msg, 16);
+        packetUBXMONHW->data.agcCnt = extractInt(msg, 18);
+        packetUBXMONHW->data.aStatus = extractByte(msg, 20);
+        packetUBXMONHW->data.aPower = extractByte(msg, 21);
+        packetUBXMONHW->data.flags.all = extractByte(msg, 22);
+        packetUBXMONHW->data.usedMask = extractLong(msg, 24);
+        for (uint8_t i = 0; i < 17; i++)
+          packetUBXMONHW->data.VP[i] = extractByte(msg, 28 + i);
+        packetUBXMONHW->data.jamInd = extractByte(msg, 45);
+        packetUBXMONHW->data.pinIrq = extractLong(msg, 48);
+        packetUBXMONHW->data.pullH = extractLong(msg, 52);
+        packetUBXMONHW->data.pullL = extractLong(msg, 56);
+
+        // Mark all datums as fresh (not read before)
+        packetUBXMONHW->moduleQueried.moduleQueried.all = 0xFFFFFFFF;
+
+        // Check if we need to copy the data for the callback
+        if ((packetUBXMONHW->callbackData != nullptr)                                  // If RAM has been allocated for the copy of the data
+            && (packetUBXMONHW->automaticFlags.flags.bits.callbackCopyValid == false)) // AND the data is stale
+        {
+          memcpy(&packetUBXMONHW->callbackData->pinSel, &packetUBXMONHW->data.pinSel, sizeof(UBX_MON_HW_data_t));
+          packetUBXMONHW->automaticFlags.flags.bits.callbackCopyValid = true;
+        }
+
+        // Check if we need to copy the data into the file buffer
+        if (packetUBXMONHW->automaticFlags.flags.bits.addToFileBuffer)
+        {
+          addedToFileBuffer = storePacket(msg);
+        }
+      }
+    }
+    break;
 #ifndef SFE_UBLOX_DISABLE_ESF
   case UBX_CLASS_ESF:
     if (msg->id == UBX_ESF_ALG && msg->len == UBX_ESF_ALG_LEN)
@@ -5752,6 +5812,17 @@ void DevUBLOXGNSS::checkCallbacks(void)
           packetUBXTIMTP->callbackPointerPtr(packetUBXTIMTP->callbackData); // Call the callback
         }
         packetUBXTIMTP->automaticFlags.flags.bits.callbackCopyValid = false; // Mark the data as stale
+      }
+
+  if (packetUBXMONHW != nullptr)                                               // If RAM has been allocated for message storage
+    if (packetUBXMONHW->callbackData != nullptr)                               // If RAM has been allocated for the copy of the data
+      if (packetUBXMONHW->automaticFlags.flags.bits.callbackCopyValid == true) // If the copy of the data is valid
+      {
+        if (packetUBXMONHW->callbackPointerPtr != nullptr) // If the pointer to the callback has been defined
+        {
+          packetUBXMONHW->callbackPointerPtr(packetUBXMONHW->callbackData); // Call the callback
+        }
+        packetUBXMONHW->automaticFlags.flags.bits.callbackCopyValid = false; // Mark the data as stale
       }
 
 #ifndef SFE_UBLOX_DISABLE_ESF
@@ -8236,49 +8307,6 @@ bool DevUBLOXGNSS::getRFinformation(UBX_MON_RF_data_t *data, uint16_t maxWait)
     data->blocks[block].ofsQ = extractSignedChar(&packetCfg, 23 + (block * 24));
     data->blocks[block].magQ = extractByte(&packetCfg, 24 + (block * 24));
   }
-
-  return (true);
-}
-
-// Get the hardware status (including jamming) using UBX_MON_HW
-bool DevUBLOXGNSS::getHWstatus(UBX_MON_HW_data_t *data, uint16_t maxWait)
-{
-  if (data == nullptr) // Check if the user forgot to include the data pointer
-    return (false);    // Bail
-
-  packetCfg.cls = UBX_CLASS_MON;
-  packetCfg.id = UBX_MON_HW;
-  packetCfg.len = 0;
-  packetCfg.startingSpot = 0;
-
-  if (sendCommand(&packetCfg, maxWait) != SFE_UBLOX_STATUS_DATA_RECEIVED) // We are expecting data and an ACK
-    return (false);
-
-  // Check the length:
-  //   The length should be 60 bytes
-  //   MAX-M10S SPG 5.00 returns 56 bytes of reserved data
-  if (packetCfg.len != UBX_MON_HW_LEN)
-    return (false);
-
-  // Extract the data
-  data->pinSel = extractLong(&packetCfg, 0);
-  data->pinBank = extractLong(&packetCfg, 4);
-  data->pinDir = extractLong(&packetCfg, 8);
-  data->pinVal = extractLong(&packetCfg, 12);
-  data->noisePerMS = extractInt(&packetCfg, 16);
-  data->agcCnt = extractInt(&packetCfg, 18);
-  data->aStatus = extractByte(&packetCfg, 20);
-  data->aPower = extractByte(&packetCfg, 21);
-  data->flags.all = extractByte(&packetCfg, 22);
-  data->usedMask = extractLong(&packetCfg, 24);
-  for (uint8_t pin = 0; pin < 17; pin++)
-  {
-    data->VP[pin] = extractByte(&packetCfg, 28 + pin);
-  }
-  data->jamInd = extractByte(&packetCfg, 45);
-  data->pinIrq = extractLong(&packetCfg, 48);
-  data->pullH = extractLong(&packetCfg, 52);
-  data->pullL = extractLong(&packetCfg, 56);
 
   return (true);
 }
@@ -13450,6 +13478,172 @@ void DevUBLOXGNSS::logTIMTP(bool enabled)
   packetUBXTIMTP->automaticFlags.flags.bits.addToFileBuffer = (uint8_t)enabled;
 }
 
+// ***** MON HW automatic support
+
+bool DevUBLOXGNSS::getMONHW(uint16_t maxWait)
+{
+  if (packetUBXMONHW == nullptr)
+    initPacketUBXMONHW();        // Check that RAM has been allocated for the TP data
+  if (packetUBXMONHW == nullptr) // Bail if the RAM allocation failed
+    return (false);
+
+  if (packetUBXMONHW->automaticFlags.flags.bits.automatic && packetUBXMONHW->automaticFlags.flags.bits.implicitUpdate)
+  {
+    // The GPS is automatically reporting, we just check whether we got unread data
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
+    return packetUBXMONHW->moduleQueried.moduleQueried.bits.all;
+  }
+  else if (packetUBXMONHW->automaticFlags.flags.bits.automatic && !packetUBXMONHW->automaticFlags.flags.bits.implicitUpdate)
+  {
+    // Someone else has to call checkUblox for us...
+    return (false);
+  }
+  else
+  {
+    // The GPS is not automatically reporting navigation position so we have to poll explicitly
+    packetCfg.cls = UBX_CLASS_MON;
+    packetCfg.id = UBX_MON_HW;
+    packetCfg.len = 0;
+    packetCfg.startingSpot = 0;
+
+    // The data is parsed as part of processing the response
+    sfe_ublox_status_e retVal = sendCommand(&packetCfg, maxWait);
+
+    if (retVal == SFE_UBLOX_STATUS_DATA_RECEIVED)
+      return (true);
+
+    if (retVal == SFE_UBLOX_STATUS_DATA_OVERWRITTEN)
+    {
+      return (true);
+    }
+
+    return (false);
+  }
+}
+
+// Enable or disable automatic message generation by the GNSS. This changes the way getMONHW works.
+bool DevUBLOXGNSS::setAutoMONHW(bool enable, uint8_t layer, uint16_t maxWait)
+{
+  return setAutoMONHWrate(enable ? 1 : 0, true, layer, maxWait);
+}
+
+// Enable or disable automatic message generation by the GNSS. This changes the way getMONHW works.
+bool DevUBLOXGNSS::setAutoMONHW(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
+{
+  return setAutoMONHWrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
+}
+
+// Enable or disable automatic message generation by the GNSS. This changes the way getMONHW works.
+bool DevUBLOXGNSS::setAutoMONHWrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
+{
+  if (packetUBXMONHW == nullptr)
+    initPacketUBXMONHW();        // Check that RAM has been allocated for the data
+  if (packetUBXMONHW == nullptr) // Only attempt this if RAM allocation was successful
+    return false;
+
+  if (rate > 127)
+    rate = 127;
+
+  uint32_t key = UBLOX_CFG_MSGOUT_UBX_MON_HW_I2C;
+  if (_commType == COMM_TYPE_SPI)
+    key = UBLOX_CFG_MSGOUT_UBX_MON_HW_SPI;
+  else if (_commType == COMM_TYPE_SERIAL)
+  {
+    if (!_UART2)
+      key = UBLOX_CFG_MSGOUT_UBX_MON_HW_UART1;
+    else
+      key = UBLOX_CFG_MSGOUT_UBX_MON_HW_UART2;
+  }
+
+  bool ok = setVal8(key, rate, layer, maxWait);
+  if (ok)
+  {
+    packetUBXMONHW->automaticFlags.flags.bits.automatic = (rate > 0);
+    packetUBXMONHW->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
+  }
+  packetUBXMONHW->moduleQueried.moduleQueried.bits.all = false;
+  return ok;
+}
+
+// Enable automatic message generation by the GNSS.
+bool DevUBLOXGNSS::setAutoMONHWcallbackPtr(void (*callbackPointerPtr)(UBX_MON_HW_data_t *), uint8_t layer, uint16_t maxWait)
+{
+  // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
+  bool result = setAutoMONHW(true, false, layer, maxWait);
+  if (!result)
+    return (result); // Bail if setAuto failed
+
+  if (packetUBXMONHW->callbackData == nullptr) // Check if RAM has been allocated for the callback copy
+  {
+    packetUBXMONHW->callbackData = new UBX_MON_HW_data_t; // Allocate RAM for the main struct
+  }
+
+  if (packetUBXMONHW->callbackData == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("setAutoMONHWcallbackPtr: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+
+  packetUBXMONHW->callbackPointerPtr = callbackPointerPtr;
+  return (true);
+}
+
+// In case no config access to the GNSS is possible and TIM TP is send cyclically already
+// set config to suitable parameters
+bool DevUBLOXGNSS::assumeAutoMONHW(bool enabled, bool implicitUpdate)
+{
+  if (packetUBXMONHW == nullptr)
+    initPacketUBXMONHW();        // Check that RAM has been allocated for the data
+  if (packetUBXMONHW == nullptr) // Only attempt this if RAM allocation was successful
+    return false;
+
+  bool changes = packetUBXMONHW->automaticFlags.flags.bits.automatic != enabled || packetUBXMONHW->automaticFlags.flags.bits.implicitUpdate != implicitUpdate;
+  if (changes)
+  {
+    packetUBXMONHW->automaticFlags.flags.bits.automatic = enabled;
+    packetUBXMONHW->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
+  }
+  return changes;
+}
+
+// PRIVATE: Allocate RAM for packetUBXMONHW and initialize it
+bool DevUBLOXGNSS::initPacketUBXMONHW()
+{
+  packetUBXMONHW = new UBX_MON_HW_t; // Allocate RAM for the main struct
+  if (packetUBXMONHW == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("initPacketUBXMONHW: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+  packetUBXMONHW->automaticFlags.flags.all = 0;
+  packetUBXMONHW->callbackPointerPtr = nullptr;
+  packetUBXMONHW->callbackData = nullptr;
+  packetUBXMONHW->moduleQueried.moduleQueried.all = 0;
+  return (true);
+}
+
+// Mark all the data as read/stale
+void DevUBLOXGNSS::flushMONHW()
+{
+  if (packetUBXMONHW == nullptr)
+    return;                                            // Bail if RAM has not been allocated (otherwise we could be writing anywhere!)
+  packetUBXMONHW->moduleQueried.moduleQueried.all = 0; // Mark all datums as stale (read before)
+}
+
+// Log this data in file buffer
+void DevUBLOXGNSS::logMONHW(bool enabled)
+{
+  if (packetUBXMONHW == nullptr)
+    return; // Bail if RAM has not been allocated (otherwise we could be writing anywhere!)
+  packetUBXMONHW->automaticFlags.flags.bits.addToFileBuffer = (uint8_t)enabled;
+}
+
 #ifndef SFE_UBLOX_DISABLE_ESF
 // ***** ESF ALG automatic support
 
@@ -17062,6 +17256,38 @@ uint32_t DevUBLOXGNSS::getTIMTPAsEpoch(uint32_t &microsecond, uint16_t maxWait)
   microsecond = us;
   return tow;
 }
+
+// ***** MON HW Helper Functions
+
+// Get the hardware status (including jamming) using UBX_MON_HW
+bool DevUBLOXGNSS::getHWstatus(UBX_MON_HW_data_t *data, uint16_t maxWait)
+{
+  if (data == nullptr) // Check if the user forgot to include the data pointer
+    return (false);    // Bail
+
+  if (!getMONHW(maxWait))
+    return (false);
+
+  memcpy(data, &packetUBXMONHW->data, sizeof(UBX_MON_HW_data_t));
+
+  return (true);
+}
+
+// Return the aStatus: 0=INIT, 1=DONTKNOW, 2=OK, 3=SHORT, 4=OPEN
+sfe_ublox_antenna_status_e DevUBLOXGNSS::getAntennaStatus(uint16_t maxWait)
+{
+  if (packetUBXMONHW == nullptr)
+    initPacketUBXMONHW();        // Check that RAM has been allocated for the TP data
+  if (packetUBXMONHW == nullptr) // Bail if the RAM allocation failed
+    return SFE_UBLOX_ANTENNA_STATUS_INIT;
+
+  if (packetUBXMONHW->moduleQueried.moduleQueried.bits.aStatus == false)
+    getMONHW(maxWait);
+  packetUBXMONHW->moduleQueried.moduleQueried.bits.aStatus = false; // Since we are about to give this to user, mark this data as stale
+  packetUBXMONHW->moduleQueried.moduleQueried.bits.all = false;
+  return ((sfe_ublox_antenna_status_e)packetUBXMONHW->data.aStatus);
+}
+
 
 #ifndef SFE_UBLOX_DISABLE_ESF
 // ***** ESF Helper Functions

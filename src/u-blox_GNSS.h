@@ -427,9 +427,6 @@ public:
   // RF Information (including jamming) - ZED-F9 only
   bool getRFinformation(UBX_MON_RF_data_t *data = nullptr, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the RF information using UBX_MON_RF
 
-  // Hardware status (including jamming)
-  bool getHWstatus(UBX_MON_HW_data_t *data = nullptr, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the hardware status using UBX_MON_HW
-
   // Extended hardware status
   bool getHW2status(UBX_MON_HW2_data_t *data = nullptr, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the extended hardware status using UBX_MON_HW2
 
@@ -962,6 +959,15 @@ public:
   void flushTIMTP();                                                                                                                                             // Mark all the data as read/stale
   void logTIMTP(bool enabled = true);                                                                                                                            // Log data to file buffer
 
+  bool getMONHW(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // MON HW
+  bool setAutoMONHW(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic MON HW reports at the navigation frequency
+  bool setAutoMONHW(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic MON HW reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
+  bool setAutoMONHWrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic MON HW reports
+  bool setAutoMONHWcallbackPtr(void (*callbackPointerPtr)(UBX_MON_HW_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic MON HW reports at the navigation frequency. Data is accessed from the callback.
+  bool assumeAutoMONHW(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and MON HW is send cyclically already
+  void flushMONHW();                                                                                                                                              // Mark all the data as read/stale
+  void logMONHW(bool enabled = true);                                                                                                                             // Log data to file buffer
+
 #ifndef SFE_UBLOX_DISABLE_ESF
   // Sensor fusion (dead reckoning) (ESF)
 
@@ -1187,6 +1193,11 @@ public:
   uint16_t getTIMTPweek(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Returns the UBX-TIM-TP time pulse week according to time base
   uint32_t getTIMTPAsEpoch(uint32_t &microsecond, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Convert TIM TP to Unix Epoch - CAUTION! Assumes the time base is UTC and the week number is GPS
 
+  // Helper function for hardware status (including jamming)
+
+  bool getHWstatus(UBX_MON_HW_data_t *data = nullptr, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the hardware status using UBX_MON_HW
+  sfe_ublox_antenna_status_e getAntennaStatus(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the antenna status (aStatus) using UBX_MON_HW
+
 #ifndef SFE_UBLOX_DISABLE_ESF
   // Helper functions for ESF
 
@@ -1301,6 +1312,8 @@ public:
   UBX_TIM_TM2_t *packetUBXTIMTM2 = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
   UBX_TIM_TP_t *packetUBXTIMTP = nullptr;   // Pointer to struct. RAM will be allocated for this if/when necessary
 
+  UBX_MON_HW_t *packetUBXMONHW = nullptr;   // Pointer to struct. RAM will be allocated for this if/when necessary
+
 #ifndef SFE_UBLOX_DISABLE_ESF
   UBX_ESF_ALG_t *packetUBXESFALG = nullptr;       // Pointer to struct. RAM will be allocated for this if/when necessary
   UBX_ESF_INS_t *packetUBXESFINS = nullptr;       // Pointer to struct. RAM will be allocated for this if/when necessary
@@ -1382,6 +1395,7 @@ protected:
   bool initPacketUBXRXMMEASX();         // Allocate RAM for packetUBXRXMMEASX and initialize it
   bool initPacketUBXTIMTM2();           // Allocate RAM for packetUBXTIMTM2 and initialize it
   bool initPacketUBXTIMTP();            // Allocate RAM for packetUBXTIMTP and initialize it
+  bool initPacketUBXMONHW();            // Allocate RAM for packetUBXMONHW and initialize it
   bool initPacketUBXESFALG();           // Allocate RAM for packetUBXESFALG and initialize it
   bool initPacketUBXESFSTATUS();        // Allocate RAM for packetUBXESFSTATUS and initialize it
   bool initPacketUBXESFINS();           // Allocate RAM for packetUBXESFINS and initialize it
