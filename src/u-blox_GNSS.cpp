@@ -622,6 +622,16 @@ void DevUBLOXGNSS::end(void)
   }
 #endif
 
+  if (storageRTCM1005 != nullptr)
+  {
+    if (storageRTCM1005->callbackData != nullptr)
+    {
+      delete storageRTCM1005->callbackData;
+    }
+    delete storageRTCM1005;
+    storageRTCM1005 = nullptr;
+  }
+
   if (sfe_ublox_ubx_logging_list_head != nullptr)
   {
     while (sfe_ublox_ubx_logging_list_head->next != nullptr)
@@ -2168,6 +2178,35 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
           // If there is space in the RTCM buffer, store the data there too
           if (rtcmBufferSpaceAvailable() >= _storageRTCM->messageLength + 6)
             storeRTCMBytes(_storageRTCM->dataMessage, _storageRTCM->messageLength + 6);
+
+          // Check "Auto" RTCM
+          if ((messageType == 1005) && (_storageRTCM->messageLength == RTCM_1005_MSG_LEN_BYTES) && (storageRTCM1005 != nullptr))
+          {
+            storageRTCM1005->data.MessageNumber =                     extractUnsignedBits16(&_storageRTCM->dataMessage[3], 0, 12);
+            storageRTCM1005->data.ReferenceStationID =                extractUnsignedBits16(&_storageRTCM->dataMessage[3], 12, 12);
+            storageRTCM1005->data.ITRFRealizationYear =               extractUnsignedBits16(&_storageRTCM->dataMessage[3], 24, 6);
+            storageRTCM1005->data.GPSIndicator =                      extractUnsignedBits16(&_storageRTCM->dataMessage[3], 30, 1);
+            storageRTCM1005->data.GLONASSIndicator =                  extractUnsignedBits16(&_storageRTCM->dataMessage[3], 31, 1);
+            storageRTCM1005->data.GalileoIndicator =                  extractUnsignedBits16(&_storageRTCM->dataMessage[3], 32, 1);
+            storageRTCM1005->data.ReferenceStationIndicator =         extractUnsignedBits16(&_storageRTCM->dataMessage[3], 33, 1);
+            storageRTCM1005->data.AntennaReferencePointECEFX =        extractSignedBits64(&_storageRTCM->dataMessage[3], 34, 38);
+            storageRTCM1005->data.SingleReceiverOscillatorIndicator = extractUnsignedBits16(&_storageRTCM->dataMessage[3], 72, 1);
+            storageRTCM1005->data.Reserved =                          extractUnsignedBits16(&_storageRTCM->dataMessage[3], 73, 1);
+            storageRTCM1005->data.AntennaReferencePointECEFY =        extractSignedBits64(&_storageRTCM->dataMessage[3], 74, 38);
+            storageRTCM1005->data.QuarterCycleIndicator =             extractUnsignedBits16(&_storageRTCM->dataMessage[3], 112, 2);
+            storageRTCM1005->data.AntennaReferencePointECEFY =        extractSignedBits64(&_storageRTCM->dataMessage[3], 114, 38);
+
+            storageRTCM1005->automaticFlags.flags.bits.dataValid = 1; // Mark the data as valid and unread
+            storageRTCM1005->automaticFlags.flags.bits.dataRead = 0;
+
+            if (storageRTCM1005->callbackData != nullptr) // Should we copy the data for the callback?
+              if (storageRTCM1005->callbackPointerPtr != nullptr) // Has the callback been defined?
+                if (storageRTCM1005->automaticFlags.flags.bits.callbackDataValid == 0) // Only overwrite the callback copy if it has been read
+                {
+                  memcpy(storageRTCM1005->callbackData, &_storageRTCM->dataMessage[3], RTCM_1005_MSG_LEN_BYTES);
+                  storageRTCM1005->automaticFlags.flags.bits.callbackDataValid = 1;
+                }
+          }
         }
         else
         {
@@ -15706,6 +15745,83 @@ void DevUBLOXGNSS::crc24q(uint8_t incoming, uint32_t *checksum)
 
 #endif
 
+// Return the most recent RTCM 1005: 0 = no data, 1 = stale data, 2 = fresh data
+uint8_t DevUBLOXGNSS::getLatestRTCM1005(RTCM_1005_data_t *data)
+{
+  if (!initStorageRTCM())
+    return 0;
+  if (storageRTCM1005 == nullptr)
+    initStorageRTCM1005();        // Check that RAM has been allocated for the message
+  if (storageRTCM1005 == nullptr) // Bail if the RAM allocation failed
+    return 0;
+
+  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
+
+  uint8_t result = 0;
+  if (storageRTCM1005->automaticFlags.flags.bits.dataValid == 1) // Is the copy valid?
+  {
+    result = 1;
+    if (storageRTCM1005->automaticFlags.flags.bits.dataRead == 0) // Has the data already been read?
+    {
+      result = 2;
+      storageRTCM1005->automaticFlags.flags.bits.dataRead = 1; // Mark the data as read
+    }
+  }
+
+  return (result);
+}
+
+bool DevUBLOXGNSS::setRTCM1005callbackPtr(void (*callbackPointerPtr)(RTCM_1005_data_t *))
+{
+  if (!initStorageRTCM())
+    return false;
+  if (storageRTCM1005 == nullptr)
+    initStorageRTCM1005();        // Check that RAM has been allocated for the message
+  if (storageRTCM1005 == nullptr) // Bail if the RAM allocation failed
+    return (false);
+
+  if (storageRTCM1005->callbackData == nullptr) // Check if RAM has been allocated for the callback copy
+  {
+    storageRTCM1005->callbackData = new RTCM_1005_data_t;
+  }
+
+  if (storageRTCM1005->callbackData == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("setRTCM1005callbackPtr: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+
+  storageRTCM1005->callbackPointerPtr = callbackPointerPtr;
+  return (true);
+}
+
+// Private: allocate RAM for incoming RTCM 1005 messages and initialize it
+bool DevUBLOXGNSS::initStorageRTCM1005()
+{
+  if (storageRTCM1005 != nullptr) // Check if storage already exists
+    return true;
+
+  storageRTCM1005 = new RTCM_1005_t; // Allocate RAM for the main struct
+  if (storageRTCM1005 == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("initStorageRTCM1005: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+
+  storageRTCM1005->callbackPointerPtr = nullptr; // Clear the callback pointers
+  storageRTCM1005->callbackData = nullptr;
+
+  storageRTCM1005->automaticFlags.flags.all = 0; // Mark the data as invalid/stale and unread
+
+  return (true);
+}
+
 // ***** CFG RATE Helper Functions
 
 // Set the rate at which the module will give us an updated navigation solution
@@ -17560,3 +17676,104 @@ double DevUBLOXGNSS::extractDouble(ubxPacket *msg, uint16_t spotToStart)
   converter.unsigned64 = extractLongLong(msg, spotToStart);
   return (converter.dbl);
 }
+
+// Given a pointer, extract an unsigned integer, starting at bit start with width
+uint16_t DevUBLOXGNSS::extractUnsignedBits16(uint8_t *ptr, uint16_t start, uint16_t width)
+{
+  uint16_t result = 0;
+  uint16_t count = 0;
+  uint8_t bitMask = 0x80;
+
+  // Loop until we reach the start bit
+  while (count < start)
+  {
+    bitMask >> 1; // Shift the bit mask
+    count++; // Increment the count
+    if (bitMask == 0) // Have we counted 8 bits?
+    {
+      ptr++; // Point to the next byte
+      bitMask = 0x80; // Reset the bit mask
+    }
+  }
+
+  // We have reached the start bit and ptr is pointing at the correct byte
+  // Now extract width bytes, incrementing ptr and shifting bitMask as we go
+  while (count < (start + width))
+  {
+    if (*ptr & bitMask) // Is the bit set?
+      result |= 1; // Set the corresponding bit in result
+
+    bitMask >> 1; // Shift the bit mask
+    count++; // Increment the count
+
+    if (bitMask == 0) // Have we counted 8 bits?
+    {
+      ptr++; // Point to the next byte
+      bitMask = 0x80; // Reset the bit mask
+    }
+
+    if (count < (start + width)) // Do we need to shift result?
+      result <<= 1; // Shift the result
+  }
+
+  return result;
+}
+
+// Given a pointer, extract a signed integer, starting at bit start with width
+int64_t DevUBLOXGNSS::extractSignedBits64(uint8_t *ptr, uint16_t start, uint16_t width)
+{
+
+  unsignedSigned64 result;
+  result.unsigned64 = 0;
+
+  unsignedSigned64 twosComplement;
+  twosComplement.unsigned64 = 0xFFFFFFFFFFFFFFFF;
+
+  bool isNegative;
+
+  uint16_t count = 0;
+  uint8_t bitMask = 0x80;
+
+  // Loop until we reach the start bit
+  while (count < start)
+  {
+    bitMask >> 1; // Shift the bit mask
+    count++; // Increment the count
+    if (bitMask == 0) // Have we counted 8 bits?
+    {
+      ptr++; // Point to the next byte
+      bitMask = 0x80; // Reset the bit mask
+    }
+  }
+
+  isNegative = *ptr & bitMask; // Record the first bit - indicates in the number is negative
+
+  // We have reached the start bit and ptr is pointing at the correct byte
+  // Now extract width bytes, incrementing ptr and shifting bitMask as we go
+  while (count < (start + width))
+  {
+    if (*ptr & bitMask) // Is the bit set?
+      result.unsigned64 |= 1; // Set the corresponding bit in result
+
+    bitMask >> 1; // Shift the bit mask
+    count++; // Increment the count
+    twosComplement.unsigned64 <<= 1; // Shift the two's complement mask
+
+    if (bitMask == 0) // Have we counted 8 bits?
+    {
+      ptr++; // Point to the next byte
+      bitMask = 0x80; // Reset the bit mask
+    }
+
+    if (count < (start + width)) // Do we need to shift result?
+      result.unsigned64 <<= 1; // Shift the result
+  }
+
+  // Handle negative number
+  if (isNegative)
+    result.unsigned64 |= twosComplement.unsigned64; // OR in the two's complement mask
+
+  return result.signed64;
+}
+
+

@@ -1254,8 +1254,13 @@ public:
   bool setNMEAGNZDAcallbackPtr(void (*callbackPointerPtr)(NMEA_ZDA_data_t *)); // Enable a callback on the arrival of a GNZDA message
 #endif
 
-  // Helper functions for RTCM logging
+  // RTCM
+
 #ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
+  uint8_t getLatestRTCM1005(RTCM_1005_data_t *data); // Return the most recent RTCM 1005: 0 = no data, 1 = stale data, 2 = fresh data
+  bool setRTCM1005callbackPtr(void (*callbackPointerPtr)(RTCM_1005_data_t *)); // Configure a callback for the RTCM 1005 Message
+
+  // Helper functions for RTCM logging
   bool setRTCMLoggingMask(uint32_t messages = SFE_UBLOX_FILTER_RTCM_ALL); // Add selected RTCM messages to file buffer - if enabled. Default to adding ALL messages to the file buffer
   uint32_t getRTCMLoggingMask();                                          // Return which RTCM messages are selected for logging to the file buffer - if enabled
 #endif
@@ -1275,6 +1280,10 @@ public:
   int8_t extractSignedChar(ubxPacket *msg, uint16_t spotToStart); // Get signed 8-bit value from payload
   float extractFloat(ubxPacket *msg, uint16_t spotToStart);       // Get signed 32-bit float (R4) from payload
   double extractDouble(ubxPacket *msg, uint16_t spotToStart);     // Get signed 64-bit double (R8) from payload
+
+  // Functions to help extract RTCM bit fields
+  uint16_t extractUnsignedBits16(uint8_t *ptr, uint16_t start, uint16_t width);
+  int64_t extractSignedBits64(uint8_t *ptr, uint16_t start, uint16_t width);
 
   // Pointers to storage for the "automatic" messages
   // RAM is allocated for these if/when required.
@@ -1341,6 +1350,8 @@ public:
   NMEA_GPZDA_t *storageNMEAGPZDA = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
   NMEA_GNZDA_t *storageNMEAGNZDA = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
 #endif
+
+  RTCM_1005_t *storageRTCM1005 = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
 
   uint16_t rtcmFrameCounter = 0; // Tracks the type of incoming byte inside RTCM frame
 
@@ -1418,6 +1429,8 @@ protected:
 
   bool initStorageRTCM(); // Allocate RAM for incoming RTCM messages and initialize it
   bool initStorageNMEA(); // Allocate RAM for incoming non-Auto NMEA messages and initialize it
+
+  bool initStorageRTCM1005(); // Allocate RAM for incoming RTCM 1005 messages and initialize it
 
   // Variables
   SparkFun_UBLOX_GNSS::GNSSDeviceBus *_sfeBus;
