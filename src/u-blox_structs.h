@@ -2794,12 +2794,12 @@ typedef struct
   bool GLONASSIndicator; // GLONASS Indicator
   bool GalileoIndicator; // Galileo Indicator
   bool ReferenceStationIndicator; // Reference-Station Indicator
-  int64_t AntennaReferencePointECEFX; // Antenna Reference Point ECEF-X
+  int64_t AntennaReferencePointECEFX; // Antenna Reference Point ECEF-X (0.0001m)
   bool SingleReceiverOscillatorIndicator; // Single Receiver Oscillator Indicator
   bool Reserved; // Reserved
-  int64_t AntennaReferencePointECEFY; // Antenna Reference Point ECEF-Y
+  int64_t AntennaReferencePointECEFY; // Antenna Reference Point ECEF-Y (0.0001m)
   uint8_t QuarterCycleIndicator; // Quarter Cycle Indicator
-  int64_t AntennaReferencePointECEFZ; // Antenna Reference Point ECEF-Z
+  int64_t AntennaReferencePointECEFZ; // Antenna Reference Point ECEF-Z (0.0001m)
 } RTCM_1005_data_t;
 
 typedef struct
@@ -2810,3 +2810,24 @@ typedef struct
   RTCM_1005_data_t *callbackData;
 } RTCM_1005_t;
 
+// RTCM 1006 Message (0x3EE): Stationary Antenna Reference Point, with Height Information
+// For the u-blox module, RTCM 1006 is input-only. It cannot output RTCM 1006.
+const uint16_t RTCM_1006_MSG_LEN_BYTES = 21;
+
+typedef struct
+{
+  uint16_t MessageNumber; // Message Number (“1006” = 0x3EE)
+  uint16_t ReferenceStationID; // Reference Station ID
+  uint8_t ITRFRealizationYear; // ITRF Realization Year
+  bool GPSIndicator; // GPS Indicator
+  bool GLONASSIndicator; // GLONASS Indicator
+  bool GalileoIndicator; // Galileo Indicator
+  bool ReferenceStationIndicator; // Reference-Station Indicator
+  int64_t AntennaReferencePointECEFX; // Antenna Reference Point ECEF-X (0.0001m)
+  bool SingleReceiverOscillatorIndicator; // Single Receiver Oscillator Indicator
+  bool Reserved; // Reserved
+  int64_t AntennaReferencePointECEFY; // Antenna Reference Point ECEF-Y (0.0001m)
+  uint8_t QuarterCycleIndicator; // Quarter Cycle Indicator
+  int64_t AntennaReferencePointECEFZ; // Antenna Reference Point ECEF-Z (0.0001m)
+  uint16_t AntennaHeight; // Antenna Height above the marker used in the survey campaign (0.0001m)
+} RTCM_1006_data_t;

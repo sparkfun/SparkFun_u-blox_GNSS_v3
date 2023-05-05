@@ -63,6 +63,10 @@ DevUBLOXGNSS::DevUBLOXGNSS(void)
   _logNMEA.all = 0;                             // Default to passing no NMEA messages to the file buffer
   _processNMEA.all = SFE_UBLOX_FILTER_NMEA_ALL; // Default to passing all NMEA messages to processNMEA
   _logRTCM.all = 0;                             // Default to passing no RTCM messages to the file buffer
+
+#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
+  rtcmInputStorage.flags.all = 0;               // Clear the RTCM Input flags
+#endif
 }
 
 DevUBLOXGNSS::~DevUBLOXGNSS(void)
@@ -2182,19 +2186,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
           // Check "Auto" RTCM
           if ((messageType == 1005) && (_storageRTCM->messageLength == RTCM_1005_MSG_LEN_BYTES) && (storageRTCM1005 != nullptr))
           {
-            storageRTCM1005->data.MessageNumber = extractUnsignedBits(&_storageRTCM->dataMessage[3], 0, 12);
-            storageRTCM1005->data.ReferenceStationID = extractUnsignedBits(&_storageRTCM->dataMessage[3], 12, 12);
-            storageRTCM1005->data.ITRFRealizationYear = extractUnsignedBits(&_storageRTCM->dataMessage[3], 24, 6);
-            storageRTCM1005->data.GPSIndicator = extractUnsignedBits(&_storageRTCM->dataMessage[3], 30, 1);
-            storageRTCM1005->data.GLONASSIndicator = extractUnsignedBits(&_storageRTCM->dataMessage[3], 31, 1);
-            storageRTCM1005->data.GalileoIndicator = extractUnsignedBits(&_storageRTCM->dataMessage[3], 32, 1);
-            storageRTCM1005->data.ReferenceStationIndicator = extractUnsignedBits(&_storageRTCM->dataMessage[3], 33, 1);
-            storageRTCM1005->data.AntennaReferencePointECEFX = extractSignedBits(&_storageRTCM->dataMessage[3], 34, 38);
-            storageRTCM1005->data.SingleReceiverOscillatorIndicator = extractUnsignedBits(&_storageRTCM->dataMessage[3], 72, 1);
-            storageRTCM1005->data.Reserved = extractUnsignedBits(&_storageRTCM->dataMessage[3], 73, 1);
-            storageRTCM1005->data.AntennaReferencePointECEFY = extractSignedBits(&_storageRTCM->dataMessage[3], 74, 38);
-            storageRTCM1005->data.QuarterCycleIndicator = extractUnsignedBits(&_storageRTCM->dataMessage[3], 112, 2);
-            storageRTCM1005->data.AntennaReferencePointECEFZ = extractSignedBits(&_storageRTCM->dataMessage[3], 114, 38);
+            extractRTCM1005(&storageRTCM1005->data, &_storageRTCM->dataMessage[3]);
 
             storageRTCM1005->automaticFlags.flags.bits.dataValid = 1; // Mark the data as valid and unread
             storageRTCM1005->automaticFlags.flags.bits.dataRead = 0;
@@ -6068,6 +6060,11 @@ bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool cal
   if (numDataBytes == 0)
     return false; // Indicate to the user that there was no data to push
 
+#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
+  parseRTCM1005(dataBytes, numDataBytes);
+  parseRTCM1006(dataBytes, numDataBytes);
+#endif
+
   if (!lock())
     return false;
 
@@ -7379,6 +7376,238 @@ void DevUBLOXGNSS::writeToRTCMBuffer(uint8_t *theBytes, uint16_t numBytes)
     rtcmBufferHead += numBytes; // Only update Head. The next byte written will be written here.
   }
 }
+
+#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
+void DevUBLOXGNSS::extractRTCM1005(RTCM_1005_data_t *destination, uint8_t *source)
+{
+  destination->MessageNumber = extractUnsignedBits(source, 0, 12);
+  destination->ReferenceStationID = extractUnsignedBits(source, 12, 12);
+  destination->ITRFRealizationYear = extractUnsignedBits(source, 24, 6);
+  destination->GPSIndicator = extractUnsignedBits(source, 30, 1);
+  destination->GLONASSIndicator = extractUnsignedBits(source, 31, 1);
+  destination->GalileoIndicator = extractUnsignedBits(source, 32, 1);
+  destination->ReferenceStationIndicator = extractUnsignedBits(source, 33, 1);
+  destination->AntennaReferencePointECEFX = extractSignedBits(source, 34, 38);
+  destination->SingleReceiverOscillatorIndicator = extractUnsignedBits(source, 72, 1);
+  destination->Reserved = extractUnsignedBits(source, 73, 1);
+  destination->AntennaReferencePointECEFY = extractSignedBits(source, 74, 38);
+  destination->QuarterCycleIndicator = extractUnsignedBits(source, 112, 2);
+  destination->AntennaReferencePointECEFZ = extractSignedBits(source, 114, 38);
+}
+
+void DevUBLOXGNSS::extractRTCM1006(RTCM_1006_data_t *destination, uint8_t *source)
+{
+  destination->MessageNumber = extractUnsignedBits(source, 0, 12);
+  destination->ReferenceStationID = extractUnsignedBits(source, 12, 12);
+  destination->ITRFRealizationYear = extractUnsignedBits(source, 24, 6);
+  destination->GPSIndicator = extractUnsignedBits(source, 30, 1);
+  destination->GLONASSIndicator = extractUnsignedBits(source, 31, 1);
+  destination->GalileoIndicator = extractUnsignedBits(source, 32, 1);
+  destination->ReferenceStationIndicator = extractUnsignedBits(source, 33, 1);
+  destination->AntennaReferencePointECEFX = extractSignedBits(source, 34, 38);
+  destination->SingleReceiverOscillatorIndicator = extractUnsignedBits(source, 72, 1);
+  destination->Reserved = extractUnsignedBits(source, 73, 1);
+  destination->AntennaReferencePointECEFY = extractSignedBits(source, 74, 38);
+  destination->QuarterCycleIndicator = extractUnsignedBits(source, 112, 2);
+  destination->AntennaReferencePointECEFZ = extractSignedBits(source, 114, 38);
+  destination->AntennaHeight = extractUnsignedBits(source, 152, 16);
+}
+
+void DevUBLOXGNSS::parseRTCM1005(uint8_t *dataBytes, size_t numDataBytes)
+{
+  // This is called from inside pushRawData. It thoroughly examines dataBytes and will copy any RTCM 1005 messages it finds into storage.
+  // It keeps a local copy of the data so it does not matter if the message spans multiple calls to pushRawData.
+
+  static uint8_t rtcm1005store[RTCM_1005_MSG_LEN_BYTES + 6];
+  static uint8_t bytesStored;
+
+  enum parse1005states {
+    waitingForD3,
+    expecting00,
+    expecting13,
+    expecting3E,
+    expectingDn,
+    storingBytes,
+  };
+  static parse1005states parse1005state = waitingForD3;
+
+  for (size_t i = 0; i < numDataBytes; i++) // Step through each byte
+  {
+    switch (parse1005state)
+    {
+      case waitingForD3:
+        if (*(dataBytes + i) == 0xD3)
+        {
+          rtcm1005store[0] = 0xD3;
+          parse1005state = expecting00;
+        }
+        break;
+      case expecting00:
+        if (*(dataBytes + i) == 0x00)
+        {
+          rtcm1005store[1] = 0x00;
+          parse1005state = expecting13;
+        }
+        else
+        {
+          parse1005state = waitingForD3;
+        }
+        break;
+      case expecting13:
+        if (*(dataBytes + i) == 0x13)
+        {
+          rtcm1005store[2] = 0x13;
+          parse1005state = expecting3E;
+        }
+        else
+        {
+          parse1005state = waitingForD3;
+        }
+        break;
+      case expecting3E:
+        if (*(dataBytes + i) == 0x3E)
+        {
+          rtcm1005store[3] = 0x3E;
+          parse1005state = expectingDn;
+        }
+        else
+        {
+          parse1005state = waitingForD3;
+        }
+        break;
+      case expectingDn:
+        if (((*(dataBytes + i)) & 0xF0) == 0xD0)
+        {
+          rtcm1005store[4] = *(dataBytes + i);
+          parse1005state = storingBytes;
+          bytesStored = 5;
+        }
+        else
+        {
+          parse1005state = waitingForD3;
+        }
+        break;
+      case storingBytes:
+        rtcm1005store[bytesStored++] = *(dataBytes + i);
+        if (bytesStored == RTCM_1005_MSG_LEN_BYTES + 6) // All data received?
+        {
+          parse1005state = waitingForD3;
+          uint32_t checksum = 0;
+          for (size_t j = 0; j < (RTCM_1005_MSG_LEN_BYTES + 3); j++)
+            crc24q(rtcm1005store[j], &checksum);
+          if (rtcm1005store[RTCM_1005_MSG_LEN_BYTES + 3] == ((checksum >> 16) & 0xFF)) // Check the checksum
+            if (rtcm1005store[RTCM_1005_MSG_LEN_BYTES + 4] == ((checksum >> 8) & 0xFF))
+              if (rtcm1005store[RTCM_1005_MSG_LEN_BYTES + 5] == (checksum & 0xFF))
+              {
+                extractRTCM1005(&rtcmInputStorage.rtcm1005, &rtcm1005store[3]);
+                rtcmInputStorage.flags.bits.dataValid1005 = 1;
+                rtcmInputStorage.flags.bits.dataRead1005 = 0;
+                return; // Return now - to avoid processing the remainder of the data
+              }
+        }
+        break;
+    }
+  }
+}
+
+void DevUBLOXGNSS::parseRTCM1006(uint8_t *dataBytes, size_t numDataBytes)
+{
+  // This is called from inside pushRawData. It thoroughly examines dataBytes and will copy any RTCM 1006 messages it finds into storage.
+  // It keeps a local copy of the data so it does not matter if the message spans multiple calls to pushRawData.
+
+  static uint8_t rtcm1006store[RTCM_1006_MSG_LEN_BYTES + 6];
+  static uint8_t bytesStored;
+
+  enum parse1006states {
+    waitingForD3,
+    expecting00,
+    expecting15,
+    expecting3E,
+    expectingEn,
+    storingBytes,
+  };
+  static parse1006states parse1006state = waitingForD3;
+
+  for (size_t i = 0; i < numDataBytes; i++) // Step through each byte
+  {
+    switch (parse1006state)
+    {
+      case waitingForD3:
+        if (*(dataBytes + i) == 0xD3)
+        {
+          rtcm1006store[0] = 0xD3;
+          parse1006state = expecting00;
+        }
+        break;
+      case expecting00:
+        if (*(dataBytes + i) == 0x00)
+        {
+          rtcm1006store[1] = 0x00;
+          parse1006state = expecting15;
+        }
+        else
+        {
+          parse1006state = waitingForD3;
+        }
+        break;
+      case expecting15:
+        if (*(dataBytes + i) == 0x15)
+        {
+          rtcm1006store[2] = 0x15;
+          parse1006state = expecting3E;
+        }
+        else
+        {
+          parse1006state = waitingForD3;
+        }
+        break;
+      case expecting3E:
+        if (*(dataBytes + i) == 0x3E)
+        {
+          rtcm1006store[3] = 0x3E;
+          parse1006state = expectingEn;
+        }
+        else
+        {
+          parse1006state = waitingForD3;
+        }
+        break;
+      case expectingEn:
+        if (((*(dataBytes + i)) & 0xF0) == 0xE0)
+        {
+          rtcm1006store[4] = *(dataBytes + i);
+          parse1006state = storingBytes;
+          bytesStored = 5;
+        }
+        else
+        {
+          parse1006state = waitingForD3;
+        }
+        break;
+      case storingBytes:
+        rtcm1006store[bytesStored++] = *(dataBytes + i);
+        if (bytesStored == RTCM_1006_MSG_LEN_BYTES + 6) // All data received?
+        {
+          parse1006state = waitingForD3;
+          uint32_t checksum = 0;
+          for (size_t j = 0; j < (RTCM_1006_MSG_LEN_BYTES + 3); j++)
+            crc24q(rtcm1006store[j], &checksum);
+
+          if (rtcm1006store[RTCM_1006_MSG_LEN_BYTES + 3] == ((checksum >> 16) & 0xFF)) // Check the checksum
+            if (rtcm1006store[RTCM_1006_MSG_LEN_BYTES + 4] == ((checksum >> 8) & 0xFF))
+              if (rtcm1006store[RTCM_1006_MSG_LEN_BYTES + 5] == (checksum & 0xFF))
+              {
+                extractRTCM1006(&rtcmInputStorage.rtcm1006, &rtcm1006store[3]);
+                rtcmInputStorage.flags.bits.dataValid1006 = 1;
+                rtcmInputStorage.flags.bits.dataRead1006 = 0;
+                return; // Return now - to avoid processing the remainder of the data
+              }
+        }
+        break;
+    }
+  }
+}
+#endif
 
 //=-=-=-=-=-=-=-= Specific commands =-=-=-=-=-=-=-==-=-=-=-=-=-=-=
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -15825,6 +16054,44 @@ bool DevUBLOXGNSS::initStorageRTCM1005()
   storageRTCM1005->automaticFlags.flags.all = 0; // Mark the data as invalid/stale and unread
 
   return (true);
+}
+
+// Return the most recent RTCM 1005 Input - from pushRawData: 0 = no data, 1 = stale data, 2 = fresh data
+uint8_t DevUBLOXGNSS::getLatestRTCM1005Input(RTCM_1005_data_t *data)
+{
+  memcpy(data, &rtcmInputStorage.rtcm1005, sizeof(RTCM_1005_data_t)); // Copy the complete message
+
+  uint8_t result = 0;
+  if (rtcmInputStorage.flags.bits.dataValid1005 == 1) // Is the data valid?
+  {
+    result = 1;
+    if (rtcmInputStorage.flags.bits.dataRead1005 == 0) // Has the data already been read?
+    {
+      result = 2;
+      rtcmInputStorage.flags.bits.dataRead1005 = 1; // Mark the data as read
+    }
+  }
+
+  return result;
+}
+
+// Return the most recent RTCM 1006 Input - from pushRawData: 0 = no data, 1 = stale data, 2 = fresh data
+uint8_t DevUBLOXGNSS::getLatestRTCM1006Input(RTCM_1006_data_t *data)
+{
+  memcpy(data, &rtcmInputStorage.rtcm1006, sizeof(RTCM_1006_data_t)); // Copy the complete message
+
+  uint8_t result = 0;
+  if (rtcmInputStorage.flags.bits.dataValid1006 == 1) // Is the data valid?
+  {
+    result = 1;
+    if (rtcmInputStorage.flags.bits.dataRead1006 == 0) // Has the data already been read?
+    {
+      result = 2;
+      rtcmInputStorage.flags.bits.dataRead1006 = 1; // Mark the data as read
+    }
+  }
+
+  return result;
 }
 
 #endif

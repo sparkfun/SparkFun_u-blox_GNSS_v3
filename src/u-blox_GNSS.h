@@ -266,6 +266,13 @@ public:
   // This is to try and prevent incoming data being 'lost' during large (bi-directional) pushes.
   // If you are only pushing limited amounts of data and/or will be calling checkUblox manually, it might be advantageous to set callProcessSpiBuffer to false.
   bool pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool callProcessSpiBuffer = true);
+#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
+  // RTCM parsing - used inside pushRawData
+protected:
+  void parseRTCM1005(uint8_t *dataBytes, size_t numDataBytes);
+  void parseRTCM1006(uint8_t *dataBytes, size_t numDataBytes);
+public:
+#endif
 
 // Push MGA AssistNow data to the module.
 // Check for UBX-MGA-ACK responses if required (if mgaAck is YES or ENQUIRE).
@@ -1260,6 +1267,12 @@ public:
   uint8_t getLatestRTCM1005(RTCM_1005_data_t *data);                           // Return the most recent RTCM 1005: 0 = no data, 1 = stale data, 2 = fresh data
   bool setRTCM1005callbackPtr(void (*callbackPointerPtr)(RTCM_1005_data_t *)); // Configure a callback for the RTCM 1005 Message
 
+  uint8_t getLatestRTCM1005Input(RTCM_1005_data_t *data); // Return the most recent RTCM 1005 Input, extracted from pushRawData: 0 = no data, 1 = stale data, 2 = fresh data
+  uint8_t getLatestRTCM1006Input(RTCM_1006_data_t *data); // Return the most recent RTCM 1006 Input, extracted from pushRawData: 0 = no data, 1 = stale data, 2 = fresh data
+
+  void extractRTCM1005(RTCM_1005_data_t *destination, uint8_t *source); // Extract RTCM 1005 from source into destination
+  void extractRTCM1006(RTCM_1006_data_t *destination, uint8_t *source); // Extract RTCM 1006 from source into destination
+
   // Helper functions for RTCM logging
   bool setRTCMLoggingMask(uint32_t messages = SFE_UBLOX_FILTER_RTCM_ALL); // Add selected RTCM messages to file buffer - if enabled. Default to adding ALL messages to the file buffer
   uint32_t getRTCMLoggingMask();                                          // Return which RTCM messages are selected for logging to the file buffer - if enabled
@@ -1352,6 +1365,22 @@ public:
 #endif
 
   RTCM_1005_t *storageRTCM1005 = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
+
+#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
+  struct {
+    union {
+      uint8_t all;
+      struct {
+        uint8_t dataValid1005 : 1;
+        uint8_t dataRead1005 : 1;
+        uint8_t dataValid1006 : 1;
+        uint8_t dataRead1006 : 1;
+      } bits;
+    } flags;
+    RTCM_1005_data_t rtcm1005; // Latest RTCM 1005 parsed from pushRawData
+    RTCM_1006_data_t rtcm1006; // Latest RTCM 1006 parsed from pushRawData
+  } rtcmInputStorage; // Latest RTCM parsed from pushRawData
+#endif
 
   uint16_t rtcmFrameCounter = 0; // Tracks the type of incoming byte inside RTCM frame
 
