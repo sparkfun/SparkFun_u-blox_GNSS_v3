@@ -2182,28 +2182,28 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
           // Check "Auto" RTCM
           if ((messageType == 1005) && (_storageRTCM->messageLength == RTCM_1005_MSG_LEN_BYTES) && (storageRTCM1005 != nullptr))
           {
-            storageRTCM1005->data.MessageNumber =                     extractUnsignedBits16(&_storageRTCM->dataMessage[3], 0, 12);
-            storageRTCM1005->data.ReferenceStationID =                extractUnsignedBits16(&_storageRTCM->dataMessage[3], 12, 12);
-            storageRTCM1005->data.ITRFRealizationYear =               extractUnsignedBits16(&_storageRTCM->dataMessage[3], 24, 6);
-            storageRTCM1005->data.GPSIndicator =                      extractUnsignedBits16(&_storageRTCM->dataMessage[3], 30, 1);
-            storageRTCM1005->data.GLONASSIndicator =                  extractUnsignedBits16(&_storageRTCM->dataMessage[3], 31, 1);
-            storageRTCM1005->data.GalileoIndicator =                  extractUnsignedBits16(&_storageRTCM->dataMessage[3], 32, 1);
-            storageRTCM1005->data.ReferenceStationIndicator =         extractUnsignedBits16(&_storageRTCM->dataMessage[3], 33, 1);
-            storageRTCM1005->data.AntennaReferencePointECEFX =        extractSignedBits64(&_storageRTCM->dataMessage[3], 34, 38);
-            storageRTCM1005->data.SingleReceiverOscillatorIndicator = extractUnsignedBits16(&_storageRTCM->dataMessage[3], 72, 1);
-            storageRTCM1005->data.Reserved =                          extractUnsignedBits16(&_storageRTCM->dataMessage[3], 73, 1);
-            storageRTCM1005->data.AntennaReferencePointECEFY =        extractSignedBits64(&_storageRTCM->dataMessage[3], 74, 38);
-            storageRTCM1005->data.QuarterCycleIndicator =             extractUnsignedBits16(&_storageRTCM->dataMessage[3], 112, 2);
-            storageRTCM1005->data.AntennaReferencePointECEFY =        extractSignedBits64(&_storageRTCM->dataMessage[3], 114, 38);
+            storageRTCM1005->data.MessageNumber = extractUnsignedBits(&_storageRTCM->dataMessage[3], 0, 12);
+            storageRTCM1005->data.ReferenceStationID = extractUnsignedBits(&_storageRTCM->dataMessage[3], 12, 12);
+            storageRTCM1005->data.ITRFRealizationYear = extractUnsignedBits(&_storageRTCM->dataMessage[3], 24, 6);
+            storageRTCM1005->data.GPSIndicator = extractUnsignedBits(&_storageRTCM->dataMessage[3], 30, 1);
+            storageRTCM1005->data.GLONASSIndicator = extractUnsignedBits(&_storageRTCM->dataMessage[3], 31, 1);
+            storageRTCM1005->data.GalileoIndicator = extractUnsignedBits(&_storageRTCM->dataMessage[3], 32, 1);
+            storageRTCM1005->data.ReferenceStationIndicator = extractUnsignedBits(&_storageRTCM->dataMessage[3], 33, 1);
+            storageRTCM1005->data.AntennaReferencePointECEFX = extractSignedBits(&_storageRTCM->dataMessage[3], 34, 38);
+            storageRTCM1005->data.SingleReceiverOscillatorIndicator = extractUnsignedBits(&_storageRTCM->dataMessage[3], 72, 1);
+            storageRTCM1005->data.Reserved = extractUnsignedBits(&_storageRTCM->dataMessage[3], 73, 1);
+            storageRTCM1005->data.AntennaReferencePointECEFY = extractSignedBits(&_storageRTCM->dataMessage[3], 74, 38);
+            storageRTCM1005->data.QuarterCycleIndicator = extractUnsignedBits(&_storageRTCM->dataMessage[3], 112, 2);
+            storageRTCM1005->data.AntennaReferencePointECEFZ = extractSignedBits(&_storageRTCM->dataMessage[3], 114, 38);
 
             storageRTCM1005->automaticFlags.flags.bits.dataValid = 1; // Mark the data as valid and unread
             storageRTCM1005->automaticFlags.flags.bits.dataRead = 0;
 
-            if (storageRTCM1005->callbackData != nullptr) // Should we copy the data for the callback?
-              if (storageRTCM1005->callbackPointerPtr != nullptr) // Has the callback been defined?
+            if (storageRTCM1005->callbackData != nullptr)                              // Should we copy the data for the callback?
+              if (storageRTCM1005->callbackPointerPtr != nullptr)                      // Has the callback been defined?
                 if (storageRTCM1005->automaticFlags.flags.bits.callbackDataValid == 0) // Only overwrite the callback copy if it has been read
                 {
-                  memcpy(storageRTCM1005->callbackData, &_storageRTCM->dataMessage[3], RTCM_1005_MSG_LEN_BYTES);
+                  memcpy(storageRTCM1005->callbackData, &storageRTCM1005->data, sizeof(RTCM_1005_data_t));
                   storageRTCM1005->automaticFlags.flags.bits.callbackDataValid = 1;
                 }
           }
@@ -6046,6 +6046,15 @@ void DevUBLOXGNSS::checkCallbacks(void)
         storageNMEAGNZDA->automaticFlags.flags.bits.callbackCopyValid = 0; // Mark the data as stale
       }
 #endif
+
+  if (storageRTCM1005 != nullptr)                                            // If RAM has been allocated for message storage
+    if (storageRTCM1005->callbackData != nullptr)                            // If RAM has been allocated for the copy of the data
+      if (storageRTCM1005->automaticFlags.flags.bits.callbackDataValid == 1) // If the copy of the data is valid
+      {
+        if (storageRTCM1005->callbackPointerPtr != nullptr)                   // If the pointer to the callback has been defined
+          storageRTCM1005->callbackPointerPtr(storageRTCM1005->callbackData); // Call the callback
+        storageRTCM1005->automaticFlags.flags.bits.callbackDataValid = 0;     // Mark the data as stale
+      }
 
   checkCallbacksReentrant = false;
 }
@@ -15689,7 +15698,7 @@ bool DevUBLOXGNSS::initStorageNMEA()
   return (true);
 }
 
-// ***** RTCM Logging
+// ***** RTCM Auto Support
 
 #ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
 
@@ -15743,19 +15752,17 @@ void DevUBLOXGNSS::crc24q(uint8_t incoming, uint32_t *checksum)
   *checksum = crc & 0xFFFFFF;
 }
 
-#endif
-
 // Return the most recent RTCM 1005: 0 = no data, 1 = stale data, 2 = fresh data
 uint8_t DevUBLOXGNSS::getLatestRTCM1005(RTCM_1005_data_t *data)
 {
   if (!initStorageRTCM())
     return 0;
-  if (storageRTCM1005 == nullptr)
-    initStorageRTCM1005();        // Check that RAM has been allocated for the message
-  if (storageRTCM1005 == nullptr) // Bail if the RAM allocation failed
+  if (!initStorageRTCM1005())
     return 0;
 
   checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
+
+  memcpy(data, &storageRTCM1005->data, sizeof(RTCM_1005_data_t)); // Copy the complete copy
 
   uint8_t result = 0;
   if (storageRTCM1005->automaticFlags.flags.bits.dataValid == 1) // Is the copy valid?
@@ -15775,10 +15782,8 @@ bool DevUBLOXGNSS::setRTCM1005callbackPtr(void (*callbackPointerPtr)(RTCM_1005_d
 {
   if (!initStorageRTCM())
     return false;
-  if (storageRTCM1005 == nullptr)
-    initStorageRTCM1005();        // Check that RAM has been allocated for the message
-  if (storageRTCM1005 == nullptr) // Bail if the RAM allocation failed
-    return (false);
+  if (!initStorageRTCM1005())
+    return false;
 
   if (storageRTCM1005->callbackData == nullptr) // Check if RAM has been allocated for the callback copy
   {
@@ -15821,6 +15826,8 @@ bool DevUBLOXGNSS::initStorageRTCM1005()
 
   return (true);
 }
+
+#endif
 
 // ***** CFG RATE Helper Functions
 
@@ -17404,7 +17411,6 @@ sfe_ublox_antenna_status_e DevUBLOXGNSS::getAntennaStatus(uint16_t maxWait)
   return ((sfe_ublox_antenna_status_e)packetUBXMONHW->data.aStatus);
 }
 
-
 #ifndef SFE_UBLOX_DISABLE_ESF
 // ***** ESF Helper Functions
 
@@ -17677,71 +17683,80 @@ double DevUBLOXGNSS::extractDouble(ubxPacket *msg, uint16_t spotToStart)
   return (converter.dbl);
 }
 
-// Given a pointer, extract an unsigned integer, starting at bit start with width
-uint16_t DevUBLOXGNSS::extractUnsignedBits16(uint8_t *ptr, uint16_t start, uint16_t width)
+// Given a pointer, extract an unsigned integer with width bits, starting at bit start
+uint64_t DevUBLOXGNSS::extractUnsignedBits(uint8_t *ptr, uint16_t start, uint16_t width)
 {
-  uint16_t result = 0;
+  uint64_t result = 0;
   uint16_t count = 0;
   uint8_t bitMask = 0x80;
+
+  // Skip whole bytes (8 bits)
+  ptr += start / 8;
+  count += (start / 8) * 8;
 
   // Loop until we reach the start bit
   while (count < start)
   {
-    bitMask >> 1; // Shift the bit mask
-    count++; // Increment the count
+    bitMask >>= 1; // Shift the bit mask
+    count++;       // Increment the count
+
     if (bitMask == 0) // Have we counted 8 bits?
     {
-      ptr++; // Point to the next byte
+      ptr++;          // Point to the next byte
       bitMask = 0x80; // Reset the bit mask
     }
   }
 
   // We have reached the start bit and ptr is pointing at the correct byte
-  // Now extract width bytes, incrementing ptr and shifting bitMask as we go
+  // Now extract width bits, incrementing ptr and shifting bitMask as we go
   while (count < (start + width))
   {
     if (*ptr & bitMask) // Is the bit set?
-      result |= 1; // Set the corresponding bit in result
+      result |= 1;      // Set the corresponding bit in result
 
-    bitMask >> 1; // Shift the bit mask
-    count++; // Increment the count
+    bitMask >>= 1; // Shift the bit mask
+    count++;       // Increment the count
 
     if (bitMask == 0) // Have we counted 8 bits?
     {
-      ptr++; // Point to the next byte
+      ptr++;          // Point to the next byte
       bitMask = 0x80; // Reset the bit mask
     }
 
     if (count < (start + width)) // Do we need to shift result?
-      result <<= 1; // Shift the result
+      result <<= 1;              // Shift the result
   }
 
   return result;
 }
 
-// Given a pointer, extract a signed integer, starting at bit start with width
-int64_t DevUBLOXGNSS::extractSignedBits64(uint8_t *ptr, uint16_t start, uint16_t width)
+// Given a pointer, extract an signed integer with width bits, starting at bit start
+int64_t DevUBLOXGNSS::extractSignedBits(uint8_t *ptr, uint16_t start, uint16_t width)
 {
 
   unsignedSigned64 result;
   result.unsigned64 = 0;
 
-  unsignedSigned64 twosComplement;
-  twosComplement.unsigned64 = 0xFFFFFFFFFFFFFFFF;
+  uint64_t twosComplement = 0xFFFFFFFFFFFFFFFF;
 
   bool isNegative;
 
   uint16_t count = 0;
   uint8_t bitMask = 0x80;
 
+  // Skip whole bytes (8 bits)
+  ptr += start / 8;
+  count += (start / 8) * 8;
+
   // Loop until we reach the start bit
   while (count < start)
   {
-    bitMask >> 1; // Shift the bit mask
-    count++; // Increment the count
+    bitMask >>= 1; // Shift the bit mask
+    count++;       // Increment the count
+
     if (bitMask == 0) // Have we counted 8 bits?
     {
-      ptr++; // Point to the next byte
+      ptr++;          // Point to the next byte
       bitMask = 0x80; // Reset the bit mask
     }
   }
@@ -17749,31 +17764,29 @@ int64_t DevUBLOXGNSS::extractSignedBits64(uint8_t *ptr, uint16_t start, uint16_t
   isNegative = *ptr & bitMask; // Record the first bit - indicates in the number is negative
 
   // We have reached the start bit and ptr is pointing at the correct byte
-  // Now extract width bytes, incrementing ptr and shifting bitMask as we go
+  // Now extract width bits, incrementing ptr and shifting bitMask as we go
   while (count < (start + width))
   {
-    if (*ptr & bitMask) // Is the bit set?
+    if (*ptr & bitMask)       // Is the bit set?
       result.unsigned64 |= 1; // Set the corresponding bit in result
 
-    bitMask >> 1; // Shift the bit mask
-    count++; // Increment the count
-    twosComplement.unsigned64 <<= 1; // Shift the two's complement mask
+    bitMask >>= 1;        // Shift the bit mask
+    count++;              // Increment the count
+    twosComplement <<= 1; // Shift the two's complement mask (clear LSB)
 
     if (bitMask == 0) // Have we counted 8 bits?
     {
-      ptr++; // Point to the next byte
+      ptr++;          // Point to the next byte
       bitMask = 0x80; // Reset the bit mask
     }
 
     if (count < (start + width)) // Do we need to shift result?
-      result.unsigned64 <<= 1; // Shift the result
+      result.unsigned64 <<= 1;   // Shift the result
   }
 
   // Handle negative number
   if (isNegative)
-    result.unsigned64 |= twosComplement.unsigned64; // OR in the two's complement mask
+    result.unsigned64 |= twosComplement; // OR in the two's complement mask
 
   return result.signed64;
 }
-
-

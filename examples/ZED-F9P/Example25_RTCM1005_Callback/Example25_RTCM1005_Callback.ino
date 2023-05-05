@@ -1,17 +1,12 @@
 /*
-  Get the RTCM 1005 sentence using getLatestRTCM1005
+  Get the RTCM 1005 sentence using a callback
   By: Paul Clark
   SparkFun Electronics
   Date: May 4th, 2023
   License: MIT. See license file for more information.
 
   This example shows how to perform a survey-in and then enable RTCM sentences over I2C.
-  It then demonstrates how to use the new getLatestRTCM1005 function to retrieve the latest RTCM 1005 message.
-  getLatestRTCM1005 returns immediately - it is not blocking.
-  It returns:
-    0 if no data is available
-    1 if the data is valid but is stale (you have read it before)
-    2 if the data is valid and fresh
+  It then demonstrates how to use a callback to retrieve the latest RTCM 1005 message.
 
   Feel like supporting open source hardware?
   Buy a board from SparkFun!
@@ -28,6 +23,40 @@
 
 #include <SparkFun_u-blox_GNSS_v3.h> //Click here to get the library: http://librarymanager/All#SparkFun_u-blox_GNSS_v3
 SFE_UBLOX_GNSS myGNSS;
+
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// Callback: newRTCM1005 will be called when new RTCM 1005 data arrives
+// See u-blox_structs.h for the full definition of RTCM_1005_data_t
+//         _____  You can use any name you like for the callback. Use the same name when you call setRTCM1005callbackPtr
+//        /             _____  This _must_ be RTCM_1005_data_t
+//        |            /                _____ You can use any name you like for the struct
+//        |            |               /
+//        |            |               |
+void newRTCM1005(RTCM_1005_data_t *rtcmStruct)
+{
+  Serial.println();
+
+  double x = rtcmStruct->AntennaReferencePointECEFX;
+  x /= 10000.0; // Convert to m
+  double y = rtcmStruct->AntennaReferencePointECEFY;
+  y /= 10000.0; // Convert to m
+  double z = rtcmStruct->AntennaReferencePointECEFZ;
+  z /= 10000.0; // Convert to m
+
+  Serial.print(F("New RTCM "));
+  Serial.print(rtcmStruct->MessageNumber);
+  Serial.print(F(" data:  ARP ECEF-X: "));
+  Serial.print(x, 4); // 4 decimal places
+  Serial.print(F("  Y: "));
+  Serial.print(y, 4); // 4 decimal places
+  Serial.print(F("  Z: "));
+  Serial.print(z, 4); // 4 decimal places
+
+  Serial.println();
+}
+
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 void setup()
 {
@@ -154,6 +183,8 @@ void setup()
 
   //myGNSS.setRTCMOutputPort(Serial); // Uncomment this line to echo all RTCM data to Serial for debugging
 
+  myGNSS.setRTCM1005callbackPtr(&newRTCM1005); //Set up the callback
+
   if (sizeof(double) != 8) // Check double is 64-bit
     Serial.println(F("double is not 64-bit. ECEF resolution may be limited!"));
 }
@@ -162,37 +193,9 @@ void setup()
 
 void loop()
 {
-  // getLatestRTCM1005 calls checkUblox for us. We don't need to do it here
+  myGNSS.checkUblox(); // Check for the arrival of new data and process it.
+  myGNSS.checkCallbacks(); // Check if any callbacks are waiting to be processed.
 
-  RTCM_1005_data_t data; // Storage for the RTCM 1005 data
-  uint8_t result = myGNSS.getLatestRTCM1005(&data); // Get the latest RTCM 1005 data (if any)
-  
-  if (result == 0)
-  {
-    Serial.println(F("No RTCM 1005 data available"));
-  }
-  else if (result == 1)
-  {
-    Serial.println(F("RTCM 1005 data is available but is stale"));
-  }
-  else // if (result == 2)
-  {
-    double x = data.AntennaReferencePointECEFX;
-    x /= 10000.0; // Convert to m
-    double y = data.AntennaReferencePointECEFY;
-    y /= 10000.0; // Convert to m
-    double z = data.AntennaReferencePointECEFZ;
-    z /= 10000.0; // Convert to m
-
-    Serial.print(F("Latest RTCM "));
-    Serial.print(data.MessageNumber);
-    Serial.print(F(":  ARP ECEF-X: "));
-    Serial.print(x, 4); // 4 decimal places
-    Serial.print(F("  Y: "));
-    Serial.print(y, 4); // 4 decimal places
-    Serial.print(F("  Z: "));
-    Serial.println(z, 4); // 4 decimal places
-  }
-
-  delay(250);
+  Serial.print(".");
+  delay(50);
 }

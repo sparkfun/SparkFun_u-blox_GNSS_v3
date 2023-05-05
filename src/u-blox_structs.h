@@ -2787,7 +2787,7 @@ const uint16_t RTCM_1005_MSG_LEN_BYTES = 19;
 
 typedef struct
 {
-  uint16_t MessageNumber; // Message Number (“1005”= 0x3ED)
+  uint16_t MessageNumber; // Message Number (“1005” = 0x3ED)
   uint16_t ReferenceStationID; // Reference Station ID
   uint8_t ITRFRealizationYear; // ITRF Realization Year
   bool GPSIndicator; // GPS Indicator
