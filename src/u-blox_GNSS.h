@@ -959,14 +959,14 @@ public:
   void flushTIMTP();                                                                                                                                             // Mark all the data as read/stale
   void logTIMTP(bool enabled = true);                                                                                                                            // Log data to file buffer
 
-  bool getMONHW(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // MON HW
-  bool setAutoMONHW(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic MON HW reports at the navigation frequency
-  bool setAutoMONHW(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic MON HW reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
-  bool setAutoMONHWrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic MON HW reports
+  bool getMONHW(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                    // MON HW
+  bool setAutoMONHW(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                               // Enable/disable automatic MON HW reports at the navigation frequency
+  bool setAutoMONHW(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                          // Enable/disable automatic MON HW reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
+  bool setAutoMONHWrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);               // Set the rate for automatic MON HW reports
   bool setAutoMONHWcallbackPtr(void (*callbackPointerPtr)(UBX_MON_HW_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic MON HW reports at the navigation frequency. Data is accessed from the callback.
-  bool assumeAutoMONHW(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and MON HW is send cyclically already
-  void flushMONHW();                                                                                                                                              // Mark all the data as read/stale
-  void logMONHW(bool enabled = true);                                                                                                                             // Log data to file buffer
+  bool assumeAutoMONHW(bool enabled, bool implicitUpdate = true);                                                                                                // In case no config access to the GPS is possible and MON HW is send cyclically already
+  void flushMONHW();                                                                                                                                             // Mark all the data as read/stale
+  void logMONHW(bool enabled = true);                                                                                                                            // Log data to file buffer
 
 #ifndef SFE_UBLOX_DISABLE_ESF
   // Sensor fusion (dead reckoning) (ESF)
@@ -1196,7 +1196,7 @@ public:
   // Helper function for hardware status (including jamming)
 
   bool getHWstatus(UBX_MON_HW_data_t *data = nullptr, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the hardware status using UBX_MON_HW
-  sfe_ublox_antenna_status_e getAntennaStatus(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the antenna status (aStatus) using UBX_MON_HW
+  sfe_ublox_antenna_status_e getAntennaStatus(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);         // Get the antenna status (aStatus) using UBX_MON_HW
 
 #ifndef SFE_UBLOX_DISABLE_ESF
   // Helper functions for ESF
@@ -1254,8 +1254,13 @@ public:
   bool setNMEAGNZDAcallbackPtr(void (*callbackPointerPtr)(NMEA_ZDA_data_t *)); // Enable a callback on the arrival of a GNZDA message
 #endif
 
-  // Helper functions for RTCM logging
+  // RTCM
+
 #ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
+  uint8_t getLatestRTCM1005(RTCM_1005_data_t *data);                           // Return the most recent RTCM 1005: 0 = no data, 1 = stale data, 2 = fresh data
+  bool setRTCM1005callbackPtr(void (*callbackPointerPtr)(RTCM_1005_data_t *)); // Configure a callback for the RTCM 1005 Message
+
+  // Helper functions for RTCM logging
   bool setRTCMLoggingMask(uint32_t messages = SFE_UBLOX_FILTER_RTCM_ALL); // Add selected RTCM messages to file buffer - if enabled. Default to adding ALL messages to the file buffer
   uint32_t getRTCMLoggingMask();                                          // Return which RTCM messages are selected for logging to the file buffer - if enabled
 #endif
@@ -1275,6 +1280,10 @@ public:
   int8_t extractSignedChar(ubxPacket *msg, uint16_t spotToStart); // Get signed 8-bit value from payload
   float extractFloat(ubxPacket *msg, uint16_t spotToStart);       // Get signed 32-bit float (R4) from payload
   double extractDouble(ubxPacket *msg, uint16_t spotToStart);     // Get signed 64-bit double (R8) from payload
+
+  // Functions to help extract RTCM bit fields
+  uint64_t extractUnsignedBits(uint8_t *ptr, uint16_t start, uint16_t width);
+  int64_t extractSignedBits(uint8_t *ptr, uint16_t start, uint16_t width);
 
   // Pointers to storage for the "automatic" messages
   // RAM is allocated for these if/when required.
@@ -1312,7 +1321,7 @@ public:
   UBX_TIM_TM2_t *packetUBXTIMTM2 = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
   UBX_TIM_TP_t *packetUBXTIMTP = nullptr;   // Pointer to struct. RAM will be allocated for this if/when necessary
 
-  UBX_MON_HW_t *packetUBXMONHW = nullptr;   // Pointer to struct. RAM will be allocated for this if/when necessary
+  UBX_MON_HW_t *packetUBXMONHW = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
 
 #ifndef SFE_UBLOX_DISABLE_ESF
   UBX_ESF_ALG_t *packetUBXESFALG = nullptr;       // Pointer to struct. RAM will be allocated for this if/when necessary
@@ -1341,6 +1350,8 @@ public:
   NMEA_GPZDA_t *storageNMEAGPZDA = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
   NMEA_GNZDA_t *storageNMEAGNZDA = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
 #endif
+
+  RTCM_1005_t *storageRTCM1005 = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
 
   uint16_t rtcmFrameCounter = 0; // Tracks the type of incoming byte inside RTCM frame
 
@@ -1418,6 +1429,8 @@ protected:
 
   bool initStorageRTCM(); // Allocate RAM for incoming RTCM messages and initialize it
   bool initStorageNMEA(); // Allocate RAM for incoming non-Auto NMEA messages and initialize it
+
+  bool initStorageRTCM1005(); // Allocate RAM for incoming RTCM 1005 messages and initialize it
 
   // Variables
   SparkFun_UBLOX_GNSS::GNSSDeviceBus *_sfeBus;

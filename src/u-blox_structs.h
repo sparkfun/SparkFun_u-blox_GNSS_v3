@@ -2757,6 +2757,21 @@ typedef struct
 
 // RTCM-specific structs
 
+// Additional flags and pointers that need to be stored with each message type
+struct rtcmAutomaticFlags
+{
+  union
+  {
+    uint8_t all;
+    struct
+    {
+      uint8_t dataValid : 1; // Is the copy of the data used by the get function valid/fresh? 0 = invalid, 1 = valid
+      uint8_t dataRead : 1;  // Has the data been read? 0 = unread, 1 = read
+      uint8_t callbackDataValid : 1; // Is the copy of the data used by the callback valid/fresh? 0 = invalid/stale, 1 = valid/fresh
+    } bits;
+  } flags;
+};
+
 // Maximum length of an RTCM message: 1023
 #define SFE_UBLOX_MAX_RTCM_MSG_LEN 1023
 
@@ -2766,3 +2781,32 @@ typedef struct
   uint32_t rollingChecksum;
   uint8_t dataMessage[3 + SFE_UBLOX_MAX_RTCM_MSG_LEN + 3]; // Add extra bytes to hold the preamble, length and CRC
 } RTCM_FRAME_t;
+
+// RTCM 1005 Message (0x3ED): Stationary Antenna Reference Point, No Height Information
+const uint16_t RTCM_1005_MSG_LEN_BYTES = 19;
+
+typedef struct
+{
+  uint16_t MessageNumber; // Message Number (“1005” = 0x3ED)
+  uint16_t ReferenceStationID; // Reference Station ID
+  uint8_t ITRFRealizationYear; // ITRF Realization Year
+  bool GPSIndicator; // GPS Indicator
+  bool GLONASSIndicator; // GLONASS Indicator
+  bool GalileoIndicator; // Galileo Indicator
+  bool ReferenceStationIndicator; // Reference-Station Indicator
+  int64_t AntennaReferencePointECEFX; // Antenna Reference Point ECEF-X
+  bool SingleReceiverOscillatorIndicator; // Single Receiver Oscillator Indicator
+  bool Reserved; // Reserved
+  int64_t AntennaReferencePointECEFY; // Antenna Reference Point ECEF-Y
+  uint8_t QuarterCycleIndicator; // Quarter Cycle Indicator
+  int64_t AntennaReferencePointECEFZ; // Antenna Reference Point ECEF-Z
+} RTCM_1005_data_t;
+
+typedef struct
+{
+  rtcmAutomaticFlags automaticFlags;
+  RTCM_1005_data_t data;
+  void (*callbackPointerPtr)(RTCM_1005_data_t *);
+  RTCM_1005_data_t *callbackData;
+} RTCM_1005_t;
+

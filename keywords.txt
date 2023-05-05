@@ -82,6 +82,8 @@ NMEA_VTG_data_t	KEYWORD1
 NMEA_RMC_data_t	KEYWORD1
 NMEA_ZDA_data_t	KEYWORD1
 
+RTCM_1005_data_t	KEYWORD1
+
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
@@ -720,6 +722,9 @@ setRTCMLoggingMask	KEYWORD2
 getRTCMLoggingMask	KEYWORD2
 crc24q	KEYWORD2
 
+getLatestRTCM1005	KEYWORD2
+setRTCM1005callbackPtr	KEYWORD2
+
 enableUBXlogging	KEYWORD2
 
 setMainTalkerID	KEYWORD2
@@ -755,6 +760,8 @@ extractByte	KEYWORD2
 extractSignedChar	KEYWORD2
 extractFloat	KEYWORD2
 extractDouble	KEYWORD2
+extractUnsignedBits	KEYWORD2
+extractSignedBits	KEYWORD2
 
 
 #######################################
