@@ -230,6 +230,54 @@ void loop()
 
   //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+  // Check if the library has been able to extract the Antenna Reference Position from an RTCM 1005 message
+
+  RTCM_1005_data_t rtcmData1005;
+
+  if (myGNSS.getLatestRTCM1005Input(&rtcmData1005) == 2) // RTCM 1005 data received? 0 = no data, 1 = stale data, 2 = fresh data
+  {
+    double x = rtcmData1005.AntennaReferencePointECEFX;
+    x /= 10000.0; // Convert to m
+    double y = rtcmData1005.AntennaReferencePointECEFY;
+    y /= 10000.0; // Convert to m
+    double z = rtcmData1005.AntennaReferencePointECEFZ;
+    z /= 10000.0; // Convert to m
+
+    Serial.print(F("NTRIP Server RTCM 1005:  ARP ECEF-X: "));
+    Serial.print(x, 4); // 4 decimal places
+    Serial.print(F("  Y: "));
+    Serial.print(y, 4); // 4 decimal places
+    Serial.print(F("  Z: "));
+    Serial.println(z, 4); // 4 decimal places
+  }
+
+  // Check if the library has been able to extract the Antenna Reference Position from an RTCM 1006 message
+
+  RTCM_1006_data_t rtcmData1006;
+
+  if (myGNSS.getLatestRTCM1006Input(&rtcmData1006) == 2) // RTCM 1006 data received? 0 = no data, 1 = stale data, 2 = fresh data
+  {
+    double x = rtcmData1006.AntennaReferencePointECEFX;
+    x /= 10000.0; // Convert to m
+    double y = rtcmData1006.AntennaReferencePointECEFY;
+    y /= 10000.0; // Convert to m
+    double z = rtcmData1006.AntennaReferencePointECEFZ;
+    z /= 10000.0; // Convert to m
+    double h = rtcmData1006.AntennaHeight;
+    h /= 10000.0; // Convert to m
+
+    Serial.print(F("NTRIP Server RTCM 1006:  ARP ECEF-X: "));
+    Serial.print(x, 4); // 4 decimal places
+    Serial.print(F("  Y: "));
+    Serial.print(y, 4); // 4 decimal places
+    Serial.print(F("  Z: "));
+    Serial.print(z, 4); // 4 decimal places
+    Serial.print(F("  Height: "));
+    Serial.println(h, 4); // 4 decimal places
+  }
+
+  //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
   switch (state)
   {
     case open_connection:
