@@ -144,6 +144,62 @@ void printPVTdata(UBX_NAV_PVT_data_t *ubxDataStruct)
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+// Callback: printRTCMdata1005 will be called when new RTCM 1005 data has been parsed from pushRawData
+// See u-blox_structs.h for the full definition of RTCM_1005_data_t
+//         _____  You can use any name you like for the callback. Use the same name when you call setRTCM1005InputcallbackPtr
+//        /                 _____  This _must_ be RTCM_1005_data_t
+//        |                /                   _____ You can use any name you like for the struct
+//        |                |                  /
+//        |                |                  |
+void printRTCMdata1005(RTCM_1005_data_t *rtcmData1005)
+{
+  double x = rtcmData1005->AntennaReferencePointECEFX;
+  x /= 10000.0; // Convert to m
+  double y = rtcmData1005->AntennaReferencePointECEFY;
+  y /= 10000.0; // Convert to m
+  double z = rtcmData1005->AntennaReferencePointECEFZ;
+  z /= 10000.0; // Convert to m
+
+  Serial.print(F("NTRIP Server RTCM 1005:  ARP ECEF-X: "));
+  Serial.print(x, 4); // 4 decimal places
+  Serial.print(F("  Y: "));
+  Serial.print(y, 4); // 4 decimal places
+  Serial.print(F("  Z: "));
+  Serial.println(z, 4); // 4 decimal places
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+// Callback: printRTCMdata1006 will be called when new RTCM 1006 data has been parsed from pushRawData
+// See u-blox_structs.h for the full definition of RTCM_1006_data_t
+//         _____  You can use any name you like for the callback. Use the same name when you call setRTCM1006InputcallbackPtr
+//        /                 _____  This _must_ be RTCM_1006_data_t
+//        |                /                   _____ You can use any name you like for the struct
+//        |                |                  /
+//        |                |                  |
+void printRTCMdata1006(RTCM_1006_data_t *rtcmData1006)
+{
+  double x = rtcmData1006->AntennaReferencePointECEFX;
+  x /= 10000.0; // Convert to m
+  double y = rtcmData1006->AntennaReferencePointECEFY;
+  y /= 10000.0; // Convert to m
+  double z = rtcmData1006->AntennaReferencePointECEFZ;
+  z /= 10000.0; // Convert to m
+  double h = rtcmData1006->AntennaHeight;
+  h /= 10000.0; // Convert to m
+
+  Serial.print(F("NTRIP Server RTCM 1006:  ARP ECEF-X: "));
+  Serial.print(x, 4); // 4 decimal places
+  Serial.print(F("  Y: "));
+  Serial.print(y, 4); // 4 decimal places
+  Serial.print(F("  Z: "));
+  Serial.print(z, 4); // 4 decimal places
+  Serial.print(F("  Height: "));
+  Serial.println(h, 4); // 4 decimal places
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 void setup()
 {
   delay(1000);
@@ -175,6 +231,9 @@ void setup()
   myGNSS.setVal8(UBLOX_CFG_MSGOUT_NMEA_ID_GGA_I2C, 10); // Tell the module to output GGA every 10 seconds
 
   myGNSS.setAutoPVTcallbackPtr(&printPVTdata); // Enable automatic NAV PVT messages with callback to printPVTdata so we can watch the carrier solution go to fixed
+
+  myGNSS.setRTCM1005InputcallbackPtr(&printRTCMdata1005); // Set up a callback to print the RTCM 1005 Antenna Reference Position from the correction data
+  myGNSS.setRTCM1006InputcallbackPtr(&printRTCMdata1006); // Set up a callback to print the RTCM 1006 Antenna Reference Position from the correction data
 
   //myGNSS.saveConfiguration(VAL_CFG_SUBSEC_IOPORT | VAL_CFG_SUBSEC_MSGCONF); //Optional: Save the ioPort and message settings to NVM
 
@@ -227,54 +286,6 @@ void loop()
     waiting_for_keypress
   };
   static states state = open_connection;
-
-  //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-  // Check if the library has been able to extract the Antenna Reference Position from an RTCM 1005 message
-
-  RTCM_1005_data_t rtcmData1005;
-
-  if (myGNSS.getLatestRTCM1005Input(&rtcmData1005) == 2) // RTCM 1005 data received? 0 = no data, 1 = stale data, 2 = fresh data
-  {
-    double x = rtcmData1005.AntennaReferencePointECEFX;
-    x /= 10000.0; // Convert to m
-    double y = rtcmData1005.AntennaReferencePointECEFY;
-    y /= 10000.0; // Convert to m
-    double z = rtcmData1005.AntennaReferencePointECEFZ;
-    z /= 10000.0; // Convert to m
-
-    Serial.print(F("NTRIP Server RTCM 1005:  ARP ECEF-X: "));
-    Serial.print(x, 4); // 4 decimal places
-    Serial.print(F("  Y: "));
-    Serial.print(y, 4); // 4 decimal places
-    Serial.print(F("  Z: "));
-    Serial.println(z, 4); // 4 decimal places
-  }
-
-  // Check if the library has been able to extract the Antenna Reference Position from an RTCM 1006 message
-
-  RTCM_1006_data_t rtcmData1006;
-
-  if (myGNSS.getLatestRTCM1006Input(&rtcmData1006) == 2) // RTCM 1006 data received? 0 = no data, 1 = stale data, 2 = fresh data
-  {
-    double x = rtcmData1006.AntennaReferencePointECEFX;
-    x /= 10000.0; // Convert to m
-    double y = rtcmData1006.AntennaReferencePointECEFY;
-    y /= 10000.0; // Convert to m
-    double z = rtcmData1006.AntennaReferencePointECEFZ;
-    z /= 10000.0; // Convert to m
-    double h = rtcmData1006.AntennaHeight;
-    h /= 10000.0; // Convert to m
-
-    Serial.print(F("NTRIP Server RTCM 1006:  ARP ECEF-X: "));
-    Serial.print(x, 4); // 4 decimal places
-    Serial.print(F("  Y: "));
-    Serial.print(y, 4); // 4 decimal places
-    Serial.print(F("  Z: "));
-    Serial.print(z, 4); // 4 decimal places
-    Serial.print(F("  Height: "));
-    Serial.println(h, 4); // 4 decimal places
-  }
 
   //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
