@@ -65,7 +65,7 @@ DevUBLOXGNSS::DevUBLOXGNSS(void)
   _logRTCM.all = 0;                             // Default to passing no RTCM messages to the file buffer
 
 #ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
-  rtcmInputStorage.flags.all = 0;               // Clear the RTCM Input flags
+  rtcmInputStorage.init();
 #endif
 }
 
@@ -6048,6 +6048,22 @@ void DevUBLOXGNSS::checkCallbacks(void)
         storageRTCM1005->automaticFlags.flags.bits.callbackDataValid = 0;     // Mark the data as stale
       }
 
+  if (rtcmInputStorage.rtcm1005CallbackPointer != nullptr) // If the pointer to the callback has been defined
+    if (rtcmInputStorage.flags.bits.dataValid1005 == 1)    // If the copy of the data is valid
+      if (rtcmInputStorage.flags.bits.dataRead1005 == 0)   // If the data has not been read
+      {
+        rtcmInputStorage.rtcm1005CallbackPointer(&rtcmInputStorage.rtcm1005); // Call the callback
+        rtcmInputStorage.flags.bits.dataRead1005 = 1;                         // Mark the data as read
+      }
+
+  if (rtcmInputStorage.rtcm1006CallbackPointer != nullptr) // If the pointer to the callback has been defined
+    if (rtcmInputStorage.flags.bits.dataValid1006 == 1)    // If the copy of the data is valid
+      if (rtcmInputStorage.flags.bits.dataRead1006 == 0)   // If the data has not been read
+      {
+        rtcmInputStorage.rtcm1006CallbackPointer(&rtcmInputStorage.rtcm1006); // Call the callback
+        rtcmInputStorage.flags.bits.dataRead1006 = 1;                         // Mark the data as read
+      }
+
   checkCallbacksReentrant = false;
 }
 
@@ -7421,7 +7437,8 @@ void DevUBLOXGNSS::parseRTCM1005(uint8_t *dataBytes, size_t numDataBytes)
   static uint8_t rtcm1005store[RTCM_1005_MSG_LEN_BYTES + 6];
   static uint8_t bytesStored;
 
-  enum parse1005states {
+  enum parse1005states
+  {
     waitingForD3,
     expecting00,
     expecting13,
@@ -7435,77 +7452,77 @@ void DevUBLOXGNSS::parseRTCM1005(uint8_t *dataBytes, size_t numDataBytes)
   {
     switch (parse1005state)
     {
-      case waitingForD3:
-        if (*(dataBytes + i) == 0xD3)
-        {
-          rtcm1005store[0] = 0xD3;
-          parse1005state = expecting00;
-        }
-        break;
-      case expecting00:
-        if (*(dataBytes + i) == 0x00)
-        {
-          rtcm1005store[1] = 0x00;
-          parse1005state = expecting13;
-        }
-        else
-        {
-          parse1005state = waitingForD3;
-        }
-        break;
-      case expecting13:
-        if (*(dataBytes + i) == 0x13)
-        {
-          rtcm1005store[2] = 0x13;
-          parse1005state = expecting3E;
-        }
-        else
-        {
-          parse1005state = waitingForD3;
-        }
-        break;
-      case expecting3E:
-        if (*(dataBytes + i) == 0x3E)
-        {
-          rtcm1005store[3] = 0x3E;
-          parse1005state = expectingDn;
-        }
-        else
-        {
-          parse1005state = waitingForD3;
-        }
-        break;
-      case expectingDn:
-        if (((*(dataBytes + i)) & 0xF0) == 0xD0)
-        {
-          rtcm1005store[4] = *(dataBytes + i);
-          parse1005state = storingBytes;
-          bytesStored = 5;
-        }
-        else
-        {
-          parse1005state = waitingForD3;
-        }
-        break;
-      case storingBytes:
-        rtcm1005store[bytesStored++] = *(dataBytes + i);
-        if (bytesStored == RTCM_1005_MSG_LEN_BYTES + 6) // All data received?
-        {
-          parse1005state = waitingForD3;
-          uint32_t checksum = 0;
-          for (size_t j = 0; j < (RTCM_1005_MSG_LEN_BYTES + 3); j++)
-            crc24q(rtcm1005store[j], &checksum);
-          if (rtcm1005store[RTCM_1005_MSG_LEN_BYTES + 3] == ((checksum >> 16) & 0xFF)) // Check the checksum
-            if (rtcm1005store[RTCM_1005_MSG_LEN_BYTES + 4] == ((checksum >> 8) & 0xFF))
-              if (rtcm1005store[RTCM_1005_MSG_LEN_BYTES + 5] == (checksum & 0xFF))
-              {
-                extractRTCM1005(&rtcmInputStorage.rtcm1005, &rtcm1005store[3]);
-                rtcmInputStorage.flags.bits.dataValid1005 = 1;
-                rtcmInputStorage.flags.bits.dataRead1005 = 0;
-                return; // Return now - to avoid processing the remainder of the data
-              }
-        }
-        break;
+    case waitingForD3:
+      if (*(dataBytes + i) == 0xD3)
+      {
+        rtcm1005store[0] = 0xD3;
+        parse1005state = expecting00;
+      }
+      break;
+    case expecting00:
+      if (*(dataBytes + i) == 0x00)
+      {
+        rtcm1005store[1] = 0x00;
+        parse1005state = expecting13;
+      }
+      else
+      {
+        parse1005state = waitingForD3;
+      }
+      break;
+    case expecting13:
+      if (*(dataBytes + i) == 0x13)
+      {
+        rtcm1005store[2] = 0x13;
+        parse1005state = expecting3E;
+      }
+      else
+      {
+        parse1005state = waitingForD3;
+      }
+      break;
+    case expecting3E:
+      if (*(dataBytes + i) == 0x3E)
+      {
+        rtcm1005store[3] = 0x3E;
+        parse1005state = expectingDn;
+      }
+      else
+      {
+        parse1005state = waitingForD3;
+      }
+      break;
+    case expectingDn:
+      if (((*(dataBytes + i)) & 0xF0) == 0xD0)
+      {
+        rtcm1005store[4] = *(dataBytes + i);
+        parse1005state = storingBytes;
+        bytesStored = 5;
+      }
+      else
+      {
+        parse1005state = waitingForD3;
+      }
+      break;
+    case storingBytes:
+      rtcm1005store[bytesStored++] = *(dataBytes + i);
+      if (bytesStored == RTCM_1005_MSG_LEN_BYTES + 6) // All data received?
+      {
+        parse1005state = waitingForD3;
+        uint32_t checksum = 0;
+        for (size_t j = 0; j < (RTCM_1005_MSG_LEN_BYTES + 3); j++)
+          crc24q(rtcm1005store[j], &checksum);
+        if (rtcm1005store[RTCM_1005_MSG_LEN_BYTES + 3] == ((checksum >> 16) & 0xFF)) // Check the checksum
+          if (rtcm1005store[RTCM_1005_MSG_LEN_BYTES + 4] == ((checksum >> 8) & 0xFF))
+            if (rtcm1005store[RTCM_1005_MSG_LEN_BYTES + 5] == (checksum & 0xFF))
+            {
+              extractRTCM1005(&rtcmInputStorage.rtcm1005, &rtcm1005store[3]);
+              rtcmInputStorage.flags.bits.dataValid1005 = 1;
+              rtcmInputStorage.flags.bits.dataRead1005 = 0;
+              return; // Return now - to avoid processing the remainder of the data
+            }
+      }
+      break;
     }
   }
 }
@@ -7518,7 +7535,8 @@ void DevUBLOXGNSS::parseRTCM1006(uint8_t *dataBytes, size_t numDataBytes)
   static uint8_t rtcm1006store[RTCM_1006_MSG_LEN_BYTES + 6];
   static uint8_t bytesStored;
 
-  enum parse1006states {
+  enum parse1006states
+  {
     waitingForD3,
     expecting00,
     expecting15,
@@ -7532,78 +7550,78 @@ void DevUBLOXGNSS::parseRTCM1006(uint8_t *dataBytes, size_t numDataBytes)
   {
     switch (parse1006state)
     {
-      case waitingForD3:
-        if (*(dataBytes + i) == 0xD3)
-        {
-          rtcm1006store[0] = 0xD3;
-          parse1006state = expecting00;
-        }
-        break;
-      case expecting00:
-        if (*(dataBytes + i) == 0x00)
-        {
-          rtcm1006store[1] = 0x00;
-          parse1006state = expecting15;
-        }
-        else
-        {
-          parse1006state = waitingForD3;
-        }
-        break;
-      case expecting15:
-        if (*(dataBytes + i) == 0x15)
-        {
-          rtcm1006store[2] = 0x15;
-          parse1006state = expecting3E;
-        }
-        else
-        {
-          parse1006state = waitingForD3;
-        }
-        break;
-      case expecting3E:
-        if (*(dataBytes + i) == 0x3E)
-        {
-          rtcm1006store[3] = 0x3E;
-          parse1006state = expectingEn;
-        }
-        else
-        {
-          parse1006state = waitingForD3;
-        }
-        break;
-      case expectingEn:
-        if (((*(dataBytes + i)) & 0xF0) == 0xE0)
-        {
-          rtcm1006store[4] = *(dataBytes + i);
-          parse1006state = storingBytes;
-          bytesStored = 5;
-        }
-        else
-        {
-          parse1006state = waitingForD3;
-        }
-        break;
-      case storingBytes:
-        rtcm1006store[bytesStored++] = *(dataBytes + i);
-        if (bytesStored == RTCM_1006_MSG_LEN_BYTES + 6) // All data received?
-        {
-          parse1006state = waitingForD3;
-          uint32_t checksum = 0;
-          for (size_t j = 0; j < (RTCM_1006_MSG_LEN_BYTES + 3); j++)
-            crc24q(rtcm1006store[j], &checksum);
+    case waitingForD3:
+      if (*(dataBytes + i) == 0xD3)
+      {
+        rtcm1006store[0] = 0xD3;
+        parse1006state = expecting00;
+      }
+      break;
+    case expecting00:
+      if (*(dataBytes + i) == 0x00)
+      {
+        rtcm1006store[1] = 0x00;
+        parse1006state = expecting15;
+      }
+      else
+      {
+        parse1006state = waitingForD3;
+      }
+      break;
+    case expecting15:
+      if (*(dataBytes + i) == 0x15)
+      {
+        rtcm1006store[2] = 0x15;
+        parse1006state = expecting3E;
+      }
+      else
+      {
+        parse1006state = waitingForD3;
+      }
+      break;
+    case expecting3E:
+      if (*(dataBytes + i) == 0x3E)
+      {
+        rtcm1006store[3] = 0x3E;
+        parse1006state = expectingEn;
+      }
+      else
+      {
+        parse1006state = waitingForD3;
+      }
+      break;
+    case expectingEn:
+      if (((*(dataBytes + i)) & 0xF0) == 0xE0)
+      {
+        rtcm1006store[4] = *(dataBytes + i);
+        parse1006state = storingBytes;
+        bytesStored = 5;
+      }
+      else
+      {
+        parse1006state = waitingForD3;
+      }
+      break;
+    case storingBytes:
+      rtcm1006store[bytesStored++] = *(dataBytes + i);
+      if (bytesStored == RTCM_1006_MSG_LEN_BYTES + 6) // All data received?
+      {
+        parse1006state = waitingForD3;
+        uint32_t checksum = 0;
+        for (size_t j = 0; j < (RTCM_1006_MSG_LEN_BYTES + 3); j++)
+          crc24q(rtcm1006store[j], &checksum);
 
-          if (rtcm1006store[RTCM_1006_MSG_LEN_BYTES + 3] == ((checksum >> 16) & 0xFF)) // Check the checksum
-            if (rtcm1006store[RTCM_1006_MSG_LEN_BYTES + 4] == ((checksum >> 8) & 0xFF))
-              if (rtcm1006store[RTCM_1006_MSG_LEN_BYTES + 5] == (checksum & 0xFF))
-              {
-                extractRTCM1006(&rtcmInputStorage.rtcm1006, &rtcm1006store[3]);
-                rtcmInputStorage.flags.bits.dataValid1006 = 1;
-                rtcmInputStorage.flags.bits.dataRead1006 = 0;
-                return; // Return now - to avoid processing the remainder of the data
-              }
-        }
-        break;
+        if (rtcm1006store[RTCM_1006_MSG_LEN_BYTES + 3] == ((checksum >> 16) & 0xFF)) // Check the checksum
+          if (rtcm1006store[RTCM_1006_MSG_LEN_BYTES + 4] == ((checksum >> 8) & 0xFF))
+            if (rtcm1006store[RTCM_1006_MSG_LEN_BYTES + 5] == (checksum & 0xFF))
+            {
+              extractRTCM1006(&rtcmInputStorage.rtcm1006, &rtcm1006store[3]);
+              rtcmInputStorage.flags.bits.dataValid1006 = 1;
+              rtcmInputStorage.flags.bits.dataRead1006 = 0;
+              return; // Return now - to avoid processing the remainder of the data
+            }
+      }
+      break;
     }
   }
 }
@@ -16092,6 +16110,18 @@ uint8_t DevUBLOXGNSS::getLatestRTCM1006Input(RTCM_1006_data_t *data)
   }
 
   return result;
+}
+
+// Configure a callback for RTCM 1005 Input - from pushRawData
+void DevUBLOXGNSS::setRTCM1005InputcallbackPtr(void (*rtcm1005CallbackPointer)(RTCM_1005_data_t *))
+{
+  rtcmInputStorage.rtcm1005CallbackPointer = rtcm1005CallbackPointer;
+}
+
+// Configure a callback for RTCM 1006 Input - from pushRawData
+void DevUBLOXGNSS::setRTCM1006InputcallbackPtr(void (*rtcm1006CallbackPointer)(RTCM_1006_data_t *))
+{
+  rtcmInputStorage.rtcm1006CallbackPointer = rtcm1006CallbackPointer;
 }
 
 #endif

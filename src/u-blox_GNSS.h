@@ -271,6 +271,7 @@ public:
 protected:
   void parseRTCM1005(uint8_t *dataBytes, size_t numDataBytes);
   void parseRTCM1006(uint8_t *dataBytes, size_t numDataBytes);
+
 public:
 #endif
 
@@ -1267,8 +1268,10 @@ public:
   uint8_t getLatestRTCM1005(RTCM_1005_data_t *data);                           // Return the most recent RTCM 1005: 0 = no data, 1 = stale data, 2 = fresh data
   bool setRTCM1005callbackPtr(void (*callbackPointerPtr)(RTCM_1005_data_t *)); // Configure a callback for the RTCM 1005 Message
 
-  uint8_t getLatestRTCM1005Input(RTCM_1005_data_t *data); // Return the most recent RTCM 1005 Input, extracted from pushRawData: 0 = no data, 1 = stale data, 2 = fresh data
-  uint8_t getLatestRTCM1006Input(RTCM_1006_data_t *data); // Return the most recent RTCM 1006 Input, extracted from pushRawData: 0 = no data, 1 = stale data, 2 = fresh data
+  uint8_t getLatestRTCM1005Input(RTCM_1005_data_t *data);                                // Return the most recent RTCM 1005 Input, extracted from pushRawData: 0 = no data, 1 = stale data, 2 = fresh data
+  void setRTCM1005InputcallbackPtr(void (*rtcm1005CallbackPointer)(RTCM_1005_data_t *)); // Configure a callback for RTCM 1005 Input - from pushRawData
+  uint8_t getLatestRTCM1006Input(RTCM_1006_data_t *data);                                // Return the most recent RTCM 1006 Input, extracted from pushRawData: 0 = no data, 1 = stale data, 2 = fresh data
+  void setRTCM1006InputcallbackPtr(void (*rtcm1006CallbackPointer)(RTCM_1006_data_t *)); // Configure a callback for RTCM 1006 Input - from pushRawData
 
   void extractRTCM1005(RTCM_1005_data_t *destination, uint8_t *source); // Extract RTCM 1005 from source into destination
   void extractRTCM1006(RTCM_1006_data_t *destination, uint8_t *source); // Extract RTCM 1006 from source into destination
@@ -1367,10 +1370,13 @@ public:
   RTCM_1005_t *storageRTCM1005 = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
 
 #ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
-  struct {
-    union {
+  struct
+  {
+    union
+    {
       uint8_t all;
-      struct {
+      struct
+      {
         uint8_t dataValid1005 : 1;
         uint8_t dataRead1005 : 1;
         uint8_t dataValid1006 : 1;
@@ -1379,6 +1385,14 @@ public:
     } flags;
     RTCM_1005_data_t rtcm1005; // Latest RTCM 1005 parsed from pushRawData
     RTCM_1006_data_t rtcm1006; // Latest RTCM 1006 parsed from pushRawData
+    void (*rtcm1005CallbackPointer)(RTCM_1005_data_t *);
+    void (*rtcm1006CallbackPointer)(RTCM_1006_data_t *);
+    void init(void) // Initializer / constructor
+    {
+      flags.all = 0;                     // Clear the RTCM Input flags
+      rtcm1005CallbackPointer = nullptr; // Clear the callback pointers
+      rtcm1006CallbackPointer = nullptr;
+    }
   } rtcmInputStorage; // Latest RTCM parsed from pushRawData
 #endif
 
