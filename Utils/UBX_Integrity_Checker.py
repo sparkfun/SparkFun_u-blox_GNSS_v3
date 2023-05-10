@@ -1,11 +1,12 @@
 # Checks the integrity of u-blox binary files
 
 # Written by: Paul Clark
-# Last update: February 21st, 2023
+# Last update: May 10th, 2023
 
 # Reads a UBX file and checks the integrity of UBX, NMEA and RTCM data
 # Will rewind and re-sync if an error is found
 # Will create a repaired file if desired
+# Will print any GNTXT messages if desired
 
 # SparkFun code, firmware, and software is released under the MIT License (http://opensource.org/licenses/MIT)
 #
@@ -105,6 +106,13 @@ else:
         repairFilename = filename[:-4] + '.repair' + filename[-4:]
     else:
         repairFilename = filename + '.repair'
+
+# Ask user if GNTXT is to be printed
+response = input('Do you want to print any GNTXT messages found? (y/N): ') # Get the response
+if (response == '') or (response == 'N') or (response == 'n'):
+    printGNTXT = False
+else:
+    printGNTXT = True
 
 print()
 print('Processing',filename)
@@ -276,6 +284,9 @@ try:
                 nmea_char_4 = 0x30
                 nmea_char_5 = 0x30
                 message_start_byte = processed # Record the message start byte for resync reporting
+                nmea_string = None
+                if printGNTXT == True:
+                    nmea_string = '$'
             elif (c == 0xD3) and (containsRTCM == True): # Have we found 0xD3 if we were expecting one?
                 if (ubx_nmea_state == sync_lost):
                     print("RTCM 0xD3 found at byte "+str(processed))
@@ -377,12 +388,15 @@ try:
         # NMEA messages
         elif (ubx_nmea_state == looking_for_asterix):
             nmea_length = nmea_length + 1 # Increase the message length count
+            if nmea_string is not None:
+                nmea_string += chr(c)
             if (nmea_length > max_nmea_len): # If the length is greater than max_nmea_len, something bad must have happened (sync_lost)
                 print("Panic!! Excessive NMEA message length!")
                 print("Sync lost at byte "+str(processed)+". Attemting to re-sync")
                 sync_lost_at = processed
                 resync_in_progress = True
                 ubx_nmea_state = sync_lost
+                nmea_string = None
                 continue
             # If this is one of the first five characters, store it
             if (nmea_length <= 5):
@@ -400,6 +414,8 @@ try:
                     message_type = chr(nmea_char_1) + chr(nmea_char_2) + chr(nmea_char_3) + chr(nmea_char_4) + chr(nmea_char_5) # Record the message type
                     if (message_type == "PUBX,"): # Remove the comma from PUBX
                         message_type = "PUBX"
+                    if (message_type != "GNTXT"): # Reset nmea_string if this is not GNTXT
+                        nmea_string = None
             # Now check if this is an '*'
             if (c == 0x2A):
                 # Asterix received
@@ -420,6 +436,8 @@ try:
         elif (ubx_nmea_state == looking_for_csum1):
             # Store the first NMEA checksum character
             nmea_csum1 = c
+            if nmea_string is not None:
+                nmea_string += chr(c)
             ubx_nmea_state = looking_for_csum2
         elif (ubx_nmea_state == looking_for_csum2):
             # Store the second NMEA checksum character
@@ -432,8 +450,11 @@ try:
                 sync_lost_at = processed
                 resync_in_progress = True
                 ubx_nmea_state = sync_lost
+                nmea_string = None
             else:
                 # Checksum was valid so wait for the terminators
+                if nmea_string is not None:
+                    nmea_string += chr(c)
                 ubx_nmea_state = looking_for_term1
         elif (ubx_nmea_state == looking_for_term1):
             # Check if this is CR
@@ -443,7 +464,10 @@ try:
                 sync_lost_at = processed
                 resync_in_progress = True
                 ubx_nmea_state = sync_lost
+                nmea_string = None
             else:
+                if nmea_string is not None:
+                    nmea_string += chr(c)
                 ubx_nmea_state = looking_for_term2
         elif (ubx_nmea_state == looking_for_term2):
             # Check if this is LF
@@ -453,6 +477,7 @@ try:
                 sync_lost_at = processed
                 resync_in_progress = True
                 ubx_nmea_state = sync_lost
+                nmea_string = None
             else:
                 # Valid NMEA message was received. Check if we have seen this message type before
                 if message_type in messages:
@@ -461,6 +486,11 @@ try:
                     messages[message_type] = 1 # if we have not, set its count to 1
                 if (nmea_length > longest_NMEA): # Update the longest NMEA message length
                     longest_NMEA = nmea_length
+                # Print GNTXT
+                if nmea_string is not None and printGNTXT == True:
+                    nmea_string += chr(c)
+                    print(nmea_string)
+                    nmea_string = None
                 # LF was received so go back to looking for B5 or a $
                 ubx_nmea_state = looking_for_B5_dollar_D3
                 rewind_in_progress = False # Clear rewind_in_progress
