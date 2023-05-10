@@ -270,11 +270,13 @@ try:
             if (c == 0xB5): # Have we found Sync Char 1 (0xB5) if we were expecting one?
                 if (ubx_nmea_state == sync_lost):
                     print("UBX Sync Char 1 (0xB5) found at byte "+str(processed))
+                    print()
                 ubx_nmea_state = looking_for_62 # Now look for Sync Char 2 (0x62)
                 message_start_byte = processed # Record the message start byte for resync reporting
             elif (c == 0x24) and (containsNMEA == True): # Have we found an NMEA '$' if we were expecting one?
                 if (ubx_nmea_state == sync_lost):
                     print("NMEA $ found at byte "+str(processed))
+                    print()
                 ubx_nmea_state = looking_for_asterix # Now keep going until we receive an asterix
                 nmea_length = 0 # Reset nmea_length then use it to check for excessive message length
                 nmea_csum = 0 # Reset the nmea_csum. Update it as each character arrives
@@ -290,6 +292,7 @@ try:
             elif (c == 0xD3) and (containsRTCM == True): # Have we found 0xD3 if we were expecting one?
                 if (ubx_nmea_state == sync_lost):
                     print("RTCM 0xD3 found at byte "+str(processed))
+                    print()
                 ubx_nmea_state = looking_for_RTCM_len1 # Now keep going until we receive the checksum
                 rtcm_expected_csum = 0 # Reset the RTCM csum with a seed of 0. Update it as each character arrives
                 rtcm_expected_csum = crc24q(c, rtcm_expected_csum) # Update expected checksum
@@ -298,8 +301,10 @@ try:
                 #print("Was expecting Sync Char 0xB5, NMEA $ or RTCM 0xD3 but did not receive one!")
                 if (c == 0x24):
                     print("Warning: * found at byte "+str(processed)+"! Are you sure this file does not contain NMEA messages?")
+                    print()
                 if (c == 0xD3):
                     print("Warning: 0xD3 found at byte "+str(processed)+"! Are you sure this file does not contain RTCM messages?")
+                    print()
                 sync_lost_at = processed
                 ubx_nmea_state = sync_lost
         
@@ -312,6 +317,7 @@ try:
             else:
                 print("Panic!! Was expecting Sync Char 2 (0x62) but did not receive one!")
                 print("Sync lost at byte "+str(processed)+". Attemting to re-sync")
+                print()
                 sync_lost_at = processed
                 resync_in_progress = True
                 ubx_nmea_state = sync_lost
@@ -355,6 +361,7 @@ try:
             if ((ubx_expected_checksum_A != ubx_checksum_A) or (ubx_expected_checksum_B != ubx_checksum_B)):
                 print("Panic!! UBX checksum error!")
                 print("Sync lost at byte "+str(processed)+". Attemting to re-sync.")
+                print()
                 sync_lost_at = processed
                 resync_in_progress = True
                 ubx_nmea_state = sync_lost
@@ -393,6 +400,7 @@ try:
             if (nmea_length > max_nmea_len): # If the length is greater than max_nmea_len, something bad must have happened (sync_lost)
                 print("Panic!! Excessive NMEA message length!")
                 print("Sync lost at byte "+str(processed)+". Attemting to re-sync")
+                print()
                 sync_lost_at = processed
                 resync_in_progress = True
                 ubx_nmea_state = sync_lost
@@ -447,6 +455,7 @@ try:
                 # The checksum does not match so sync_lost
                 print("Panic!! NMEA checksum error!")
                 print("Sync lost at byte "+str(processed)+". Attemting to re-sync")
+                print()
                 sync_lost_at = processed
                 resync_in_progress = True
                 ubx_nmea_state = sync_lost
@@ -461,6 +470,7 @@ try:
             if (c != 0x0D):
                 print("Panic!! NMEA CR not found!")
                 print("Sync lost at byte "+str(processed)+". Attemting to re-sync")
+                print()
                 sync_lost_at = processed
                 resync_in_progress = True
                 ubx_nmea_state = sync_lost
@@ -474,6 +484,7 @@ try:
             if (c != 0x0A):
                 print("Panic!! NMEA LF not found!")
                 print("Sync lost at byte "+str(processed)+". Attemting to re-sync")
+                print()
                 sync_lost_at = processed
                 resync_in_progress = True
                 ubx_nmea_state = sync_lost
@@ -572,6 +583,7 @@ try:
             if (rtcm_expected_csum != rtcm_actual_csum):
                 print("Panic!! RTCM checksum error!")
                 print("Sync lost at byte "+str(processed)+". Attemting to re-sync.")
+                print()
                 sync_lost_at = processed
                 resync_in_progress = True
                 ubx_nmea_state = sync_lost
@@ -617,6 +629,7 @@ try:
                 keepGoing = False
             else:
                 print("Sync has been lost. Currently processing byte "+str(processed)+". Rewinding to byte "+str(rewind_to))
+                print()
                 fi.seek(rewind_to) # Rewind the file
                 processed = rewind_to - 1 # Rewind processed too! (-1 is needed as processed is incremented at the start of the loop)
                 rewind_in_progress = True # Flag that a rewind is in progress
