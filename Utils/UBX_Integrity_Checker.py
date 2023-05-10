@@ -108,11 +108,11 @@ else:
         repairFilename = filename + '.repair'
 
 # Ask user if GNTXT is to be printed
-response = input('Do you want to print any GNTXT messages found? (y/N): ') # Get the response
-if (response == '') or (response == 'N') or (response == 'n'):
-    printGNTXT = False
-else:
-    printGNTXT = True
+printGNTXT = False
+if containsNMEA == True:
+    response = input('Do you want to print any GNTXT messages found? (y/N): ') # Get the response
+    if (response == 'Y') or (response == 'y'):
+        printGNTXT = True
 
 print()
 print('Processing',filename)
