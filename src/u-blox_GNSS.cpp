@@ -6048,6 +6048,7 @@ void DevUBLOXGNSS::checkCallbacks(void)
         storageRTCM1005->automaticFlags.flags.bits.callbackDataValid = 0;     // Mark the data as stale
       }
 
+#ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
   if (rtcmInputStorage.rtcm1005CallbackPointer != nullptr) // If the pointer to the callback has been defined
     if (rtcmInputStorage.flags.bits.dataValid1005 == 1)    // If the copy of the data is valid
       if (rtcmInputStorage.flags.bits.dataRead1005 == 0)   // If the data has not been read
@@ -6063,6 +6064,7 @@ void DevUBLOXGNSS::checkCallbacks(void)
         rtcmInputStorage.rtcm1006CallbackPointer(&rtcmInputStorage.rtcm1006); // Call the callback
         rtcmInputStorage.flags.bits.dataRead1006 = 1;                         // Mark the data as read
       }
+#endif
 
   checkCallbacksReentrant = false;
 }
