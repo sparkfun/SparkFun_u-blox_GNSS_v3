@@ -459,6 +459,10 @@ public:
   bool setDynamicSPARTNKeys(uint8_t keyLengthBytes1, uint16_t validFromWno1, uint32_t validFromTow1, const uint8_t *key1,
                             uint8_t keyLengthBytes2, uint16_t validFromWno2, uint32_t validFromTow2, const uint8_t *key2);
 
+  // Get unique chip ID - UBX-SEC-UNIQID
+  bool getUniqueChipId(UBX_SEC_UNIQID_data_t *data = nullptr, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the unique chip ID using UBX_SEC_UNIQID
+  const char *getUniqueChipIdStr(UBX_SEC_UNIQID_data_t *data = nullptr, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the unique chip ID using UBX_SEC_UNIQID
+
   // General configuration (used only on protocol v27 and higher - ie, ZED-F9P)
 
   // VALGET

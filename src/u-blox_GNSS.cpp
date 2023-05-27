@@ -8931,6 +8931,72 @@ bool DevUBLOXGNSS::setDynamicSPARTNKeys(uint8_t keyLengthBytes1, uint16_t validF
   return (sendCommand(&packetCfg, 0) == SFE_UBLOX_STATUS_SUCCESS); // UBX-RXM-SPARTNKEY is silent. It does not ACK (or NACK)
 }
 
+// Get the unique chip ID using UBX-SEC-UNIQID
+// The ID is five bytes on the F9 and M9 (version 1) but six bytes on the M10 (version 2)
+bool DevUBLOXGNSS::getUniqueChipId(UBX_SEC_UNIQID_data_t *data, uint16_t maxWait)
+{
+  if (data == nullptr) // Check if the user forgot to include the data pointer
+    return (false);    // Bail
+
+  packetCfg.cls = UBX_CLASS_SEC;
+  packetCfg.id = UBX_SEC_UNIQID;
+  packetCfg.len = 0;
+  packetCfg.startingSpot = 0;
+
+  if (sendCommand(&packetCfg, maxWait) != SFE_UBLOX_STATUS_DATA_RECEIVED) // We are expecting data and an ACK
+    return (false);
+
+  // Extract the data
+  data->version = extractByte(&packetCfg, 0);
+  for (uint8_t i = 0; i < 5; i++)
+    data->uniqueId[i] = extractByte(&packetCfg, i + 4);
+
+  // The ID is five bytes on the F9 and M9 (version 1) but six bytes on the M10 (version 2)
+  if ((data->version == 2) && (packetCfg.len == 10))
+    data->uniqueId[5] = extractByte(&packetCfg, 9);
+  else
+    data->uniqueId[5] = 0;
+
+  return (true);
+}
+// Get the unique chip ID as text
+const char *DevUBLOXGNSS::getUniqueChipIdStr(UBX_SEC_UNIQID_data_t *data, uint16_t maxWait)
+{
+  static char uniqueId[13] = {'0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '\0'};
+  bool valid = true;
+  bool provided = (data != nullptr);
+
+  if (!provided)
+  {
+    data = new UBX_SEC_UNIQID_data_t;
+    valid = getUniqueChipId(data, maxWait);
+  }
+
+  if (valid)
+  {
+    for (uint8_t i = 0; (i < (data->version + 4)) && (i < 6); i++)
+    {
+      uint8_t nibble = data->uniqueId[i] >> 4;
+      if (nibble < 10)
+        uniqueId[(i * 2) + 0] = nibble + '0';
+      else
+        uniqueId[(i * 2) + 0] = nibble + 'A' - 10;
+      nibble = data->uniqueId[i] & 0x0F;
+      if (nibble < 10)
+        uniqueId[(i * 2) + 1] = nibble + '0';
+      else
+        uniqueId[(i * 2) + 1] = nibble + 'A' - 10;
+      uniqueId[(i * 2) + 2] = 0; // NULL-terminate
+    }
+  }
+
+  if (!provided)
+    delete data;
+
+  return ((const char *)uniqueId);
+}
+
+
 // CONFIGURATION INTERFACE (protocol v27 and above)
 
 // Given a key, load the payload with data that can then be extracted to 8, 16, or 32 bits

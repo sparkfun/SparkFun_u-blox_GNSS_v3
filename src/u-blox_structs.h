@@ -2031,6 +2031,19 @@ typedef struct
   UBX_TIM_TP_data_t *callbackData;
 } UBX_TIM_TP_t;
 
+// SEC-specific structs
+
+// UBX-SEC-UNIQID (0x27 0x03): Unique chip ID
+// The ID is five bytes on the F9 and M9 (version 1) but six bytes on the M10 (version 2)
+const uint16_t UBX_SEC_UNIQID_LEN = 9;
+
+typedef struct
+{
+  uint8_t version;
+  uint8_t reserved0[3];
+  uint8_t uniqueId[6];
+} UBX_SEC_UNIQID_data_t;
+
 // ESF-specific structs
 
 // UBX-ESF-ALG (0x10 0x14): IMU alignment information
