@@ -69,6 +69,38 @@ void setup()
   }
   else
     Serial.println(F("Error: could not read module info!"));
+
+  // Use the helper method to read the unique chip ID as a string
+  // Returns "000000000000" if the read fails
+  Serial.print(F("Unique chip ID: 0x"));
+  Serial.println(myGNSS.getUniqueChipIdStr());
+
+  // Or we can read the ID and use the helper method to convert it to string
+  UBX_SEC_UNIQID_data_t chipID;
+  if (myGNSS.getUniqueChipId(&chipID))
+  {
+    Serial.print(F("Unique chip ID: 0x"));
+    Serial.println(myGNSS.getUniqueChipIdStr(&chipID));
+  }
+  else
+    Serial.println(F("Error: could not read chip ID!"));
+
+  // Or we can read and print the unique chip ID manually
+  if (myGNSS.getUniqueChipId(&chipID))
+  {
+    Serial.print(F("Unique chip ID: 0x"));
+    // The ID is five bytes on the F9 and M9 (version 1) but six bytes on the M10 (version 2)
+    for (uint8_t i = 0; i < (chipID.version + 4); i++)
+    {
+      if (chipID.uniqueId[i] < 0x10)
+        Serial.print(F("0"));
+      Serial.print(chipID.uniqueId[i], HEX);
+    }
+    Serial.println();
+  }
+  else
+    Serial.println(F("Error: could not read chip ID!"));
+
 }
 
 void loop()
