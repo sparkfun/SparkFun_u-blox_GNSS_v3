@@ -2035,7 +2035,8 @@ typedef struct
 
 // UBX-SEC-UNIQID (0x27 0x03): Unique chip ID
 // The ID is five bytes on the F9 and M9 (version 1) but six bytes on the M10 (version 2)
-const uint16_t UBX_SEC_UNIQID_LEN = 9;
+const uint16_t UBX_SEC_UNIQID_LEN_VERSION1 = 9;
+const uint16_t UBX_SEC_UNIQID_LEN_VERSION2 = 10;
 
 typedef struct
 {

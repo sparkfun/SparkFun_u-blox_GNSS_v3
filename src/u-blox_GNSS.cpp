@@ -8952,7 +8952,7 @@ bool DevUBLOXGNSS::getUniqueChipId(UBX_SEC_UNIQID_data_t *data, uint16_t maxWait
     data->uniqueId[i] = extractByte(&packetCfg, i + 4);
 
   // The ID is five bytes on the F9 and M9 (version 1) but six bytes on the M10 (version 2)
-  if ((data->version == 2) && (packetCfg.len == 10))
+  if ((data->version == 2) && (packetCfg.len == UBX_SEC_UNIQID_LEN_VERSION2))
     data->uniqueId[5] = extractByte(&packetCfg, 9);
   else
     data->uniqueId[5] = 0;
