@@ -962,7 +962,7 @@ void DevUBLOXGNSS::setSpiBufferSize(size_t bufferSize)
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
     if (_printDebug == true)
     {
-      _debugSerial.println(F("setSpiTransactionSize: you need to call setSpiBufferSize _before_ begin!"));
+      _debugSerial.println(F("setSpiBufferSize: you need to call setSpiBufferSize _before_ begin!"));
     }
 #endif
   }
@@ -6089,8 +6089,23 @@ bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool cal
   bool ok = false;
   if (_commType == COMM_TYPE_SERIAL)
   {
-    // Serial: write all the bytes in one go
-    ok = writeBytes(dataBytes, numDataBytes) == numDataBytes;
+    // Serial: writeBytes can only write 255 bytes maximum, so we need to divide up into chunks if required
+    ok = true;
+    size_t bytesLeftToWrite = numDataBytes;
+    while (bytesLeftToWrite > 0)
+    {
+      uint8_t bytesToWrite;
+
+      if (bytesLeftToWrite < 0x100)
+        bytesToWrite = (uint8_t)bytesLeftToWrite;
+      else
+        bytesToWrite = 0xFF;
+
+      ok &= (writeBytes(dataBytes, bytesToWrite) == bytesToWrite); // Will set ok to false if any one write fails
+
+      bytesLeftToWrite -= (size_t)bytesToWrite;
+      dataBytes += bytesToWrite;
+    }
   }
   else if (_commType == COMM_TYPE_I2C)
   {
