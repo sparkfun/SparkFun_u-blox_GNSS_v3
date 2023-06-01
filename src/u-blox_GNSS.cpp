@@ -962,7 +962,7 @@ void DevUBLOXGNSS::setSpiBufferSize(size_t bufferSize)
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
     if (_printDebug == true)
     {
-      _debugSerial.println(F("setSpiTransactionSize: you need to call setSpiBufferSize _before_ begin!"));
+      _debugSerial.println(F("setSpiBufferSize: you need to call setSpiBufferSize _before_ begin!"));
     }
 #endif
   }
@@ -6072,7 +6072,7 @@ void DevUBLOXGNSS::checkCallbacks(void)
 // Push (e.g.) RTCM data directly to the module
 // Returns true if all numDataBytes were pushed successfully
 // Warning: this function does not check that the data is valid. It is the user's responsibility to ensure the data is valid before pushing.
-bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool callProcessSpiBuffer)
+bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool callProcessBuffer)
 {
   // Return now if numDataBytes is zero
   if (numDataBytes == 0)
@@ -6089,8 +6089,27 @@ bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool cal
   bool ok = false;
   if (_commType == COMM_TYPE_SERIAL)
   {
-    // Serial: write all the bytes in one go
-    ok = writeBytes(dataBytes, numDataBytes) == numDataBytes;
+    // Serial: divide pushes up into 16 byte chunks and call checkUbloxSerial between pushes
+    // (if callProcessBuffer is true) to try and avoid data loss
+    ok = true;
+    size_t bytesLeftToWrite = numDataBytes;
+    while (bytesLeftToWrite > 0)
+    {
+      uint8_t bytesToWrite;
+
+      if (bytesLeftToWrite < 16)
+        bytesToWrite = (uint8_t)bytesLeftToWrite;
+      else
+        bytesToWrite = 16;
+
+      ok &= (writeBytes(dataBytes, bytesToWrite) == bytesToWrite); // Will set ok to false if any one write fails
+
+      bytesLeftToWrite -= (size_t)bytesToWrite;
+      dataBytes += bytesToWrite;
+
+      if (callProcessBuffer) // Try and prevent data loss during large pushes by calling checkUbloxSerial between chunks
+        checkUbloxSerial(&packetCfg, 0, 0); // Don't call checkUbloxInternal as we already have the lock!
+    }
   }
   else if (_commType == COMM_TYPE_I2C)
   {
@@ -6189,7 +6208,7 @@ bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool cal
 
       bytesLeftToWrite -= bytesToWrite; // Update the totals
 
-      if (callProcessSpiBuffer)
+      if (callProcessBuffer)
         processSpiBuffer(&packetCfg, 0, 0); // This will hopefully prevent any lost data?
     }
 
@@ -6309,7 +6328,7 @@ size_t DevUBLOXGNSS::pushAssistNowDataInternal(size_t offset, bool skipTime, con
       }
       else
       {
-        bool pushResult = pushRawData((uint8_t *)(dataBytes + dataPtr), packetLength + ((size_t)8), checkForAcks ? false : true); // Push the data. Don't call processSpiBuffer when using ACKs
+        bool pushResult = pushRawData((uint8_t *)(dataBytes + dataPtr), packetLength + ((size_t)8), checkForAcks ? false : true); // Push the data. Don't call processSpiBuffer / checkUbloxSerial when using ACKs
 
         if (pushResult)
           bytesPushed += packetLength + ((size_t)8); // Increment bytesPushed if the push was successful
