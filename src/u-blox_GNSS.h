@@ -262,10 +262,14 @@ public:
   // Push (e.g.) RTCM or Assist Now data directly to the module
   // Warning: this function does not check that the data is valid. It is the user's responsibility to ensure the data is valid before pushing.
   //
-  // For SPI: callProcessSpiBuffer defaults to true and forces pushRawData to call processSpiBuffer in between push transactions.
+  // For SPI: callProcessBuffer defaults to true and forces pushRawData to call processSpiBuffer in between push transactions.
   // This is to try and prevent incoming data being 'lost' during large (bi-directional) pushes.
-  // If you are only pushing limited amounts of data and/or will be calling checkUblox manually, it might be advantageous to set callProcessSpiBuffer to false.
-  bool pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool callProcessSpiBuffer = true);
+  // If you are only pushing limited amounts of data and/or will be calling checkUblox manually, it might be advantageous to set callProcessBuffer to false.
+  //
+  // Likewise for Serial: callProcessBuffer defaults to true and forces pushRawData to call checkUbloxSerial in between pushing data.
+  // This is to try and prevent incoming data being 'lost' (overflowing the serial RX buffer) during a large push.
+  // If you are only pushing limited amounts of data and/or will be calling checkUblox manually, it might be advantageous to set callProcessBuffer to false.
+  bool pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool callProcessBuffer = true);
 #ifndef SFE_UBLOX_DISABLE_RTCM_LOGGING
   // RTCM parsing - used inside pushRawData
 protected:
