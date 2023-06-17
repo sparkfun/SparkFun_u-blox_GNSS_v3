@@ -432,6 +432,20 @@ typedef struct
     struct
     {
       uint8_t invalidLlh : 1; // 1 = Invalid lon, lat, height and hMSL
+      uint8_t lastCorrectionAge : 4; // Age of the most recently received differential correction:
+                                     // 0: Not available
+                                     // 1: Age between 0 and 1 second
+                                     // 2: Age between 1 (inclusive) and 2 seconds
+                                     // 3: Age between 2 (inclusive) and 5 seconds
+                                     // 4: Age between 5 (inclusive) and 10 seconds
+                                     // 5: Age between 10 (inclusive) and 15 seconds
+                                     // 6: Age between 15 (inclusive) and 20 seconds
+                                     // 7: Age between 20 (inclusive) and 30 seconds
+                                     // 8: Age between 30 (inclusive) and 45 seconds
+                                     // 9: Age between 45 (inclusive) and 60 seconds
+                                     // 10: Age between 60 (inclusive) and 90 seconds
+                                     // 11: Age between 90 (inclusive) and 120 seconds
+                                     // >=12: Age greater or equal than 120 seconds
     } bits;
   } flags3;
   uint8_t reserved1[5];
