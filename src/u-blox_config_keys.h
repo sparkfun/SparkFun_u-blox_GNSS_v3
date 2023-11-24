@@ -92,24 +92,24 @@ const uint8_t VAL_ID_I2C_ADDRESS = 0x01;
 // The following enum allows automatic identification of the Configuration Item data type.
 // These are OR'd into the reserved bits in each Config Key ID.
 // Based on an idea by Michael Ammann. Thank you @mazgch
-const uint32_t UBX_CFG_L = 0x01001000;        // bool
-const uint32_t UBX_CFG_U1 = 0x01002000;       // uint8_t
-const uint32_t UBX_CFG_U2 = 0x01003000;       // uint16_t
-const uint32_t UBX_CFG_U4 = 0x01004000;       // uint32_t
-const uint32_t UBX_CFG_U8 = 0x01005000;       // uint64_t
-const uint32_t UBX_CFG_I1 = 0x01006000;       // int8_t
-const uint32_t UBX_CFG_I2 = 0x01007000;       // int16_t
-const uint32_t UBX_CFG_I4 = 0x01008000;       // int32_t
-const uint32_t UBX_CFG_I8 = 0x01009000;       // int64_t
-const uint32_t UBX_CFG_R4 = 0x0100A000;       // float (32-bit)
-const uint32_t UBX_CFG_R8 = 0x0100B000;       // double (64-bit)
-const uint32_t UBX_CFG_E1 = 0x0100C000;       // 8-bit enum == uint8_t
-const uint32_t UBX_CFG_E2 = 0x0100D000;       // 16-bit enum == uint16_t
-const uint32_t UBX_CFG_E4 = 0x0100E000;       // 32-bit enum == uint32_t
-const uint32_t UBX_CFG_X1 = 0x0100F000;       // 8-bit bitfield / string == uint8_t
-const uint32_t UBX_CFG_X2 = 0x02001000;       // 16-bit bitfield / string == uint16_t
-const uint32_t UBX_CFG_X4 = 0x02002000;       // 32-bit bitfield / string == uint32_t
-const uint32_t UBX_CFG_X8 = 0x02003000;       // 64-bit bitfield / string == uint64_t
+const uint32_t UBX_CFG_L = 0x01001000;         // bool
+const uint32_t UBX_CFG_U1 = 0x01002000;        // uint8_t
+const uint32_t UBX_CFG_U2 = 0x01003000;        // uint16_t
+const uint32_t UBX_CFG_U4 = 0x01004000;        // uint32_t
+const uint32_t UBX_CFG_U8 = 0x01005000;        // uint64_t
+const uint32_t UBX_CFG_I1 = 0x01006000;        // int8_t
+const uint32_t UBX_CFG_I2 = 0x01007000;        // int16_t
+const uint32_t UBX_CFG_I4 = 0x01008000;        // int32_t
+const uint32_t UBX_CFG_I8 = 0x01009000;        // int64_t
+const uint32_t UBX_CFG_R4 = 0x0100A000;        // float (32-bit)
+const uint32_t UBX_CFG_R8 = 0x0100B000;        // double (64-bit)
+const uint32_t UBX_CFG_E1 = 0x0100C000;        // 8-bit enum == uint8_t
+const uint32_t UBX_CFG_E2 = 0x0100D000;        // 16-bit enum == uint16_t
+const uint32_t UBX_CFG_E4 = 0x0100E000;        // 32-bit enum == uint32_t
+const uint32_t UBX_CFG_X1 = 0x0100F000;        // 8-bit bitfield / string == uint8_t
+const uint32_t UBX_CFG_X2 = 0x02001000;        // 16-bit bitfield / string == uint16_t
+const uint32_t UBX_CFG_X4 = 0x02002000;        // 32-bit bitfield / string == uint32_t
+const uint32_t UBX_CFG_X8 = 0x02003000;        // 64-bit bitfield / string == uint64_t
 const uint32_t UBX_CFG_SIZE_MASK = 0x0F00F000; // Bit mask
 
 // Below are the key values for a given configuration setting
@@ -122,6 +122,10 @@ const uint32_t UBLOX_CFG_ANA_ORBMAXERR = UBX_CFG_U2 | 0x30230002; // Maximum acc
 // CFG-BDS: BeiDou system configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_BDS_USE_PRN_1_TO_5 = UBX_CFG_L | 0x10340014; // Use BeiDou geostationary satellites (PRN 1-5)
+
+// CFG-CLOCK: System clock configuration
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+const uint32_t UBLOX_CFG_CLOCK_OSC_FREQ = UBX_CFG_U4 | 0x40a4000d; // Oscillator speed
 
 // CFG-GEOFENCE: Geofencing configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -148,20 +152,29 @@ const uint32_t UBLOX_CFG_GEOFENCE_FENCE4_RAD = UBX_CFG_U4 | 0x40240053; // Radiu
 
 // CFG-HW: Hardware configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_HW_ANT_CFG_VOLTCTRL = UBX_CFG_L | 0x10a3002e;     // Active antenna voltage control flag
-const uint32_t UBLOX_CFG_HW_ANT_CFG_SHORTDET = UBX_CFG_L | 0x10a3002f;     // Short antenna detection flag
-const uint32_t UBLOX_CFG_HW_ANT_CFG_SHORTDET_POL = UBX_CFG_L | 0x10a30030; // Short antenna detection polarity
-const uint32_t UBLOX_CFG_HW_ANT_CFG_OPENDET = UBX_CFG_L | 0x10a30031;      // Open antenna detection flag
-const uint32_t UBLOX_CFG_HW_ANT_CFG_OPENDET_POL = UBX_CFG_L | 0x10a30032;  // Open antenna detection polarity
-const uint32_t UBLOX_CFG_HW_ANT_CFG_PWRDOWN = UBX_CFG_L | 0x10a30033;      // Power down antenna flag
-const uint32_t UBLOX_CFG_HW_ANT_CFG_PWRDOWN_POL = UBX_CFG_L | 0x10a30034;  // Power down antenna logic polarity
-const uint32_t UBLOX_CFG_HW_ANT_CFG_RECOVER = UBX_CFG_L | 0x10a30035;      // Automatic recovery from short state flag
-const uint32_t UBLOX_CFG_HW_ANT_SUP_SWITCH_PIN = UBX_CFG_U1 | 0x20a30036;  // ANT1 PIO number
-const uint32_t UBLOX_CFG_HW_ANT_SUP_SHORT_PIN = UBX_CFG_U1 | 0x20a30037;   // ANT0 PIO number
-const uint32_t UBLOX_CFG_HW_ANT_SUP_OPEN_PIN = UBX_CFG_U1 | 0x20a30038;    // ANT2 PIO number
-const uint32_t UBLOX_CFG_HW_ANT_SUP_ENGINE = UBX_CFG_E1 | 0x20a30054;      // Antenna supervisor engine selection
-const uint32_t UBLOX_CFG_HW_ANT_SUP_SHORT_THR = UBX_CFG_U1 | 0x20a30055;   // Antenna supervisor MADC engine short detection threshold
-const uint32_t UBLOX_CFG_HW_ANT_SUP_OPEN_THR = UBX_CFG_U1 | 0x20a30056;    // Antenna supervisor MADC engine open detection threshold
+const uint32_t UBLOX_CFG_HW_DCDC_DIS = UBX_CFG_L | 0x10a30018;                // DCDC converter disabled
+const uint32_t UBLOX_CFG_HW_SINGLE_CLK = UBX_CFG_L | 0x10a30019;              // Single-clock system
+const uint32_t UBLOX_CFG_HW_OSC_TYPE = UBX_CFG_E1 | 0x20a30025;               // Oscillator type
+const uint32_t UBLOX_CFG_HW_CLK_OFFSET = UBX_CFG_I4 | 0x40a30028;             // Clock offset
+const uint32_t UBLOX_CFG_HW_CLK_OFFSET_VALID = UBX_CFG_L | 0x10a30029;        // Clock offset valid
+const uint32_t UBLOX_CFG_HW_CLK_PRECISION = UBX_CFG_U4 | 0x40a3002a;          // Precision of the clock offset
+const uint32_t UBLOX_CFG_HW_CLK_MAX_CALIB_DEV = UBX_CFG_U4 | 0x40a3002b;      // Maximum calibration deviation
+const uint32_t UBLOX_CFG_HW_CLK_MAX_CALIB_DEV_VALID = UBX_CFG_L | 0x10a3002c; // Max calibration deviation valid
+const uint32_t UBLOX_CFG_HW_CLK_IS_TCXO = UBX_CFG_L | 0x10a30047;             // Oscillator type indicator
+const uint32_t UBLOX_CFG_HW_ANT_CFG_VOLTCTRL = UBX_CFG_L | 0x10a3002e;        // Active antenna voltage control flag
+const uint32_t UBLOX_CFG_HW_ANT_CFG_SHORTDET = UBX_CFG_L | 0x10a3002f;        // Short antenna detection flag
+const uint32_t UBLOX_CFG_HW_ANT_CFG_SHORTDET_POL = UBX_CFG_L | 0x10a30030;    // Short antenna detection polarity
+const uint32_t UBLOX_CFG_HW_ANT_CFG_OPENDET = UBX_CFG_L | 0x10a30031;         // Open antenna detection flag
+const uint32_t UBLOX_CFG_HW_ANT_CFG_OPENDET_POL = UBX_CFG_L | 0x10a30032;     // Open antenna detection polarity
+const uint32_t UBLOX_CFG_HW_ANT_CFG_PWRDOWN = UBX_CFG_L | 0x10a30033;         // Power down antenna flag
+const uint32_t UBLOX_CFG_HW_ANT_CFG_PWRDOWN_POL = UBX_CFG_L | 0x10a30034;     // Power down antenna logic polarity
+const uint32_t UBLOX_CFG_HW_ANT_CFG_RECOVER = UBX_CFG_L | 0x10a30035;         // Automatic recovery from short state flag
+const uint32_t UBLOX_CFG_HW_ANT_SUP_SWITCH_PIN = UBX_CFG_U1 | 0x20a30036;     // ANT1 PIO number
+const uint32_t UBLOX_CFG_HW_ANT_SUP_SHORT_PIN = UBX_CFG_U1 | 0x20a30037;      // ANT0 PIO number
+const uint32_t UBLOX_CFG_HW_ANT_SUP_OPEN_PIN = UBX_CFG_U1 | 0x20a30038;       // ANT2 PIO number
+const uint32_t UBLOX_CFG_HW_ANT_SUP_ENGINE = UBX_CFG_E1 | 0x20a30054;         // Antenna supervisor engine selection
+const uint32_t UBLOX_CFG_HW_ANT_SUP_SHORT_THR = UBX_CFG_U1 | 0x20a30055;      // Antenna supervisor MADC engine short detection threshold
+const uint32_t UBLOX_CFG_HW_ANT_SUP_OPEN_THR = UBX_CFG_U1 | 0x20a30056;       // Antenna supervisor MADC engine open detection threshold
 
 // CFG-I2C: Configuration of the I2C interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -738,11 +751,11 @@ const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_DOP_SPI = UBX_CFG_U1 | 0x20910469;     
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_DOP_UART1 = UBX_CFG_U1 | 0x20910466;      // Output rate of the UBX-NAV2-DOP message onport UART1
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_DOP_UART2 = UBX_CFG_U1 | 0x20910467;      // Output rate of the UBX-NAV2-DOP message onport UART2
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_DOP_USB = UBX_CFG_U1 | 0x20910468;        // Output rate of the UBX-NAV2-DOP message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EELL_I2C = UBX_CFG_U1 | 0x20910470;        // Output rate of the UBX-NAV2-EELL message onport I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EELL_SPI = UBX_CFG_U1 | 0x20910474;        // Output rate of the UBX-NAV2-EELL message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EELL_UART1 = UBX_CFG_U1 | 0x20910471;      // Output rate of the UBX-NAV2-EELL message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EELL_UART2 = UBX_CFG_U1 | 0x20910472;      // Output rate of the UBX-NAV2-EELL message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EELL_USB = UBX_CFG_U1 | 0x20910473;        // Output rate of the UBX-NAV2-EELL message onport USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EELL_I2C = UBX_CFG_U1 | 0x20910470;       // Output rate of the UBX-NAV2-EELL message onport I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EELL_SPI = UBX_CFG_U1 | 0x20910474;       // Output rate of the UBX-NAV2-EELL message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EELL_UART1 = UBX_CFG_U1 | 0x20910471;     // Output rate of the UBX-NAV2-EELL message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EELL_UART2 = UBX_CFG_U1 | 0x20910472;     // Output rate of the UBX-NAV2-EELL message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EELL_USB = UBX_CFG_U1 | 0x20910473;       // Output rate of the UBX-NAV2-EELL message onport USB
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EOE_I2C = UBX_CFG_U1 | 0x20910565;        // Output rate of the UBX-NAV2-EOE message onport I2C
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EOE_SPI = UBX_CFG_U1 | 0x20910569;        // Output rate of the UBX-NAV2-EOE message on port SPI
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EOE_UART1 = UBX_CFG_U1 | 0x20910566;      // Output rate of the UBX-NAV2-EOE message on port UART1
@@ -763,11 +776,11 @@ const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSLLH_SPI = UBX_CFG_U1 | 0x20910489;  
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSLLH_UART1 = UBX_CFG_U1 | 0x20910486;   // Output rate of the UBX-NAV2-POSLLH message on port UART1
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSLLH_UART2 = UBX_CFG_U1 | 0x20910487;   // Output rate of the UBX-NAV2-POSLLH message on port UART2
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSLLH_USB = UBX_CFG_U1 | 0x20910488;     // Output rate of the UBX-NAV2-POSLLH message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVAT_I2C = UBX_CFG_U1 | 0x2091062f;        // Output rate of the UBX-NAV2-PVAT message onport I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVAT_SPI = UBX_CFG_U1 | 0x20910633;        // Output rate of the UBX-NAV2-PVAT message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVAT_UART1 = UBX_CFG_U1 | 0x20910630;      // Output rate of the UBX-NAV2-PVAT message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVAT_UART2 = UBX_CFG_U1 | 0x20910631;      // Output rate of the UBX-NAV2-PVAT message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVAT_USB = UBX_CFG_U1 | 0x20910632;        // Output rate of the UBX-NAV2-PVAT message onport USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVAT_I2C = UBX_CFG_U1 | 0x2091062f;       // Output rate of the UBX-NAV2-PVAT message onport I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVAT_SPI = UBX_CFG_U1 | 0x20910633;       // Output rate of the UBX-NAV2-PVAT message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVAT_UART1 = UBX_CFG_U1 | 0x20910630;     // Output rate of the UBX-NAV2-PVAT message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVAT_UART2 = UBX_CFG_U1 | 0x20910631;     // Output rate of the UBX-NAV2-PVAT message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVAT_USB = UBX_CFG_U1 | 0x20910632;       // Output rate of the UBX-NAV2-PVAT message onport USB
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVT_I2C = UBX_CFG_U1 | 0x20910490;        // Output rate of the UBX-NAV2-PVT message onport I2C
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVT_SPI = UBX_CFG_U1 | 0x20910494;        // Output rate of the UBX-NAV2-PVT message on port SPI
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVT_UART1 = UBX_CFG_U1 | 0x20910491;      // Output rate of the UBX-NAV2-PVT message on port UART1
@@ -871,16 +884,26 @@ const uint32_t UBLOX_CFG_MSGOUT_UBX_TIM_SVIN_USB = UBX_CFG_U1 | 0x2091009a;     
 
 // Additional CFG_MSGOUT keys for the NEO-D9S
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_I2C = UBX_CFG_U1 | 0x2091031d;   // Output rate of the UBX_RXM_PMP message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_SPI = UBX_CFG_U1 | 0x20910321;   // Output rate of the UBX_RXM_PMP message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART1 = UBX_CFG_U1 | 0x2091031e; // Output rate of the UBX_RXM_PMP message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART2 = UBX_CFG_U1 | 0x2091031f; // Output rate of the UBX_RXM_PMP message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_USB = UBX_CFG_U1 | 0x20910320;   // Output rate of the UBX_RXM_PMP message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_I2C = UBX_CFG_U1 | 0x20910322;   // Output rate of the UBX_MON_PMP message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_SPI = UBX_CFG_U1 | 0x20910326;   // Output rate of the UBX_MON_PMP message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_UART1 = UBX_CFG_U1 | 0x20910323; // Output rate of the UBX_MON_PMP message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_UART2 = UBX_CFG_U1 | 0x20910324; // Output rate of the UBX_MON_PMP message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_USB = UBX_CFG_U1 | 0x20910325;   // Output rate of the UBX_MON_PMP message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_I2C = UBX_CFG_U1 | 0x2091031d;    // Output rate of the UBX_RXM_PMP message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_SPI = UBX_CFG_U1 | 0x20910321;    // Output rate of the UBX_RXM_PMP message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART1 = UBX_CFG_U1 | 0x2091031e;  // Output rate of the UBX_RXM_PMP message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART2 = UBX_CFG_U1 | 0x2091031f;  // Output rate of the UBX_RXM_PMP message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_USB = UBX_CFG_U1 | 0x20910320;    // Output rate of the UBX_RXM_PMP message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_I2C = UBX_CFG_U1 | 0x20910322;    // Output rate of the UBX_MON_PMP message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_SPI = UBX_CFG_U1 | 0x20910326;    // Output rate of the UBX_MON_PMP message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_UART1 = UBX_CFG_U1 | 0x20910323;  // Output rate of the UBX_MON_PMP message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_UART2 = UBX_CFG_U1 | 0x20910324;  // Output rate of the UBX_MON_PMP message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_USB = UBX_CFG_U1 | 0x20910325;    // Output rate of the UBX_MON_PMP message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PT2_I2C = UBX_CFG_U1 | 0x20910209;    // Output rate of the UBX_MON_PT2 message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PT2_SPI = UBX_CFG_U1 | 0x2091020d;    // Output rate of the UBX_MON_PT2 message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PT2_UART1 = UBX_CFG_U1 | 0x2091020a;  // Output rate of the UBX_MON_PT2 message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PT2_UART2 = UBX_CFG_U1 | 0x2091020b;  // Output rate of the UBX_MON_PT2 message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PT2_USB = UBX_CFG_U1 | 0x2091020c;    // Output rate of the UBX_MON_PT2 message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_TEMP_I2C = UBX_CFG_U1 | 0x20910331;   // Output rate of the UBX_MON_TEMP message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_TEMP_SPI = UBX_CFG_U1 | 0x20910335;   // Output rate of the UBX_MON_TEMP message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_TEMP_UART1 = UBX_CFG_U1 | 0x20910332; // Output rate of the UBX_MON_TEMP message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_TEMP_UART2 = UBX_CFG_U1 | 0x20910333; // Output rate of the UBX_MON_TEMP message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_TEMP_USB = UBX_CFG_U1 | 0x20910334;   // Output rate of the UBX_MON_TEMP message on port USB
 
 // Additional CFG_MSGOUT keys for the NEO-D9S
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1129,7 +1152,7 @@ const uint32_t UBLOX_CFG_SPARTN_USE_SOURCE = UBX_CFG_E1 | 0x20a70001;
 
 // CFG-SPI: Configuration of the SPI interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_SPI_MAXFF = UBX_CFG_U1 | 0x20640001;           // Number of bytes containing 0xFF to receive before switching oﬀ reception. Range: 0 (mechanism oﬀ) - 63
+const uint32_t UBLOX_CFG_SPI_MAXFF = UBX_CFG_U1 | 0x20640001;          // Number of bytes containing 0xFF to receive before switching oﬀ reception. Range: 0 (mechanism oﬀ) - 63
 const uint32_t UBLOX_CFG_SPI_CPOLARITY = UBX_CFG_L | 0x10640002;       // Clock polarity select: 0: Active Hight Clock, SCLK idles low, 1: Active Low Clock, SCLK idles high
 const uint32_t UBLOX_CFG_SPI_CPHASE = UBX_CFG_L | 0x10640003;          // Clock phase select: 0: Data captured on first edge of SCLK, 1: Data captured on second edge of SCLK
 const uint32_t UBLOX_CFG_SPI_EXTENDEDTIMEOUT = UBX_CFG_L | 0x10640005; // Flag to disable timeouting the interface after 1.5s
@@ -1182,11 +1205,11 @@ const uint32_t UBLOX_CFG_TP_LEN_LOCK_TP1 = UBX_CFG_U4 | 0x40050005;     // Time 
 const uint32_t UBLOX_CFG_TP_DUTY_TP1 = UBX_CFG_R8 | 0x5005002a;         // Time pulse duty cycle (TP1)
 const uint32_t UBLOX_CFG_TP_DUTY_LOCK_TP1 = UBX_CFG_R8 | 0x5005002b;    // Time pulse duty cycle when locked to GNSS time (TP1)
 const uint32_t UBLOX_CFG_TP_USER_DELAY_TP1 = UBX_CFG_I4 | 0x40050006;   // User-configurable time pulse delay (TP1)
-const uint32_t UBLOX_CFG_TP_TP1_ENA = UBX_CFG_L | 0x10050007;          // Enable the first timepulse
-const uint32_t UBLOX_CFG_TP_SYNC_GNSS_TP1 = UBX_CFG_L | 0x10050008;    // Sync time pulse to GNSS time or local clock (TP1)
-const uint32_t UBLOX_CFG_TP_USE_LOCKED_TP1 = UBX_CFG_L | 0x10050009;   // Use locked parameters when possible (TP1)
-const uint32_t UBLOX_CFG_TP_ALIGN_TO_TOW_TP1 = UBX_CFG_L | 0x1005000a; // Align time pulse to top of second (TP1)
-const uint32_t UBLOX_CFG_TP_POL_TP1 = UBX_CFG_L | 0x1005000b;          // Set time pulse polarity (TP1)
+const uint32_t UBLOX_CFG_TP_TP1_ENA = UBX_CFG_L | 0x10050007;           // Enable the first timepulse
+const uint32_t UBLOX_CFG_TP_SYNC_GNSS_TP1 = UBX_CFG_L | 0x10050008;     // Sync time pulse to GNSS time or local clock (TP1)
+const uint32_t UBLOX_CFG_TP_USE_LOCKED_TP1 = UBX_CFG_L | 0x10050009;    // Use locked parameters when possible (TP1)
+const uint32_t UBLOX_CFG_TP_ALIGN_TO_TOW_TP1 = UBX_CFG_L | 0x1005000a;  // Align time pulse to top of second (TP1)
+const uint32_t UBLOX_CFG_TP_POL_TP1 = UBX_CFG_L | 0x1005000b;           // Set time pulse polarity (TP1)
 const uint32_t UBLOX_CFG_TP_TIMEGRID_TP1 = UBX_CFG_E1 | 0x2005000c;     // Time grid to use (TP1)
 const uint32_t UBLOX_CFG_TP_PERIOD_TP2 = UBX_CFG_U4 | 0x4005000d;       // Time pulse period (TP2)
 const uint32_t UBLOX_CFG_TP_PERIOD_LOCK_TP2 = UBX_CFG_U4 | 0x4005000e;  // Time pulse period when locked to GNSS time
@@ -1197,19 +1220,19 @@ const uint32_t UBLOX_CFG_TP_LEN_LOCK_TP2 = UBX_CFG_U4 | 0x40050010;     // Time 
 const uint32_t UBLOX_CFG_TP_DUTY_TP2 = UBX_CFG_R8 | 0x5005002c;         // Time pulse duty cycle (TP2)
 const uint32_t UBLOX_CFG_TP_DUTY_LOCK_TP2 = UBX_CFG_R8 | 0x5005002d;    // Time pulse duty cycle when locked to GNSS time
 const uint32_t UBLOX_CFG_TP_USER_DELAY_TP2 = UBX_CFG_I4 | 0x40050011;   // User-configurable time pulse delay (TP2)
-const uint32_t UBLOX_CFG_TP_TP2_ENA = UBX_CFG_L | 0x10050012;          // Enable the second timepulse
-const uint32_t UBLOX_CFG_TP_SYNC_GNSS_TP2 = UBX_CFG_L | 0x10050013;    // Sync time pulse to GNSS time or local clock
-const uint32_t UBLOX_CFG_TP_USE_LOCKED_TP2 = UBX_CFG_L | 0x10050014;   // Use locked parameters when possible (TP2)
-const uint32_t UBLOX_CFG_TP_ALIGN_TO_TOW_TP2 = UBX_CFG_L | 0x10050015; // Align time pulse to top of second (TP2)
-const uint32_t UBLOX_CFG_TP_POL_TP2 = UBX_CFG_L | 0x10050016;          // Set time pulse polarity (TP2)
+const uint32_t UBLOX_CFG_TP_TP2_ENA = UBX_CFG_L | 0x10050012;           // Enable the second timepulse
+const uint32_t UBLOX_CFG_TP_SYNC_GNSS_TP2 = UBX_CFG_L | 0x10050013;     // Sync time pulse to GNSS time or local clock
+const uint32_t UBLOX_CFG_TP_USE_LOCKED_TP2 = UBX_CFG_L | 0x10050014;    // Use locked parameters when possible (TP2)
+const uint32_t UBLOX_CFG_TP_ALIGN_TO_TOW_TP2 = UBX_CFG_L | 0x10050015;  // Align time pulse to top of second (TP2)
+const uint32_t UBLOX_CFG_TP_POL_TP2 = UBX_CFG_L | 0x10050016;           // Set time pulse polarity (TP2)
 const uint32_t UBLOX_CFG_TP_TIMEGRID_TP2 = UBX_CFG_E1 | 0x20050017;     // Time grid to use (TP2)
 const uint32_t UBLOX_CFG_TP_DRSTR_TP1 = UBX_CFG_E1 | 0x20050035;        // Set drive strength of TP1
 const uint32_t UBLOX_CFG_TP_DRSTR_TP2 = UBX_CFG_E1 | 0x20050036;        // Set drive strength of TP2
 
 // CFG-TXREADY: TX ready configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_TXREADY_ENABLED = UBX_CFG_L | 0x10a20001;   // Flag to indicate if TX ready pin mechanism should be enabled
-const uint32_t UBLOX_CFG_TXREADY_POLARITY = UBX_CFG_L | 0x10a20002;  // The polarity of the TX ready pin: false:high- active, true:low-active
+const uint32_t UBLOX_CFG_TXREADY_ENABLED = UBX_CFG_L | 0x10a20001;    // Flag to indicate if TX ready pin mechanism should be enabled
+const uint32_t UBLOX_CFG_TXREADY_POLARITY = UBX_CFG_L | 0x10a20002;   // The polarity of the TX ready pin: false:high- active, true:low-active
 const uint32_t UBLOX_CFG_TXREADY_PIN = UBX_CFG_U1 | 0x20a20003;       // Pin number to use for the TX ready functionality
 const uint32_t UBLOX_CFG_TXREADY_THRESHOLD = UBX_CFG_U2 | 0x30a20004; // Amount of data that should be ready on the interface before triggering the TX ready pin
 const uint32_t UBLOX_CFG_TXREADY_INTERFACE = UBX_CFG_E1 | 0x20a20005; // Interface where the TX ready feature should be linked to
@@ -1220,7 +1243,8 @@ const uint32_t UBLOX_CFG_UART1_BAUDRATE = UBX_CFG_U4 | 0x40520001; // The baud r
 const uint32_t UBLOX_CFG_UART1_STOPBITS = UBX_CFG_E1 | 0x20520002; // Number of stopbits that should be used on UART1
 const uint32_t UBLOX_CFG_UART1_DATABITS = UBX_CFG_E1 | 0x20520003; // Number of databits that should be used on UART1
 const uint32_t UBLOX_CFG_UART1_PARITY = UBX_CFG_E1 | 0x20520004;   // Parity mode that should be used on UART1
-const uint32_t UBLOX_CFG_UART1_ENABLED = UBX_CFG_L | 0x10520005;  // Flag to indicate if the UART1 should be enabled
+const uint32_t UBLOX_CFG_UART1_ENABLED = UBX_CFG_L | 0x10520005;   // Flag to indicate if the UART1 should be enabled
+const uint32_t UBLOX_CFG_UART1_REMAP = UBX_CFG_L | 0x10520006;     // UART1 Remapping
 
 // CFG-UART1INPROT: Input protocol configuration of the UART1 interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1241,8 +1265,8 @@ const uint32_t UBLOX_CFG_UART2_BAUDRATE = UBX_CFG_U4 | 0x40530001; // The baud r
 const uint32_t UBLOX_CFG_UART2_STOPBITS = UBX_CFG_E1 | 0x20530002; // Number of stopbits that should be used on UART2
 const uint32_t UBLOX_CFG_UART2_DATABITS = UBX_CFG_E1 | 0x20530003; // Number of databits that should be used on UART2
 const uint32_t UBLOX_CFG_UART2_PARITY = UBX_CFG_E1 | 0x20530004;   // Parity mode that should be used on UART2
-const uint32_t UBLOX_CFG_UART2_ENABLED = UBX_CFG_L | 0x10530005;  // Flag to indicate if the UART2 should be enabled
-const uint32_t UBLOX_CFG_UART2_REMAP = UBX_CFG_L | 0x10530006;    // UART2 Remapping
+const uint32_t UBLOX_CFG_UART2_ENABLED = UBX_CFG_L | 0x10530005;   // Flag to indicate if the UART2 should be enabled
+const uint32_t UBLOX_CFG_UART2_REMAP = UBX_CFG_L | 0x10530006;     // UART2 Remapping
 
 // CFG-UART2INPROT: Input protocol configuration of the UART2 interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1259,8 +1283,8 @@ const uint32_t UBLOX_CFG_UART2OUTPROT_RTCM3X = UBX_CFG_L | 0x10760004; // Flag t
 
 // CFG-USB: Configuration of the USB interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_USB_ENABLED = UBX_CFG_L | 0x10650001;        // Flag to indicate if the USB interface should be enabled
-const uint32_t UBLOX_CFG_USB_SELFPOW = UBX_CFG_L | 0x10650002;        // Self-powered device
+const uint32_t UBLOX_CFG_USB_ENABLED = UBX_CFG_L | 0x10650001;         // Flag to indicate if the USB interface should be enabled
+const uint32_t UBLOX_CFG_USB_SELFPOW = UBX_CFG_L | 0x10650002;         // Self-powered device
 const uint32_t UBLOX_CFG_USB_VENDOR_ID = UBX_CFG_U2 | 0x3065000a;      // Vendor ID
 const uint32_t UBLOX_CFG_USB_PRODUCT_ID = UBX_CFG_U2 | 0x3065000b;     // Vendor ID
 const uint32_t UBLOX_CFG_USB_POWER = UBX_CFG_U2 | 0x3065000c;          // Power consumption
