@@ -935,6 +935,27 @@ const uint32_t UBLOX_CFG_NAV2_SBAS_USE_INTEGRITY = UBX_CFG_L | 0x10170002; // Us
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_NAVHPG_DGNSSMODE = UBX_CFG_E1 | 0x20140011; // Diﬀerential corrections mode
 
+// CFG-NAVMASK: Satellite Elevation Mask Configuration (ZED_F9T)
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_000_020 = UBX_CFG_X8 | 0x50180001; // Elevation masks for azimuth range 0 <= az < 20 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_020_040 = UBX_CFG_X8 | 0x50180002; // Elevation masks for azimuth range 20 <= az < 40 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_040_060 = UBX_CFG_X8 | 0x50180003; // Elevation masks for azimuth range 40 <= az < 60 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_060_080 = UBX_CFG_X8 | 0x50180004; // Elevation masks for azimuth range 60 <= az < 80 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_080_100 = UBX_CFG_X8 | 0x50180005; // Elevation masks for azimuth range 80 <= az < 100 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_100_120 = UBX_CFG_X8 | 0x50180006; // Elevation masks for azimuth range 100 <= az < 120 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_120_140 = UBX_CFG_X8 | 0x50180007; // Elevation masks for azimuth range 120 <= az < 140 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_140_160 = UBX_CFG_X8 | 0x50180008; // Elevation masks for azimuth range 140 <= az < 160 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_160_180 = UBX_CFG_X8 | 0x50180009; // Elevation masks for azimuth range 160 <= az < 180 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_180_200 = UBX_CFG_X8 | 0x5018000a; // Elevation masks for azimuth range 180 <= az < 200 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_200_220 = UBX_CFG_X8 | 0x5018000b; // Elevation masks for azimuth range 200 <= az < 220 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_220_240 = UBX_CFG_X8 | 0x5018000c; // Elevation masks for azimuth range 220 <= az < 240 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_240_260 = UBX_CFG_X8 | 0x5018000d; // Elevation masks for azimuth range 240 <= az < 260 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_260_280 = UBX_CFG_X8 | 0x5018000e; // Elevation masks for azimuth range 260 <= az < 280 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_280_300 = UBX_CFG_X8 | 0x5018000f; // Elevation masks for azimuth range 280 <= az < 300 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_300_320 = UBX_CFG_X8 | 0x50180010; // Elevation masks for azimuth range 300 <= az < 320 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_320_340 = UBX_CFG_X8 | 0x50180011; // Elevation masks for azimuth range 320 <= az < 340 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_340_360 = UBX_CFG_X8 | 0x50180012; // Elevation masks for azimuth range 340 <= az < 360 deg
+
 // CFG-NAVSPG: Standard precision navigation configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_NAVSPG_FIXMODE = UBX_CFG_E1 | 0x20110011;        // Position fix mode
