@@ -1250,6 +1250,7 @@ const uint32_t UBLOX_CFG_UART1_REMAP = UBX_CFG_L | 0x10520006;     // UART1 Rema
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_UART1INPROT_UBX = UBX_CFG_L | 0x10730001;    // Flag to indicate if UBX should be an input protocol on UART1
 const uint32_t UBLOX_CFG_UART1INPROT_NMEA = UBX_CFG_L | 0x10730002;   // Flag to indicate if NMEA should be an input protocol on UART1
+const uint32_t UBLOX_CFG_UART1INPROT_RTCM2X = UBX_CFG_L | 0x10730003; // Flag to indicate if RTCM2X should be an input protocol on UART1
 const uint32_t UBLOX_CFG_UART1INPROT_RTCM3X = UBX_CFG_L | 0x10730004; // Flag to indicate if RTCM3X should be an input protocol on UART1
 const uint32_t UBLOX_CFG_UART1INPROT_SPARTN = UBX_CFG_L | 0x10730005; // Flag to indicate if SPARTN should be an input protocol on UART1
 
@@ -1305,6 +1306,7 @@ const uint32_t UBLOX_CFG_USB_SERIAL_NO_STR3 = UBX_CFG_X8 | 0x50650018; // Serial
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_USBINPROT_UBX = UBX_CFG_L | 0x10770001;    // Flag to indicate if UBX should be an input protocol on USB
 const uint32_t UBLOX_CFG_USBINPROT_NMEA = UBX_CFG_L | 0x10770002;   // Flag to indicate if NMEA should be an input protocol on USB
+const uint32_t UBLOX_CFG_USBINPROT_RTCM2X = UBX_CFG_L | 0x10770003; // Flag to indicate if RTCM2X should be an input protocol on USB
 const uint32_t UBLOX_CFG_USBINPROT_RTCM3X = UBX_CFG_L | 0x10770004; // Flag to indicate if RTCM3X should be an input protocol on USB
 const uint32_t UBLOX_CFG_USBINPROT_SPARTN = UBX_CFG_L | 0x10770005; // Flag to indicate if SPARTN should be an input protocol on USB
 
