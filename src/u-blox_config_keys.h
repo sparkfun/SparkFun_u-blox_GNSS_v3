@@ -176,6 +176,8 @@ const uint32_t UBLOX_CFG_HW_ANT_ON_SHORT_US = UBX_CFG_U2 | 0x30a3003c;        //
 const uint32_t UBLOX_CFG_HW_ANT_SUP_ENGINE = UBX_CFG_E1 | 0x20a30054;         // Antenna supervisor engine selection
 const uint32_t UBLOX_CFG_HW_ANT_SUP_SHORT_THR = UBX_CFG_U1 | 0x20a30055;      // Antenna supervisor MADC engine short detection threshold
 const uint32_t UBLOX_CFG_HW_ANT_SUP_OPEN_THR = UBX_CFG_U1 | 0x20a30056;       // Antenna supervisor MADC engine open detection threshold
+const uint32_t UBLOX_CFG_HW_SENS_WOM_MODE = UBX_CFG_E1 | 0x20a30063;          // Select Wake-On-Motion mode
+const uint32_t UBLOX_CFG_HW_SENS_WOM_THLD = UBX_CFG_U1 | 0x20a30064;          // Wake-On-Motion threshold
 
 // CFG-I2C: Configuration of the I2C interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
