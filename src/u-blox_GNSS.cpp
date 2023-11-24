@@ -17795,6 +17795,24 @@ sfe_ublox_antenna_status_e DevUBLOXGNSS::getAntennaStatus(uint16_t maxWait)
   return ((sfe_ublox_antenna_status_e)packetUBXMONHW->data.aStatus);
 }
 
+// ***** Helper functions for the NEO-F10N
+bool DevUBLOXGNSS::getLNAMode(sfe_ublox_lna_mode_e *mode, uint8_t layer, uint16_t maxWait)
+{
+  return getVal8(UBLOX_CFG_HW_RF_LNA_MODE, (uint8_t *)mode, layer, maxWait); // Get the LNA mode
+}
+bool DevUBLOXGNSS::setLNAMode(sfe_ublox_lna_mode_e mode, uint8_t layer, uint16_t maxWait)
+{
+  return setVal8(UBLOX_CFG_HW_RF_LNA_MODE, (uint8_t)mode, layer, maxWait); // Set the LNA mode
+}
+bool DevUBLOXGNSS::getGPSL5HealthOverride(bool *override, uint8_t layer, uint16_t maxWait)
+{
+  return getVal8(UBLOX_CFG_SIGNAL_GPS_L5_HEALTH_OVERRIDE, (uint8_t *)override, layer, maxWait); // Get the GPS L5 health override status
+}
+bool DevUBLOXGNSS::setGPSL5HealthOverride(bool override, uint8_t layer, uint16_t maxWait)
+{
+  return setVal8(UBLOX_CFG_SIGNAL_GPS_L5_HEALTH_OVERRIDE, (uint8_t)override, layer, maxWait); // Set the GPS L5 health override status
+}
+
 #ifndef SFE_UBLOX_DISABLE_ESF
 // ***** ESF Helper Functions
 

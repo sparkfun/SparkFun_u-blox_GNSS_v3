@@ -475,3 +475,11 @@ enum sfe_ublox_antenna_status_e
   SFE_UBLOX_ANTENNA_STATUS_SHORT,
   SFE_UBLOX_ANTENNA_STATUS_OPEN
 };
+
+// NEO-F10N LNA Mode
+enum sfe_ublox_lna_mode_e
+{
+  SFE_UBLOX_LNA_MODE_NORMAL, // Default - full gain
+  SFE_UBLOX_LNA_MODE_LOWGAIN,
+  SFE_UBLOX_LNA_MODE_BYPASS
+};

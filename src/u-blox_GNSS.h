@@ -1236,6 +1236,12 @@ public:
   float getHNRheading(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                        // Returned as degrees
 #endif
 
+  // Helper functions for the NEO-F10N
+  bool getLNAMode(sfe_ublox_lna_mode_e *mode, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the LNA mode
+  bool setLNAMode(sfe_ublox_lna_mode_e mode, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the LNA mode
+  bool getGPSL5HealthOverride(bool *override, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the GPS L5 health override status
+  bool setGPSL5HealthOverride(bool override, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the GPS L5 health override status
+
   // Set the mainTalkerId used by NMEA messages - allows all NMEA messages except GSV to be prefixed with GP instead of GN
   bool setMainTalkerID(sfe_ublox_talker_ids_e id = SFE_UBLOX_MAIN_TALKER_ID_DEFAULT, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
 

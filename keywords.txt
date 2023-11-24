@@ -719,6 +719,11 @@ getHNRroll	KEYWORD2
 getHNRpitch	KEYWORD2
 getHNRheading	KEYWORD2
 
+getLNAMode	KEYWORD2
+setLNAMode	KEYWORD2
+getGPSL5HealthOverride	KEYWORD2
+setGPSL5HealthOverride	KEYWORD2
+
 setNMEALoggingMask	KEYWORD2
 getNMEALoggingMask	KEYWORD2
 setProcessNMEAMask	KEYWORD2
