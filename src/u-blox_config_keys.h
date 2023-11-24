@@ -114,6 +114,11 @@ const uint32_t UBX_CFG_SIZE_MASK = 0x0F00F000; // Bit mask
 
 // Below are the key values for a given configuration setting
 
+// UNDOCUMENTED Keys for the NEO-F10N (SPG 6.00)
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// From the code example in the NEO-F10N Integration Manual. Set True to override the GPS L5 health status with GPS L1.
+const uint32_t UBLOX_CFG_SIGNAL_GPS_L5_HEALTH_OVERRIDE = UBX_CFG_L | 0x10320001;
+
 // CFG-ANA: AssistNow Autonomous and Offline configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_ANA_USE_ANA = UBX_CFG_L | 0x10230001;    // Use AssistNow Autonomous
