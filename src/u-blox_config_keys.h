@@ -178,6 +178,7 @@ const uint32_t UBLOX_CFG_HW_ANT_SUP_SHORT_THR = UBX_CFG_U1 | 0x20a30055;      //
 const uint32_t UBLOX_CFG_HW_ANT_SUP_OPEN_THR = UBX_CFG_U1 | 0x20a30056;       // Antenna supervisor MADC engine open detection threshold
 const uint32_t UBLOX_CFG_HW_SENS_WOM_MODE = UBX_CFG_E1 | 0x20a30063;          // Select Wake-On-Motion mode
 const uint32_t UBLOX_CFG_HW_SENS_WOM_THLD = UBX_CFG_U1 | 0x20a30064;          // Wake-On-Motion threshold
+const uint32_t UBLOX_CFG_HW_RF_LNA_MODE = UBX_CFG_E1 | 0x20a30057;            // Mode for internal LNA (NEO-F10)
 
 // CFG-I2C: Configuration of the I2C interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -701,7 +702,7 @@ const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_PVAT_UART2 = UBX_CFG_U1 | 0x2091062c;   
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_PVAT_USB = UBX_CFG_U1 | 0x2091062d;     // Output rate of the UBX-NAV-PVAT message on port USB
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_PVAT_SPI = UBX_CFG_U1 | 0x2091062e;     // Output rate of the UBX-NAV-PVAT message on port SPI
 
-// Additional CFG_MSGOUT keys for the M10
+// Additional CFG_MSGOUT keys for the M10 / F10
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_AOPSTATUS_I2C = UBX_CFG_U1 | 0x20910079;
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_AOPSTATUS_SPI = UBX_CFG_U1 | 0x2091007d;
@@ -955,6 +956,14 @@ const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_280_300 = UBX_CFG_X8 | 0x5018000f; // E
 const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_300_320 = UBX_CFG_X8 | 0x50180010; // Elevation masks for azimuth range 300 <= az < 320 deg
 const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_320_340 = UBX_CFG_X8 | 0x50180011; // Elevation masks for azimuth range 320 <= az < 340 deg
 const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_340_360 = UBX_CFG_X8 | 0x50180012; // Elevation masks for azimuth range 340 <= az < 360 deg
+
+// CFG-NAVMASK: Satellite Mask Configuration (F10)
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+const uint32_t UBLOX_CFG_NAVMASK_SV_MASK_GPS = UBX_CFG_X8 | 0x50180013;   // Satellite mask for the GPS system
+const uint32_t UBLOX_CFG_NAVMASK_SV_MASK_GAL = UBX_CFG_X8 | 0x50180014;   // Satellite mask for the GALILEO system
+const uint32_t UBLOX_CFG_NAVMASK_SV_MASK_BDS = UBX_CFG_X8 | 0x50180016;   // Satellite mask for the BeiDou system
+const uint32_t UBLOX_CFG_NAVMASK_SV_MASK_QZSS = UBX_CFG_X8 | 0x50180017;  // Satellite mask for the QZSS system
+const uint32_t UBLOX_CFG_NAVMASK_SV_MASK_NAVIC = UBX_CFG_X8 | 0x50180018; // Satellite mask for the NavIC system
 
 // CFG-NAVSPG: Standard precision navigation configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
