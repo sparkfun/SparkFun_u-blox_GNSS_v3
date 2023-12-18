@@ -375,6 +375,10 @@ void DevUBLOXGNSS::end(void)
     {
       delete packetUBXRXMSFRBX->callbackData;
     }
+    if (packetUBXRXMSFRBX->callbackMessageData != nullptr)
+    {
+      delete[] packetUBXRXMSFRBX->callbackMessageData;
+    }
     delete packetUBXRXMSFRBX;
     packetUBXRXMSFRBX = nullptr;
   }
@@ -4124,6 +4128,31 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
           packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid = true;
         }
 
+        // Check if we need to copy the data for the message callbacks
+        if (packetUBXRXMSFRBX->callbackMessageData != nullptr) // If RAM has been allocated for the copy of the data
+        {
+          for (uint16_t i = 0; i < UBX_RXM_SFRBX_MESSAGE_CALLBACK_BUFFERS; i++) // Check all available buffers
+          {
+            if ((packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackMessageCopyValid & (1 << i)) == 0) // AND the buffer is empty
+            {
+              packetUBXRXMSFRBX->callbackMessageData[i].sync1 = UBX_SYNCH_1;
+              packetUBXRXMSFRBX->callbackMessageData[i].sync2 = UBX_SYNCH_2;
+              packetUBXRXMSFRBX->callbackMessageData[i].cls = UBX_CLASS_RXM;
+              packetUBXRXMSFRBX->callbackMessageData[i].ID = UBX_RXM_SFRBX;
+              packetUBXRXMSFRBX->callbackMessageData[i].lengthLSB = msg->len & 0xFF;
+              packetUBXRXMSFRBX->callbackMessageData[i].lengthMSB = msg->len >> 8;
+
+              memcpy(packetUBXRXMSFRBX->callbackMessageData[i].payload, msg->payload, msg->len);
+
+              packetUBXRXMSFRBX->callbackMessageData[i].checksumA = msg->checksumA;
+              packetUBXRXMSFRBX->callbackMessageData[i].checksumB = msg->checksumB;
+
+              packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackMessageCopyValid |= (1 << i);
+              break; // abort when added
+            }
+          }
+        }
+
         // Check if we need to copy the data into the file buffer
         if (packetUBXRXMSFRBX->automaticFlags.flags.bits.addToFileBuffer)
         {
@@ -5789,8 +5818,10 @@ void DevUBLOXGNSS::checkCallbacks(void)
         packetUBXRXMCOR->automaticFlags.flags.bits.callbackCopyValid = false; // Mark the data as stale
       }
 
-  if (packetUBXRXMSFRBX != nullptr)                                               // If RAM has been allocated for message storage
-    if (packetUBXRXMSFRBX->callbackData != nullptr)                               // If RAM has been allocated for the copy of the data
+  if (packetUBXRXMSFRBX != nullptr) // If RAM has been allocated for message storage
+  {
+    if (packetUBXRXMSFRBX->callbackData != nullptr) // If RAM has been allocated for the copy of the data
+    {
       if (packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid == true) // If the copy of the data is valid
       {
         if (packetUBXRXMSFRBX->callbackPointerPtr != nullptr) // If the pointer to the callback has been defined
@@ -5799,6 +5830,22 @@ void DevUBLOXGNSS::checkCallbacks(void)
         }
         packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid = false; // Mark the data as stale
       }
+    }
+    if (packetUBXRXMSFRBX->callbackMessageData != nullptr) // If RAM has been allocated for the copy of the data
+    {
+      for (uint16_t i = 0; i < UBX_RXM_SFRBX_MESSAGE_CALLBACK_BUFFERS; i++)
+      {
+        if ((packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackMessageCopyValid & (1 << i)) > 0) // If the copy of the data is valid
+        {
+          if (packetUBXRXMSFRBX->callbackMessagePointerPtr != nullptr) // If the pointer to the callback has been defined
+          {
+            packetUBXRXMSFRBX->callbackMessagePointerPtr(&packetUBXRXMSFRBX->callbackMessageData[i]); // Call the callback
+          }
+          packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackMessageCopyValid &= ~(1 << i); // Mark the data as stale
+        }
+      }
+    }
+  }
 
   if (packetUBXRXMRAWX != nullptr)                                               // If RAM has been allocated for message storage
     if (packetUBXRXMRAWX->callbackData != nullptr)                               // If RAM has been allocated for the copy of the data
@@ -6107,7 +6154,7 @@ bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool cal
       bytesLeftToWrite -= (size_t)bytesToWrite;
       dataBytes += bytesToWrite;
 
-      if (callProcessBuffer) // Try and prevent data loss during large pushes by calling checkUbloxSerial between chunks
+      if (callProcessBuffer)                // Try and prevent data loss during large pushes by calling checkUbloxSerial between chunks
         checkUbloxSerial(&packetCfg, 0, 0); // Don't call checkUbloxInternal as we already have the lock!
     }
   }
@@ -9014,7 +9061,6 @@ const char *DevUBLOXGNSS::getUniqueChipIdStr(UBX_SEC_UNIQID_data_t *data, uint16
 
   return ((const char *)uniqueId);
 }
-
 
 // CONFIGURATION INTERFACE (protocol v27 and above)
 
@@ -13132,6 +13178,31 @@ bool DevUBLOXGNSS::setAutoRXMSFRBXcallbackPtr(void (*callbackPointerPtr)(UBX_RXM
   packetUBXRXMSFRBX->callbackPointerPtr = callbackPointerPtr;
   return (true);
 }
+// Use this if you want all of the SFRBX message (including sync chars, checksum, etc.) to push to the PointPerfect Library
+bool DevUBLOXGNSS::setAutoRXMSFRBXmessageCallbackPtr(void (*callbackMessagePointerPtr)(UBX_RXM_SFRBX_message_data_t *), uint8_t layer, uint16_t maxWait)
+{
+  // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
+  bool result = setAutoRXMSFRBX(true, false, layer, maxWait);
+  if (!result)
+    return (result); // Bail if setAuto failed
+
+  if (packetUBXRXMSFRBX->callbackMessageData == nullptr) // Check if RAM has been allocated for the callback copy
+  {
+    packetUBXRXMSFRBX->callbackMessageData = new UBX_RXM_SFRBX_message_data_t[UBX_RXM_SFRBX_MESSAGE_CALLBACK_BUFFERS]; // Allocate RAM for the main struct
+  }
+
+  if (packetUBXRXMSFRBX->callbackMessageData == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("setAutoRXMSFRBXmessageCallbackPtr: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+
+  packetUBXRXMSFRBX->callbackMessagePointerPtr = callbackMessagePointerPtr;
+  return (true);
+}
 
 // In case no config access to the GNSS is possible and SFRBX is send cyclically already
 // set config to suitable parameters
@@ -13166,6 +13237,8 @@ bool DevUBLOXGNSS::initPacketUBXRXMSFRBX()
   packetUBXRXMSFRBX->automaticFlags.flags.all = 0;
   packetUBXRXMSFRBX->callbackPointerPtr = nullptr;
   packetUBXRXMSFRBX->callbackData = nullptr;
+  packetUBXRXMSFRBX->callbackMessagePointerPtr = nullptr;
+  packetUBXRXMSFRBX->callbackMessageData = nullptr;
   packetUBXRXMSFRBX->moduleQueried = false;
   return (true);
 }
@@ -17806,11 +17879,11 @@ bool DevUBLOXGNSS::setLNAMode(sfe_ublox_lna_mode_e mode, uint8_t layer, uint16_t
 }
 bool DevUBLOXGNSS::getGPSL5HealthOverride(bool *override, uint8_t layer, uint16_t maxWait)
 {
-  return getVal8(UBLOX_CFG_SIGNAL_GPS_L5_HEALTH_OVERRIDE, (uint8_t *)override, layer, maxWait); // Get the GPS L5 health override status
+  return getVal8(UBLOX_CFG_SIGNAL_GPS_L5_HEALTH_OVERRIDE, (uint8_t *) override, layer, maxWait); // Get the GPS L5 health override status
 }
 bool DevUBLOXGNSS::setGPSL5HealthOverride(bool override, uint8_t layer, uint16_t maxWait)
 {
-  return setVal8(UBLOX_CFG_SIGNAL_GPS_L5_HEALTH_OVERRIDE, (uint8_t)override, layer, maxWait); // Set the GPS L5 health override status
+  return setVal8(UBLOX_CFG_SIGNAL_GPS_L5_HEALTH_OVERRIDE, (uint8_t) override, layer, maxWait); // Set the GPS L5 health override status
 }
 
 #ifndef SFE_UBLOX_DISABLE_ESF

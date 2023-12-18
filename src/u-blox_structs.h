@@ -431,7 +431,7 @@ typedef struct
     uint8_t all;
     struct
     {
-      uint8_t invalidLlh : 1; // 1 = Invalid lon, lat, height and hMSL
+      uint8_t invalidLlh : 1;        // 1 = Invalid lon, lat, height and hMSL
       uint8_t lastCorrectionAge : 4; // Age of the most recently received differential correction:
                                      // 0: Not available
                                      // 1: Age between 0 and 1 second
@@ -1429,6 +1429,7 @@ typedef struct
 // Note: length is variable
 // Note: on protocol version 17: numWords is (0..16)
 //       on protocol version 18+: numWords is (0..10)
+#define UBX_RXM_SFRBX_MESSAGE_CALLBACK_BUFFERS 12
 const uint8_t UBX_RXM_SFRBX_MAX_WORDS = 16;
 const uint16_t UBX_RXM_SFRBX_MAX_LEN = 8 + (4 * UBX_RXM_SFRBX_MAX_WORDS);
 
@@ -1445,13 +1446,46 @@ typedef struct
   uint32_t dwrd[UBX_RXM_SFRBX_MAX_WORDS]; // The data words
 } UBX_RXM_SFRBX_data_t;
 
+// Define a struct to hold the entire SFRBX message so the whole thing can be pushed to the PointPerfect Library
+// Remember that the length of the payload will be variable.
 typedef struct
 {
-  ubxAutomaticFlags automaticFlags;
+  uint8_t sync1; // 0xB5
+  uint8_t sync2; // 0x62
+  uint8_t cls;
+  uint8_t ID;
+  uint8_t lengthLSB;
+  uint8_t lengthMSB;
+  uint8_t payload[UBX_RXM_SFRBX_MAX_LEN];
+  uint8_t checksumA;
+  uint8_t checksumB;
+} UBX_RXM_SFRBX_message_data_t;
+
+struct ubxSFRBXAutomaticFlags
+{
+  union
+  {
+    uint16_t all;
+    struct
+    {
+      uint16_t automatic : 1;                                                     // Will this message be delivered and parsed "automatically" (without polling)
+      uint16_t implicitUpdate : 1;                                                // Is the update triggered by accessing stale data (=true) or by a call to checkUblox (=false)
+      uint16_t addToFileBuffer : 1;                                               // Should the raw UBX data be added to the file buffer?
+      uint16_t callbackCopyValid : 1;                                             // Is the copy of the data struct used by the callback valid/fresh?
+      uint16_t callbackMessageCopyValid : UBX_RXM_SFRBX_MESSAGE_CALLBACK_BUFFERS; // Are the copies of the data structs used by the callback valid/fresh?
+    } bits;
+  } flags;
+};
+
+typedef struct
+{
+  ubxSFRBXAutomaticFlags automaticFlags;
   UBX_RXM_SFRBX_data_t data;
   bool moduleQueried;
   void (*callbackPointerPtr)(UBX_RXM_SFRBX_data_t *);
   UBX_RXM_SFRBX_data_t *callbackData;
+  void (*callbackMessagePointerPtr)(UBX_RXM_SFRBX_message_data_t *);
+  UBX_RXM_SFRBX_message_data_t *callbackMessageData;
 } UBX_RXM_SFRBX_t;
 
 // UBX-RXM-MEASX (0x02 0x14): Receiver Manager Messages: i.e. Satellite Status, RTC Status.
@@ -1798,7 +1832,7 @@ typedef struct
   uint8_t reserved2[2]; // Reserved
   uint32_t pinIrq;      // Mask of pins value using the PIO Irq
   uint32_t pullH;       // Mask of pins value using the PIO pull high resistor
-  uint32_t pullL;        // Mask of pins value using the PIO pull low resistor
+  uint32_t pullL;       // Mask of pins value using the PIO pull low resistor
 } UBX_MON_HW_data_t;
 
 typedef struct
@@ -2793,8 +2827,8 @@ struct rtcmAutomaticFlags
     uint8_t all;
     struct
     {
-      uint8_t dataValid : 1; // Is the copy of the data used by the get function valid/fresh? 0 = invalid, 1 = valid
-      uint8_t dataRead : 1;  // Has the data been read? 0 = unread, 1 = read
+      uint8_t dataValid : 1;         // Is the copy of the data used by the get function valid/fresh? 0 = invalid, 1 = valid
+      uint8_t dataRead : 1;          // Has the data been read? 0 = unread, 1 = read
       uint8_t callbackDataValid : 1; // Is the copy of the data used by the callback valid/fresh? 0 = invalid/stale, 1 = valid/fresh
     } bits;
   } flags;
@@ -2815,19 +2849,19 @@ const uint16_t RTCM_1005_MSG_LEN_BYTES = 19;
 
 typedef struct
 {
-  uint16_t MessageNumber; // Message Number (“1005” = 0x3ED)
-  uint16_t ReferenceStationID; // Reference Station ID
-  uint8_t ITRFRealizationYear; // ITRF Realization Year
-  bool GPSIndicator; // GPS Indicator
-  bool GLONASSIndicator; // GLONASS Indicator
-  bool GalileoIndicator; // Galileo Indicator
-  bool ReferenceStationIndicator; // Reference-Station Indicator
-  int64_t AntennaReferencePointECEFX; // Antenna Reference Point ECEF-X (0.0001m)
+  uint16_t MessageNumber;                 // Message Number (“1005” = 0x3ED)
+  uint16_t ReferenceStationID;            // Reference Station ID
+  uint8_t ITRFRealizationYear;            // ITRF Realization Year
+  bool GPSIndicator;                      // GPS Indicator
+  bool GLONASSIndicator;                  // GLONASS Indicator
+  bool GalileoIndicator;                  // Galileo Indicator
+  bool ReferenceStationIndicator;         // Reference-Station Indicator
+  int64_t AntennaReferencePointECEFX;     // Antenna Reference Point ECEF-X (0.0001m)
   bool SingleReceiverOscillatorIndicator; // Single Receiver Oscillator Indicator
-  bool Reserved; // Reserved
-  int64_t AntennaReferencePointECEFY; // Antenna Reference Point ECEF-Y (0.0001m)
-  uint8_t QuarterCycleIndicator; // Quarter Cycle Indicator
-  int64_t AntennaReferencePointECEFZ; // Antenna Reference Point ECEF-Z (0.0001m)
+  bool Reserved;                          // Reserved
+  int64_t AntennaReferencePointECEFY;     // Antenna Reference Point ECEF-Y (0.0001m)
+  uint8_t QuarterCycleIndicator;          // Quarter Cycle Indicator
+  int64_t AntennaReferencePointECEFZ;     // Antenna Reference Point ECEF-Z (0.0001m)
 } RTCM_1005_data_t;
 
 typedef struct
@@ -2844,18 +2878,18 @@ const uint16_t RTCM_1006_MSG_LEN_BYTES = 21;
 
 typedef struct
 {
-  uint16_t MessageNumber; // Message Number (“1006” = 0x3EE)
-  uint16_t ReferenceStationID; // Reference Station ID
-  uint8_t ITRFRealizationYear; // ITRF Realization Year
-  bool GPSIndicator; // GPS Indicator
-  bool GLONASSIndicator; // GLONASS Indicator
-  bool GalileoIndicator; // Galileo Indicator
-  bool ReferenceStationIndicator; // Reference-Station Indicator
-  int64_t AntennaReferencePointECEFX; // Antenna Reference Point ECEF-X (0.0001m)
+  uint16_t MessageNumber;                 // Message Number (“1006” = 0x3EE)
+  uint16_t ReferenceStationID;            // Reference Station ID
+  uint8_t ITRFRealizationYear;            // ITRF Realization Year
+  bool GPSIndicator;                      // GPS Indicator
+  bool GLONASSIndicator;                  // GLONASS Indicator
+  bool GalileoIndicator;                  // Galileo Indicator
+  bool ReferenceStationIndicator;         // Reference-Station Indicator
+  int64_t AntennaReferencePointECEFX;     // Antenna Reference Point ECEF-X (0.0001m)
   bool SingleReceiverOscillatorIndicator; // Single Receiver Oscillator Indicator
-  bool Reserved; // Reserved
-  int64_t AntennaReferencePointECEFY; // Antenna Reference Point ECEF-Y (0.0001m)
-  uint8_t QuarterCycleIndicator; // Quarter Cycle Indicator
-  int64_t AntennaReferencePointECEFZ; // Antenna Reference Point ECEF-Z (0.0001m)
-  uint16_t AntennaHeight; // Antenna Height above the marker used in the survey campaign (0.0001m)
+  bool Reserved;                          // Reserved
+  int64_t AntennaReferencePointECEFY;     // Antenna Reference Point ECEF-Y (0.0001m)
+  uint8_t QuarterCycleIndicator;          // Quarter Cycle Indicator
+  int64_t AntennaReferencePointECEFZ;     // Antenna Reference Point ECEF-Z (0.0001m)
+  uint16_t AntennaHeight;                 // Antenna Height above the marker used in the survey campaign (0.0001m)
 } RTCM_1006_data_t;
