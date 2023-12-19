@@ -375,6 +375,10 @@ void DevUBLOXGNSS::end(void)
     {
       delete packetUBXRXMSFRBX->callbackData;
     }
+    if (packetUBXRXMSFRBX->callbackMessageData != nullptr)
+    {
+      delete[] packetUBXRXMSFRBX->callbackMessageData;
+    }
     delete packetUBXRXMSFRBX;
     packetUBXRXMSFRBX = nullptr;
   }
@@ -465,7 +469,7 @@ void DevUBLOXGNSS::end(void)
   {
     if (packetUBXESFMEAS->callbackData != nullptr)
     {
-      delete packetUBXESFMEAS->callbackData;
+      delete[] packetUBXESFMEAS->callbackData;
     }
     delete packetUBXESFMEAS;
     packetUBXESFMEAS = nullptr;
@@ -4117,11 +4121,42 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         packetUBXRXMSFRBX->moduleQueried = true;
 
         // Check if we need to copy the data for the callback
-        if ((packetUBXRXMSFRBX->callbackData != nullptr)                                  // If RAM has been allocated for the copy of the data
-            && (packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid == false)) // AND the data is stale
+        if (packetUBXRXMSFRBX->callbackData != nullptr) // If RAM has been allocated for the copies of the data
         {
-          memcpy(&packetUBXRXMSFRBX->callbackData->gnssId, &packetUBXRXMSFRBX->data.gnssId, sizeof(UBX_RXM_SFRBX_data_t));
-          packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid = true;
+          for (uint32_t i = 0; i < UBX_RXM_SFRBX_CALLBACK_BUFFERS; i++) // Check all available buffers
+          {
+            if ((packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid & (1 << i)) == 0) // AND the buffer is empty
+            {
+              memcpy(&packetUBXRXMSFRBX->callbackData[i].gnssId, &packetUBXRXMSFRBX->data.gnssId, sizeof(UBX_RXM_SFRBX_data_t));
+              packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid |= (1 << i);
+              break; // Only copy once - into first available buffer
+            }
+          }
+        }
+
+        // Check if we need to copy the data for the message callbacks
+        if (packetUBXRXMSFRBX->callbackMessageData != nullptr) // If RAM has been allocated for the copies of the data
+        {
+          for (uint32_t i = 0; i < UBX_RXM_SFRBX_CALLBACK_BUFFERS; i++) // Check all available buffers
+          {
+            if ((packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackMessageCopyValid & (1 << i)) == 0) // AND the buffer is empty
+            {
+              packetUBXRXMSFRBX->callbackMessageData[i].sync1 = UBX_SYNCH_1;
+              packetUBXRXMSFRBX->callbackMessageData[i].sync2 = UBX_SYNCH_2;
+              packetUBXRXMSFRBX->callbackMessageData[i].cls = UBX_CLASS_RXM;
+              packetUBXRXMSFRBX->callbackMessageData[i].ID = UBX_RXM_SFRBX;
+              packetUBXRXMSFRBX->callbackMessageData[i].lengthLSB = msg->len & 0xFF;
+              packetUBXRXMSFRBX->callbackMessageData[i].lengthMSB = msg->len >> 8;
+
+              memcpy(&packetUBXRXMSFRBX->callbackMessageData[i].payload, msg->payload, msg->len);
+
+              packetUBXRXMSFRBX->callbackMessageData[i].checksumA = msg->checksumA;
+              packetUBXRXMSFRBX->callbackMessageData[i].checksumB = msg->checksumB;
+
+              packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackMessageCopyValid |= (1 << i);
+              break; // Only copy once - into first available buffer
+            }
+          }
         }
 
         // Check if we need to copy the data into the file buffer
@@ -4431,11 +4466,17 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
           packetUBXESFMEAS->data.calibTtag = extractLong(msg, 8 + (packetUBXESFMEAS->data.flags.bits.numMeas * 4));
 
         // Check if we need to copy the data for the callback
-        if ((packetUBXESFMEAS->callbackData != nullptr)                                  // If RAM has been allocated for the copy of the data
-            && (packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid == false)) // AND the data is stale
+        if (packetUBXESFMEAS->callbackData != nullptr) // If RAM has been allocated for the copy of the data
         {
-          memcpy(&packetUBXESFMEAS->callbackData->timeTag, &packetUBXESFMEAS->data.timeTag, sizeof(UBX_ESF_MEAS_data_t));
-          packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid = true;
+          for (uint16_t i = 0; i < UBX_ESF_MEAS_CALLBACK_BUFFERS; i++)
+          {
+            if ((packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid & (1 << i)) == 0) // AND the data is stale
+            {
+              memcpy(&packetUBXESFMEAS->callbackData[i].timeTag, &packetUBXESFMEAS->data.timeTag, sizeof(UBX_ESF_MEAS_data_t));
+              packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid |= (1 << i);
+              break; // Only copy once
+            }
+          }
         }
 
         // Check if we need to copy the data into the file buffer
@@ -5789,16 +5830,37 @@ void DevUBLOXGNSS::checkCallbacks(void)
         packetUBXRXMCOR->automaticFlags.flags.bits.callbackCopyValid = false; // Mark the data as stale
       }
 
-  if (packetUBXRXMSFRBX != nullptr)                                               // If RAM has been allocated for message storage
-    if (packetUBXRXMSFRBX->callbackData != nullptr)                               // If RAM has been allocated for the copy of the data
-      if (packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid == true) // If the copy of the data is valid
+  if (packetUBXRXMSFRBX != nullptr) // If RAM has been allocated for message storage
+  {
+    if (packetUBXRXMSFRBX->callbackData != nullptr) // If RAM has been allocated for the copies of the data
+    {
+      for (uint32_t i = 0; i < UBX_RXM_SFRBX_CALLBACK_BUFFERS; i++)
       {
-        if (packetUBXRXMSFRBX->callbackPointerPtr != nullptr) // If the pointer to the callback has been defined
+        if ((packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid & (1 << i)) != 0) // If the copy of the data is valid
         {
-          packetUBXRXMSFRBX->callbackPointerPtr(packetUBXRXMSFRBX->callbackData); // Call the callback
+          if (packetUBXRXMSFRBX->callbackPointerPtr != nullptr) // If the pointer to the callback has been defined
+          {
+            packetUBXRXMSFRBX->callbackPointerPtr(&packetUBXRXMSFRBX->callbackData[i]); // Call the callback
+          }
+          packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid &= ~(1 << i); // Mark the data as stale
         }
-        packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid = false; // Mark the data as stale
       }
+    }
+    if (packetUBXRXMSFRBX->callbackMessageData != nullptr) // If RAM has been allocated for the copies of the data
+    {
+      for (uint32_t i = 0; i < UBX_RXM_SFRBX_CALLBACK_BUFFERS; i++)
+      {
+        if ((packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackMessageCopyValid & (1 << i)) != 0) // If the copy of the data is valid
+        {
+          if (packetUBXRXMSFRBX->callbackMessagePointerPtr != nullptr) // If the pointer to the callback has been defined
+          {
+            packetUBXRXMSFRBX->callbackMessagePointerPtr(&packetUBXRXMSFRBX->callbackMessageData[i]); // Call the callback
+          }
+          packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackMessageCopyValid &= ~(1 << i); // Mark the data as stale
+        }
+      }
+    }
+  }
 
   if (packetUBXRXMRAWX != nullptr)                                               // If RAM has been allocated for message storage
     if (packetUBXRXMRAWX->callbackData != nullptr)                               // If RAM has been allocated for the copy of the data
@@ -5881,13 +5943,16 @@ void DevUBLOXGNSS::checkCallbacks(void)
 
   if (packetUBXESFMEAS != nullptr)                                               // If RAM has been allocated for message storage
     if (packetUBXESFMEAS->callbackData != nullptr)                               // If RAM has been allocated for the copy of the data
-      if (packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid == true) // If the copy of the data is valid
+      for (uint16_t i = 0; i < UBX_ESF_MEAS_CALLBACK_BUFFERS; i++)
       {
-        if (packetUBXESFMEAS->callbackPointerPtr != nullptr) // If the pointer to the callback has been defined
+        if ((packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid & (1 << i)) != 0) // If the copy of the data is valid
         {
-          packetUBXESFMEAS->callbackPointerPtr(packetUBXESFMEAS->callbackData); // Call the callback
+          if (packetUBXESFMEAS->callbackPointerPtr != nullptr) // If the pointer to the callback has been defined
+          {
+            packetUBXESFMEAS->callbackPointerPtr(&packetUBXESFMEAS->callbackData[i]); // Call the callback
+          }
+          packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid &= ~(1 << i); // Mark the data as stale
         }
-        packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid = false; // Mark the data as stale
       }
 
   if (packetUBXESFRAW != nullptr)                                               // If RAM has been allocated for message storage
@@ -6107,7 +6172,7 @@ bool DevUBLOXGNSS::pushRawData(uint8_t *dataBytes, size_t numDataBytes, bool cal
       bytesLeftToWrite -= (size_t)bytesToWrite;
       dataBytes += bytesToWrite;
 
-      if (callProcessBuffer) // Try and prevent data loss during large pushes by calling checkUbloxSerial between chunks
+      if (callProcessBuffer)                // Try and prevent data loss during large pushes by calling checkUbloxSerial between chunks
         checkUbloxSerial(&packetCfg, 0, 0); // Don't call checkUbloxInternal as we already have the lock!
     }
   }
@@ -8950,6 +9015,395 @@ bool DevUBLOXGNSS::setDynamicSPARTNKeys(uint8_t keyLengthBytes1, uint16_t validF
   return (sendCommand(&packetCfg, 0) == SFE_UBLOX_STATUS_SUCCESS); // UBX-RXM-SPARTNKEY is silent. It does not ACK (or NACK)
 }
 
+// Support for SPARTN parsing
+// Mostly stolen from https://github.com/u-blox/ubxlib/blob/master/common/spartn/src/u_spartn_crc.c
+
+uint8_t DevUBLOXGNSS::uSpartnCrc4(const uint8_t *pU8Msg, size_t size)
+{
+    // Initialize local variables
+    uint8_t u8TableRemainder;
+    uint8_t u8Remainder = 0; // Initial remainder
+
+    // Compute the CRC value
+    // Divide each byte of the message by the corresponding polynomial
+    for (size_t x = 0; x < size; x++) {
+        u8TableRemainder = pU8Msg[x] ^ u8Remainder;
+        u8Remainder = sfe_ublox_u8Crc4Table[u8TableRemainder];
+    }
+
+    return u8Remainder;
+}
+
+uint8_t DevUBLOXGNSS::uSpartnCrc8(const uint8_t *pU8Msg, size_t size)
+{
+    // Initialize local variables
+    uint8_t u8TableRemainder;
+    uint8_t u8Remainder = 0; // Initial remainder
+
+    // Compute the CRC value
+    // Divide each byte of the message by the corresponding polynomial
+    for (size_t x = 0; x < size; x++) {
+        u8TableRemainder = pU8Msg[x] ^ u8Remainder;
+        u8Remainder = sfe_ublox_u8Crc8Table[u8TableRemainder];
+    }
+
+    return u8Remainder;
+}
+
+uint16_t DevUBLOXGNSS::uSpartnCrc16(const uint8_t *pU8Msg, size_t size)
+{
+    // Initialize local variables
+    uint16_t u16TableRemainder;
+    uint16_t u16Remainder = 0; // Initial remainder
+    uint8_t  u8NumBitsInCrc = (8 * sizeof(uint16_t));
+
+    // Compute the CRC value
+    // Divide each byte of the message by the corresponding polynomial
+    for (size_t x = 0; x < size; x++) {
+        u16TableRemainder = pU8Msg[x] ^ (u16Remainder >> (u8NumBitsInCrc - 8));
+        u16Remainder = sfe_ublox_u16Crc16Table[u16TableRemainder] ^ (u16Remainder << 8);
+    }
+
+    return u16Remainder;
+}
+
+uint32_t DevUBLOXGNSS::uSpartnCrc24(const uint8_t *pU8Msg, size_t size)
+{
+    // Initialize local variables
+    uint32_t u32TableRemainder;
+    uint32_t u32Remainder = 0; // Initial remainder
+    uint8_t u8NumBitsInCrc = (8 * sizeof(uint8_t) * 3);
+
+    // Compute the CRC value
+    // Divide each byte of the message by the corresponding polynomial
+    for (size_t x = 0; x < size; x++) {
+        u32TableRemainder = pU8Msg[x] ^ (u32Remainder >> (u8NumBitsInCrc - 8));
+        u32Remainder = sfe_ublox_u32Crc24Table[u32TableRemainder] ^ (u32Remainder << 8);
+        u32Remainder = u32Remainder & 0x00FFFFFF; // Only interested in 24 bits
+    }
+
+    return u32Remainder;
+}
+
+uint32_t DevUBLOXGNSS::uSpartnCrc32(const uint8_t *pU8Msg, size_t size)
+{
+    // Initialize local variables
+    uint32_t u32TableRemainder;
+    uint32_t u32Remainder = 0xFFFFFFFFU; // Initial remainder
+    uint8_t u8NumBitsInCrc = (8 * sizeof(uint32_t));
+    uint32_t u32FinalXORValue = 0xFFFFFFFFU;
+
+    // Compute the CRC value
+    // Divide each byte of the message by the corresponding polynomial
+    for (size_t x = 0; x < size; x++) {
+        u32TableRemainder = pU8Msg[x] ^ (u32Remainder >> (u8NumBitsInCrc - 8));
+        u32Remainder = sfe_ublox_u32Crc32Table[u32TableRemainder] ^ (u32Remainder << 8);
+    }
+
+    u32Remainder = u32Remainder ^ u32FinalXORValue;
+
+    return u32Remainder;
+}
+
+// Parse SPARTN data
+uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len)
+{
+  typedef enum {
+    waitingFor73,
+    TF002_TF006,
+    TF007,
+    TF009,
+    TF016,
+    TF017,
+    TF018
+  } parseStates;
+  static parseStates parseState = waitingFor73;
+
+  static uint8_t spartn[1100];
+
+  static uint16_t frameCount;
+  static uint8_t messageType;
+  static uint16_t payloadLength;
+  static uint16_t EAF;
+  static uint8_t crcType;
+  static uint16_t crcBytes;
+  static uint8_t frameCRC;
+  static uint8_t messageSubtype;
+  static uint16_t timeTagType;
+  static uint16_t authenticationIndicator;
+  static uint16_t embeddedApplicationLengthBytes;
+  static uint16_t TF007toTF016;
+
+  valid = false;
+
+  switch(parseState)
+  {
+    case waitingFor73:
+      if (incoming == 0x73)
+      {
+        parseState = TF002_TF006;
+        frameCount = 0;
+        spartn[0] = incoming;
+      }
+      break;
+    case TF002_TF006:
+      spartn[1 + frameCount] = incoming;
+      if (frameCount == 0)
+      {
+        messageType = incoming >> 1;
+        payloadLength = incoming & 0x01;
+      }
+      if (frameCount == 1)
+      {
+        payloadLength <<= 8;
+        payloadLength |= incoming;
+      }
+      if (frameCount == 2)
+      {
+        payloadLength <<= 1;
+        payloadLength |= incoming >> 7;
+        EAF = (incoming >> 6) & 0x01;
+        crcType = (incoming >> 4) & 0x03;
+        switch (crcType)
+        {
+          case 0:
+            crcBytes = 1;
+            break;
+          case 1:
+            crcBytes = 2;
+            break;
+          case 2:
+            crcBytes = 3;
+            break;
+          default:
+            crcBytes = 4;
+            break;
+        }
+        frameCRC = incoming & 0x0F;
+        spartn[3] = spartn[3] & 0xF0; // Zero the 4 LSBs before calculating the CRC
+        if (uSpartnCrc4(&spartn[1], 3) == frameCRC)
+        {
+          spartn[3] = incoming; // Restore TF005 and TF006 now we know the data is valid
+          parseState = TF007;
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+          if (_printDebug == true)
+          {
+            _debugSerial.print(F("SPARTN Header CRC is valid: payloadLength "));
+            _debugSerial.print(payloadLength);
+            _debugSerial.print(F(" EAF "));
+            _debugSerial.print(EAF);
+            _debugSerial.print(F(" crcType "));
+            _debugSerial.println(crcType);
+          }
+#endif
+        }
+        else
+        {
+          parseState = waitingFor73;
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+          if (_printDebug == true)
+          {
+            _debugSerial.println(F("SPARTN Header CRC is INVALID"));
+          }
+#endif
+        }
+      }
+      frameCount++;
+      break;
+    case TF007:
+      spartn[4] = incoming;
+      messageSubtype = incoming >> 4;
+      timeTagType = (incoming >> 3) & 0x01;
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+      if (_printDebug == true)
+      {
+        _debugSerial.print(F("SPARTN timeTagType "));
+        _debugSerial.println(timeTagType);
+      }
+#endif
+      if (timeTagType == 0)
+        TF007toTF016 = 4;
+      else
+        TF007toTF016 = 6;
+      if (EAF > 0)
+        TF007toTF016 += 2;
+      parseState = TF009;
+      frameCount = 1;          
+      break;
+    case TF009:
+      spartn[4 + frameCount] = incoming;
+      frameCount++;
+      if (frameCount == TF007toTF016)
+      {
+        if (EAF == 0)
+        {
+          authenticationIndicator = 0;
+          embeddedApplicationLengthBytes = 0;
+        }
+        else
+        {
+          authenticationIndicator = (incoming >> 3) & 0x07;
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+          if (_printDebug == true)
+          {
+            _debugSerial.print(F("SPARTN authenticationIndicator "));
+            _debugSerial.println(authenticationIndicator);
+          }
+#endif
+          if (authenticationIndicator <= 1)
+            embeddedApplicationLengthBytes = 0;
+          else
+          {
+            switch(incoming & 0x07)
+            {
+              case 0:
+                embeddedApplicationLengthBytes = 8; // 64 bits
+                break;
+              case 1:
+                embeddedApplicationLengthBytes = 12; // 96 bits
+                break;
+              case 2:
+                embeddedApplicationLengthBytes = 16; // 128 bits
+                break;
+              case 3:
+                embeddedApplicationLengthBytes = 32; // 256 bits
+                break;
+              default:
+                embeddedApplicationLengthBytes = 64; // 512 / TBD bits
+                break;
+            }
+          }
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+          if (_printDebug == true)
+          {
+            _debugSerial.print(F("SPARTN embeddedApplicationLengthBytes "));
+            _debugSerial.println(embeddedApplicationLengthBytes);
+          }
+#endif
+        }
+        parseState = TF016;
+        frameCount = 0;                  
+      }
+      break;
+    case TF016:
+      spartn[4 + TF007toTF016 + frameCount] = incoming;
+      frameCount++;
+      if (frameCount == payloadLength)
+      {
+        if (embeddedApplicationLengthBytes > 0)
+        {
+          parseState = TF017;
+          frameCount = 0;
+        }
+        else               
+        {
+          parseState = TF018;
+          frameCount = 0;
+        }
+      }
+      break;
+    case TF017:
+      spartn[4 + TF007toTF016 + payloadLength + frameCount] = incoming;
+      frameCount++;
+      if (frameCount == embeddedApplicationLengthBytes)
+      {
+        parseState = TF018;
+        frameCount = 0;        
+      }
+      break;
+    case TF018:
+      spartn[4 + TF007toTF016 + payloadLength + embeddedApplicationLengthBytes + frameCount] = incoming;
+      frameCount++;
+      if (frameCount == crcBytes)
+      {
+          parseState = waitingFor73;
+          uint16_t numBytes = 4 + TF007toTF016 + payloadLength + embeddedApplicationLengthBytes;
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+          if (_printDebug == true)
+          {
+            _debugSerial.print(F("SPARTN numBytes "));
+            _debugSerial.println(numBytes);
+          }
+#endif
+          uint8_t *ptr = &spartn[numBytes];
+          switch (crcType)
+          {
+            case 0:
+            {
+              uint8_t expected = *ptr;
+              if (uSpartnCrc8(&spartn[1], numBytes - 1) == expected) // Don't include the preamble in the CRC
+              {
+                valid = true;
+                len = numBytes + 1;
+              }
+            }
+            break;
+            case 1:
+            {
+              uint16_t expected = *ptr++;
+              expected <<= 8;
+              expected |= *ptr;
+              if (uSpartnCrc16(&spartn[1], numBytes - 1) == expected) // Don't include the preamble in the CRC
+              {
+                valid = true;
+                len = numBytes + 2;
+              }
+            }
+            break;
+            case 2:
+            {
+              uint32_t expected = *ptr++;
+              expected <<= 8;
+              expected |= *ptr++;
+              expected <<= 8;
+              expected |= *ptr;
+              uint32_t crc = uSpartnCrc24(&spartn[1], numBytes - 1); // Don't include the preamble in the CRC
+              if (crc == expected)
+              {
+                valid = true;
+                len = numBytes + 3;
+              }
+              else
+              {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+                if (_printDebug == true)
+                {
+                  _debugSerial.print(F("SPARTN CRC-24 is INVALID: 0x"));
+                  _debugSerial.print(expected, HEX);
+                  _debugSerial.print(F(" vs 0x"));
+                  _debugSerial.println(crc, HEX);
+                }
+#endif
+              }
+            }
+            break;
+            default:
+            {
+              uint32_t expected = *ptr++;
+              expected <<= 8;
+              expected |= *ptr++;
+              expected <<= 8;
+              expected |= *ptr++;
+              expected <<= 8;
+              expected |= *ptr;
+              if (uSpartnCrc32(&spartn[1], numBytes - 1) == expected)
+              {
+                valid = true;
+                len = numBytes + 4;
+              }
+            }
+            break;
+          }
+      }
+      break;
+  }
+
+  (void)messageType; // Avoid pesky compiler warnings-as-errors
+  (void)messageSubtype;
+
+  return &spartn[0];
+}
+
 // Get the unique chip ID using UBX-SEC-UNIQID
 // The ID is five bytes on the F9 and M9 (version 1) but six bytes on the M10 (version 2)
 bool DevUBLOXGNSS::getUniqueChipId(UBX_SEC_UNIQID_data_t *data, uint16_t maxWait)
@@ -9014,7 +9468,6 @@ const char *DevUBLOXGNSS::getUniqueChipIdStr(UBX_SEC_UNIQID_data_t *data, uint16
 
   return ((const char *)uniqueId);
 }
-
 
 // CONFIGURATION INTERFACE (protocol v27 and above)
 
@@ -13117,7 +13570,7 @@ bool DevUBLOXGNSS::setAutoRXMSFRBXcallbackPtr(void (*callbackPointerPtr)(UBX_RXM
 
   if (packetUBXRXMSFRBX->callbackData == nullptr) // Check if RAM has been allocated for the callback copy
   {
-    packetUBXRXMSFRBX->callbackData = new UBX_RXM_SFRBX_data_t; // Allocate RAM for the main struct
+    packetUBXRXMSFRBX->callbackData = new UBX_RXM_SFRBX_data_t[UBX_RXM_SFRBX_CALLBACK_BUFFERS]; // Allocate RAM for the main struct
   }
 
   if (packetUBXRXMSFRBX->callbackData == nullptr)
@@ -13130,6 +13583,31 @@ bool DevUBLOXGNSS::setAutoRXMSFRBXcallbackPtr(void (*callbackPointerPtr)(UBX_RXM
   }
 
   packetUBXRXMSFRBX->callbackPointerPtr = callbackPointerPtr;
+  return (true);
+}
+// Use this if you want all of the SFRBX message (including sync chars, checksum, etc.) to push to the PointPerfect Library
+bool DevUBLOXGNSS::setAutoRXMSFRBXmessageCallbackPtr(void (*callbackMessagePointerPtr)(UBX_RXM_SFRBX_message_data_t *), uint8_t layer, uint16_t maxWait)
+{
+  // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
+  bool result = setAutoRXMSFRBX(true, false, layer, maxWait);
+  if (!result)
+    return (result); // Bail if setAuto failed
+
+  if (packetUBXRXMSFRBX->callbackMessageData == nullptr) // Check if RAM has been allocated for the callback copy
+  {
+    packetUBXRXMSFRBX->callbackMessageData = new UBX_RXM_SFRBX_message_data_t[UBX_RXM_SFRBX_CALLBACK_BUFFERS]; // Allocate RAM for the main struct
+  }
+
+  if (packetUBXRXMSFRBX->callbackMessageData == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("setAutoRXMSFRBXmessageCallbackPtr: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+
+  packetUBXRXMSFRBX->callbackMessagePointerPtr = callbackMessagePointerPtr;
   return (true);
 }
 
@@ -13166,6 +13644,8 @@ bool DevUBLOXGNSS::initPacketUBXRXMSFRBX()
   packetUBXRXMSFRBX->automaticFlags.flags.all = 0;
   packetUBXRXMSFRBX->callbackPointerPtr = nullptr;
   packetUBXRXMSFRBX->callbackData = nullptr;
+  packetUBXRXMSFRBX->callbackMessagePointerPtr = nullptr;
+  packetUBXRXMSFRBX->callbackMessageData = nullptr;
   packetUBXRXMSFRBX->moduleQueried = false;
   return (true);
 }
@@ -14611,7 +15091,7 @@ bool DevUBLOXGNSS::setAutoESFMEAScallbackPtr(void (*callbackPointerPtr)(UBX_ESF_
 
   if (packetUBXESFMEAS->callbackData == nullptr) // Check if RAM has been allocated for the callback copy
   {
-    packetUBXESFMEAS->callbackData = new UBX_ESF_MEAS_data_t; // Allocate RAM for the main struct
+    packetUBXESFMEAS->callbackData = new UBX_ESF_MEAS_data_t[UBX_ESF_MEAS_CALLBACK_BUFFERS]; // Allocate RAM for the main struct
   }
 
   if (packetUBXESFMEAS->callbackData == nullptr)
@@ -17793,6 +18273,24 @@ sfe_ublox_antenna_status_e DevUBLOXGNSS::getAntennaStatus(uint16_t maxWait)
   packetUBXMONHW->moduleQueried.moduleQueried.bits.aStatus = false; // Since we are about to give this to user, mark this data as stale
   packetUBXMONHW->moduleQueried.moduleQueried.bits.all = false;
   return ((sfe_ublox_antenna_status_e)packetUBXMONHW->data.aStatus);
+}
+
+// ***** Helper functions for the NEO-F10N
+bool DevUBLOXGNSS::getLNAMode(sfe_ublox_lna_mode_e *mode, uint8_t layer, uint16_t maxWait)
+{
+  return getVal8(UBLOX_CFG_HW_RF_LNA_MODE, (uint8_t *)mode, layer, maxWait); // Get the LNA mode
+}
+bool DevUBLOXGNSS::setLNAMode(sfe_ublox_lna_mode_e mode, uint8_t layer, uint16_t maxWait)
+{
+  return setVal8(UBLOX_CFG_HW_RF_LNA_MODE, (uint8_t)mode, layer, maxWait); // Set the LNA mode
+}
+bool DevUBLOXGNSS::getGPSL5HealthOverride(bool *override, uint8_t layer, uint16_t maxWait)
+{
+  return getVal8(UBLOX_CFG_SIGNAL_GPS_L5_HEALTH_OVERRIDE, (uint8_t *) override, layer, maxWait); // Get the GPS L5 health override status
+}
+bool DevUBLOXGNSS::setGPSL5HealthOverride(bool override, uint8_t layer, uint16_t maxWait)
+{
+  return setVal8(UBLOX_CFG_SIGNAL_GPS_L5_HEALTH_OVERRIDE, (uint8_t) override, layer, maxWait); // Set the GPS L5 health override status
 }
 
 #ifndef SFE_UBLOX_DISABLE_ESF

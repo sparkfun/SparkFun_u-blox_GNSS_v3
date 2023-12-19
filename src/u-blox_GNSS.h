@@ -386,6 +386,7 @@ public:
   bool setDGNSSConfiguration(sfe_ublox_dgnss_mode_e dgnssMode = SFE_UBLOX_DGNSS_MODE_FIXED, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the DGNSS differential mode
 
   // Read the module's protocol version
+  // For safety, call getProtocolVersion etc. inside an if(getModuleInfo())
   uint8_t getProtocolVersionHigh(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the PROTVER XX.00 from UBX-MON-VER register
   uint8_t getProtocolVersionLow(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);  // Returns the PROTVER 00.XX from UBX-MON-VER register
   uint8_t getFirmwareVersionHigh(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the FWVER XX.00 from UBX-MON-VER register
@@ -393,7 +394,7 @@ public:
   const char *getFirmwareType(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);    // Returns the firmware type (SPG, HPG, ADR, etc.) from UBX-MON-VER register
   const char *getModuleName(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Returns the module name (ZED-F9P, ZED-F9R, etc.) from UBX-MON-VER register
   bool getProtocolVersion(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);        // Deprecated. Use getModuleInfo.
-  bool getModuleInfo(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);             // Queries module, extracts info
+  bool getModuleInfo(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);             // Queries module, extracts info. Returns true if MON-VER was read successfully
 protected:
   bool prepareModuleInfo(uint16_t maxWait);
 
@@ -462,6 +463,14 @@ public:
                             uint8_t keyLengthBytes2, uint16_t validFromWno2, uint32_t validFromTow2, const char *key2);
   bool setDynamicSPARTNKeys(uint8_t keyLengthBytes1, uint16_t validFromWno1, uint32_t validFromTow1, const uint8_t *key1,
                             uint8_t keyLengthBytes2, uint16_t validFromWno2, uint32_t validFromTow2, const uint8_t *key2);
+
+  // Support for SPARTN parsing
+  uint8_t uSpartnCrc4(const uint8_t *pU8Msg, size_t size);
+  uint8_t uSpartnCrc8(const uint8_t *pU8Msg, size_t size);
+  uint16_t uSpartnCrc16(const uint8_t *pU8Msg, size_t size);
+  uint32_t uSpartnCrc24(const uint8_t *pU8Msg, size_t size);
+  uint32_t uSpartnCrc32(const uint8_t *pU8Msg, size_t size);
+  uint8_t * parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len);
 
   // Get unique chip ID - UBX-SEC-UNIQID
   bool getUniqueChipId(UBX_SEC_UNIQID_data_t *data = nullptr, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the unique chip ID using UBX_SEC_UNIQID
@@ -927,11 +936,13 @@ public:
 
   bool setRXMCORcallbackPtr(void (*callbackPointerPtr)(UBX_RXM_COR_data_t *)); // RXM COR
 
+  // Note: RXM-SFRBX is output-only. It cannot be polled. Strictly getRXMSFRBX should be deprecated
   bool getRXMSFRBX(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                       // RXM SFRBX
   bool setAutoRXMSFRBX(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                  // Enable/disable automatic RXM SFRBX reports at the navigation frequency
   bool setAutoRXMSFRBX(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                             // Enable/disable automatic RXM SFRBX reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
   bool setAutoRXMSFRBXrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                  // Set the rate for automatic SFRBX reports
   bool setAutoRXMSFRBXcallbackPtr(void (*callbackPointerPtr)(UBX_RXM_SFRBX_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic SFRBX reports at the navigation frequency. Data is accessed from the callback.
+  bool setAutoRXMSFRBXmessageCallbackPtr(void (*callbackMessagePointerPtr)(UBX_RXM_SFRBX_message_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Use this if you want all of the SFRBX message (including sync chars, checksum, etc.) to push to the PointPerfect Library
   bool assumeAutoRXMSFRBX(bool enabled, bool implicitUpdate = true);                                                                                                   // In case no config access to the GPS is possible and RXM SFRBX is send cyclically already
   void flushRXMSFRBX();                                                                                                                                                // Mark all the data as read/stale
   void logRXMSFRBX(bool enabled = true);                                                                                                                               // Log data to file buffer
@@ -1078,6 +1089,7 @@ public:
   uint16_t getNavigationRate(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                       // Unsafe overload
 
   // Helper functions for DOP
+  // For safety, call these inside an if(getDOP())
 
   uint16_t getGeometricDOP(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
   uint16_t getPositionDOP(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
@@ -1088,12 +1100,14 @@ public:
   uint16_t getEastingDOP(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
 
   // Helper functions for ATT
+  // For safety, call these inside an if(getNAVATT())
 
   float getATTroll(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);    // Returned as degrees
   float getATTpitch(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Returned as degrees
   float getATTheading(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returned as degrees
 
   // Helper functions for PVT
+  // For safety, call these inside an if(getPVT())
 
   uint32_t getTimeOfWeek(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
   uint16_t getYear(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
@@ -1145,6 +1159,7 @@ public:
   int32_t getGeoidSeparation(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
 
   // Helper functions for HPPOSECEF
+  // For safety, call these inside an if(getNAVHPPOSECEF())
 
   uint32_t getPositionAccuracy(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the 3D accuracy of the current high-precision fix, in mm. Supported on NEO-M8P, ZED-F9P,
   int32_t getHighResECEFX(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);      // Returns the ECEF X coordinate (cm)
@@ -1155,6 +1170,7 @@ public:
   int8_t getHighResECEFZHp(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);     // Returns the ECEF Z coordinate High Precision Component (0.1 mm)
 
   // Helper functions for HPPOSLLH
+  // For safety, call these inside an if(getHPPOSLLH())
 
   uint32_t getTimeOfWeekFromHPPOSLLH(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
   int32_t getHighResLongitude(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
@@ -1169,6 +1185,7 @@ public:
   uint32_t getVerticalAccuracy(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
 
   // Helper functions for PVAT
+  // For safety, call these inside an if(getNAVPVAT())
 
   int32_t getVehicleRoll(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);    // Returns vehicle roll in degrees * 10^-5
   int32_t getVehiclePitch(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);   // Returns vehicle pitch in degrees * 10^-5
@@ -1176,6 +1193,7 @@ public:
   int32_t getMotionHeading(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);  // Returns the motion heading in degrees * 10^-5
 
   // Helper functions for SVIN
+  // For safety, call these inside an if(getSurveyStatus())
 
   bool getSurveyInActive(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
   bool getSurveyInValid(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
@@ -1184,11 +1202,13 @@ public:
   float getSurveyInMeanAccuracy(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);           // Returned as m
 
   // Helper functions for TIMELS
+  // For safety, call these inside an if(getLeapSecondEvent())
 
   uint8_t getLeapIndicator(int32_t &timeToLsEvent, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
   int8_t getCurrentLeapSeconds(sfe_ublox_ls_src_e &source, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
 
   // Helper functions for RELPOSNED
+  // For safety, call these inside an if(getRELPOSNED())
 
   float getRelPosN(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);    // Returned as m
   float getRelPosE(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);    // Returned as m
@@ -1198,11 +1218,13 @@ public:
   float getRelPosAccD(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returned as m
 
   // Helper functions for AOPSTATUS
+  // For safety, call these inside an if(getAOPSTATUS())
 
   uint8_t getAOPSTATUSuseAOP(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the UBX-NAV-AOPSTATUS useAOP flag. Don't confuse this with getAopCfg - which returns the aopCfg byte from UBX-CFG-NAVX5
   uint8_t getAOPSTATUSstatus(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the UBX-NAV-AOPSTATUS status field. A host application can determine the optimal time to shut down the receiver by monitoring the status field for a steady 0.
 
   // Helper functions for TIM TP
+  // For safety, call these inside an if(getTIMTP())
 
   uint32_t getTIMTPtowMS(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                          // Returns the UBX-TIM-TP towMS time pulse of week (ms)
   uint32_t getTIMTPtowSubMS(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                       // Returns the UBX-TIM-TP submillisecond part of towMS (ms * 2^-32)
@@ -1210,12 +1232,14 @@ public:
   uint32_t getTIMTPAsEpoch(uint32_t &microsecond, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Convert TIM TP to Unix Epoch - CAUTION! Assumes the time base is UTC and the week number is GPS
 
   // Helper function for hardware status (including jamming)
+  // For safety, call getAntennaStatus inside an if(getMONHW())
 
   bool getHWstatus(UBX_MON_HW_data_t *data = nullptr, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the hardware status using UBX_MON_HW
   sfe_ublox_antenna_status_e getAntennaStatus(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);         // Get the antenna status (aStatus) using UBX_MON_HW
 
 #ifndef SFE_UBLOX_DISABLE_ESF
   // Helper functions for ESF
+  // For safety, call getESFroll/pitch/yaw inside an if(getESFALG())
 
   float getESFroll(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);  // Returned as degrees
   float getESFpitch(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returned as degrees
@@ -1228,6 +1252,7 @@ public:
 
 #ifndef SFE_UBLOX_DISABLE_HNR
   // Helper functions for HNR
+  // For safety, call getHNRroll/pitch/yaw inside an if(getHNRATT())
 
   bool setHNRNavigationRate(uint8_t rate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns true if the setHNRNavigationRate is successful
   uint8_t getHNRNavigationRate(uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Returns 0 if the getHNRNavigationRate fails
@@ -1235,6 +1260,12 @@ public:
   float getHNRpitch(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                          // Returned as degrees
   float getHNRheading(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                        // Returned as degrees
 #endif
+
+  // Helper functions for the NEO-F10N
+  bool getLNAMode(sfe_ublox_lna_mode_e *mode, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the LNA mode
+  bool setLNAMode(sfe_ublox_lna_mode_e mode, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the LNA mode
+  bool getGPSL5HealthOverride(bool *override, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the GPS L5 health override status
+  bool setGPSL5HealthOverride(bool override, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the GPS L5 health override status
 
   // Set the mainTalkerId used by NMEA messages - allows all NMEA messages except GSV to be prefixed with GP instead of GN
   bool setMainTalkerID(sfe_ublox_talker_ids_e id = SFE_UBLOX_MAIN_TALKER_ID_DEFAULT, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);

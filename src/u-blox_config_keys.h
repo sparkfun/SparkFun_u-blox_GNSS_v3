@@ -92,27 +92,32 @@ const uint8_t VAL_ID_I2C_ADDRESS = 0x01;
 // The following enum allows automatic identification of the Configuration Item data type.
 // These are OR'd into the reserved bits in each Config Key ID.
 // Based on an idea by Michael Ammann. Thank you @mazgch
-const uint32_t UBX_CFG_L = 0x01001000;        // bool
-const uint32_t UBX_CFG_U1 = 0x01002000;       // uint8_t
-const uint32_t UBX_CFG_U2 = 0x01003000;       // uint16_t
-const uint32_t UBX_CFG_U4 = 0x01004000;       // uint32_t
-const uint32_t UBX_CFG_U8 = 0x01005000;       // uint64_t
-const uint32_t UBX_CFG_I1 = 0x01006000;       // int8_t
-const uint32_t UBX_CFG_I2 = 0x01007000;       // int16_t
-const uint32_t UBX_CFG_I4 = 0x01008000;       // int32_t
-const uint32_t UBX_CFG_I8 = 0x01009000;       // int64_t
-const uint32_t UBX_CFG_R4 = 0x0100A000;       // float (32-bit)
-const uint32_t UBX_CFG_R8 = 0x0100B000;       // double (64-bit)
-const uint32_t UBX_CFG_E1 = 0x0100C000;       // 8-bit enum == uint8_t
-const uint32_t UBX_CFG_E2 = 0x0100D000;       // 16-bit enum == uint16_t
-const uint32_t UBX_CFG_E4 = 0x0100E000;       // 32-bit enum == uint32_t
-const uint32_t UBX_CFG_X1 = 0x0100F000;       // 8-bit bitfield / string == uint8_t
-const uint32_t UBX_CFG_X2 = 0x02001000;       // 16-bit bitfield / string == uint16_t
-const uint32_t UBX_CFG_X4 = 0x02002000;       // 32-bit bitfield / string == uint32_t
-const uint32_t UBX_CFG_X8 = 0x02003000;       // 64-bit bitfield / string == uint64_t
+const uint32_t UBX_CFG_L = 0x01001000;         // bool
+const uint32_t UBX_CFG_U1 = 0x01002000;        // uint8_t
+const uint32_t UBX_CFG_U2 = 0x01003000;        // uint16_t
+const uint32_t UBX_CFG_U4 = 0x01004000;        // uint32_t
+const uint32_t UBX_CFG_U8 = 0x01005000;        // uint64_t
+const uint32_t UBX_CFG_I1 = 0x01006000;        // int8_t
+const uint32_t UBX_CFG_I2 = 0x01007000;        // int16_t
+const uint32_t UBX_CFG_I4 = 0x01008000;        // int32_t
+const uint32_t UBX_CFG_I8 = 0x01009000;        // int64_t
+const uint32_t UBX_CFG_R4 = 0x0100A000;        // float (32-bit)
+const uint32_t UBX_CFG_R8 = 0x0100B000;        // double (64-bit)
+const uint32_t UBX_CFG_E1 = 0x0100C000;        // 8-bit enum == uint8_t
+const uint32_t UBX_CFG_E2 = 0x0100D000;        // 16-bit enum == uint16_t
+const uint32_t UBX_CFG_E4 = 0x0100E000;        // 32-bit enum == uint32_t
+const uint32_t UBX_CFG_X1 = 0x0100F000;        // 8-bit bitfield / string == uint8_t
+const uint32_t UBX_CFG_X2 = 0x02001000;        // 16-bit bitfield / string == uint16_t
+const uint32_t UBX_CFG_X4 = 0x02002000;        // 32-bit bitfield / string == uint32_t
+const uint32_t UBX_CFG_X8 = 0x02003000;        // 64-bit bitfield / string == uint64_t
 const uint32_t UBX_CFG_SIZE_MASK = 0x0F00F000; // Bit mask
 
 // Below are the key values for a given configuration setting
+
+// UNDOCUMENTED Keys for the NEO-F10N (SPG 6.00)
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// From the code example in the NEO-F10N Integration Manual. Set True to override the GPS L5 health status with GPS L1.
+const uint32_t UBLOX_CFG_SIGNAL_GPS_L5_HEALTH_OVERRIDE = UBX_CFG_L | 0x10320001;
 
 // CFG-ANA: AssistNow Autonomous and Offline configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -122,6 +127,10 @@ const uint32_t UBLOX_CFG_ANA_ORBMAXERR = UBX_CFG_U2 | 0x30230002; // Maximum acc
 // CFG-BDS: BeiDou system configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_BDS_USE_PRN_1_TO_5 = UBX_CFG_L | 0x10340014; // Use BeiDou geostationary satellites (PRN 1-5)
+
+// CFG-CLOCK: System clock configuration
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+const uint32_t UBLOX_CFG_CLOCK_OSC_FREQ = UBX_CFG_U4 | 0x40a4000d; // Oscillator speed
 
 // CFG-GEOFENCE: Geofencing configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -148,20 +157,33 @@ const uint32_t UBLOX_CFG_GEOFENCE_FENCE4_RAD = UBX_CFG_U4 | 0x40240053; // Radiu
 
 // CFG-HW: Hardware configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_HW_ANT_CFG_VOLTCTRL = UBX_CFG_L | 0x10a3002e;     // Active antenna voltage control flag
-const uint32_t UBLOX_CFG_HW_ANT_CFG_SHORTDET = UBX_CFG_L | 0x10a3002f;     // Short antenna detection flag
-const uint32_t UBLOX_CFG_HW_ANT_CFG_SHORTDET_POL = UBX_CFG_L | 0x10a30030; // Short antenna detection polarity
-const uint32_t UBLOX_CFG_HW_ANT_CFG_OPENDET = UBX_CFG_L | 0x10a30031;      // Open antenna detection flag
-const uint32_t UBLOX_CFG_HW_ANT_CFG_OPENDET_POL = UBX_CFG_L | 0x10a30032;  // Open antenna detection polarity
-const uint32_t UBLOX_CFG_HW_ANT_CFG_PWRDOWN = UBX_CFG_L | 0x10a30033;      // Power down antenna flag
-const uint32_t UBLOX_CFG_HW_ANT_CFG_PWRDOWN_POL = UBX_CFG_L | 0x10a30034;  // Power down antenna logic polarity
-const uint32_t UBLOX_CFG_HW_ANT_CFG_RECOVER = UBX_CFG_L | 0x10a30035;      // Automatic recovery from short state flag
-const uint32_t UBLOX_CFG_HW_ANT_SUP_SWITCH_PIN = UBX_CFG_U1 | 0x20a30036;  // ANT1 PIO number
-const uint32_t UBLOX_CFG_HW_ANT_SUP_SHORT_PIN = UBX_CFG_U1 | 0x20a30037;   // ANT0 PIO number
-const uint32_t UBLOX_CFG_HW_ANT_SUP_OPEN_PIN = UBX_CFG_U1 | 0x20a30038;    // ANT2 PIO number
-const uint32_t UBLOX_CFG_HW_ANT_SUP_ENGINE = UBX_CFG_E1 | 0x20a30054;      // Antenna supervisor engine selection
-const uint32_t UBLOX_CFG_HW_ANT_SUP_SHORT_THR = UBX_CFG_U1 | 0x20a30055;   // Antenna supervisor MADC engine short detection threshold
-const uint32_t UBLOX_CFG_HW_ANT_SUP_OPEN_THR = UBX_CFG_U1 | 0x20a30056;    // Antenna supervisor MADC engine open detection threshold
+const uint32_t UBLOX_CFG_HW_DCDC_DIS = UBX_CFG_L | 0x10a30018;                // DCDC converter disabled
+const uint32_t UBLOX_CFG_HW_SINGLE_CLK = UBX_CFG_L | 0x10a30019;              // Single-clock system
+const uint32_t UBLOX_CFG_HW_OSC_TYPE = UBX_CFG_E1 | 0x20a30025;               // Oscillator type
+const uint32_t UBLOX_CFG_HW_CLK_OFFSET = UBX_CFG_I4 | 0x40a30028;             // Clock offset
+const uint32_t UBLOX_CFG_HW_CLK_OFFSET_VALID = UBX_CFG_L | 0x10a30029;        // Clock offset valid
+const uint32_t UBLOX_CFG_HW_CLK_PRECISION = UBX_CFG_U4 | 0x40a3002a;          // Precision of the clock offset
+const uint32_t UBLOX_CFG_HW_CLK_MAX_CALIB_DEV = UBX_CFG_U4 | 0x40a3002b;      // Maximum calibration deviation
+const uint32_t UBLOX_CFG_HW_CLK_MAX_CALIB_DEV_VALID = UBX_CFG_L | 0x10a3002c; // Max calibration deviation valid
+const uint32_t UBLOX_CFG_HW_CLK_IS_TCXO = UBX_CFG_L | 0x10a30047;             // Oscillator type indicator
+const uint32_t UBLOX_CFG_HW_ANT_CFG_VOLTCTRL = UBX_CFG_L | 0x10a3002e;        // Active antenna voltage control flag
+const uint32_t UBLOX_CFG_HW_ANT_CFG_SHORTDET = UBX_CFG_L | 0x10a3002f;        // Short antenna detection flag
+const uint32_t UBLOX_CFG_HW_ANT_CFG_SHORTDET_POL = UBX_CFG_L | 0x10a30030;    // Short antenna detection polarity
+const uint32_t UBLOX_CFG_HW_ANT_CFG_OPENDET = UBX_CFG_L | 0x10a30031;         // Open antenna detection flag
+const uint32_t UBLOX_CFG_HW_ANT_CFG_OPENDET_POL = UBX_CFG_L | 0x10a30032;     // Open antenna detection polarity
+const uint32_t UBLOX_CFG_HW_ANT_CFG_PWRDOWN = UBX_CFG_L | 0x10a30033;         // Power down antenna flag
+const uint32_t UBLOX_CFG_HW_ANT_CFG_PWRDOWN_POL = UBX_CFG_L | 0x10a30034;     // Power down antenna logic polarity
+const uint32_t UBLOX_CFG_HW_ANT_CFG_RECOVER = UBX_CFG_L | 0x10a30035;         // Automatic recovery from short state flag
+const uint32_t UBLOX_CFG_HW_ANT_SUP_SWITCH_PIN = UBX_CFG_U1 | 0x20a30036;     // ANT1 PIO number
+const uint32_t UBLOX_CFG_HW_ANT_SUP_SHORT_PIN = UBX_CFG_U1 | 0x20a30037;      // ANT0 PIO number
+const uint32_t UBLOX_CFG_HW_ANT_SUP_OPEN_PIN = UBX_CFG_U1 | 0x20a30038;       // ANT2 PIO number
+const uint32_t UBLOX_CFG_HW_ANT_ON_SHORT_US = UBX_CFG_U2 | 0x30a3003c;        // ANT on->short timeout[us]
+const uint32_t UBLOX_CFG_HW_ANT_SUP_ENGINE = UBX_CFG_E1 | 0x20a30054;         // Antenna supervisor engine selection
+const uint32_t UBLOX_CFG_HW_ANT_SUP_SHORT_THR = UBX_CFG_U1 | 0x20a30055;      // Antenna supervisor MADC engine short detection threshold
+const uint32_t UBLOX_CFG_HW_ANT_SUP_OPEN_THR = UBX_CFG_U1 | 0x20a30056;       // Antenna supervisor MADC engine open detection threshold
+const uint32_t UBLOX_CFG_HW_SENS_WOM_MODE = UBX_CFG_E1 | 0x20a30063;          // Select Wake-On-Motion mode
+const uint32_t UBLOX_CFG_HW_SENS_WOM_THLD = UBX_CFG_U1 | 0x20a30064;          // Wake-On-Motion threshold
+const uint32_t UBLOX_CFG_HW_RF_LNA_MODE = UBX_CFG_E1 | 0x20a30057;            // Mode for internal LNA (NEO-F10)
 
 // CFG-I2C: Configuration of the I2C interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -556,6 +578,11 @@ const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMELS_SPI = UBX_CFG_U1 | 0x20910064;   
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMELS_UART1 = UBX_CFG_U1 | 0x20910061;     // Output rate of the UBX-NAV-TIMELS message on port UART1
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMELS_UART2 = UBX_CFG_U1 | 0x20910062;     // Output rate of the UBX-NAV-TIMELS message on port UART2
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMELS_USB = UBX_CFG_U1 | 0x20910063;       // Output rate of the UBX-NAV-TIMELS message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMENAVIC_I2C = UBX_CFG_U1 | 0x209106a2;    // Output rate of the UBX-NAV-TIMENAVIC message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMENAVIC_SPI = UBX_CFG_U1 | 0x209106a6;    // Output rate of the UBX-NAV-TIMENAVIC message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMENAVIC_UART1 = UBX_CFG_U1 | 0x209106a3;  // Output rate of the UBX-NAV-TIMENAVIC message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMENAVIC_UART2 = UBX_CFG_U1 | 0x209106a4;  // Output rate of the UBX-NAV-TIMENAVIC message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMENAVIC_USB = UBX_CFG_U1 | 0x209106a5;    // Output rate of the UBX-NAV-TIMENAVIC message on port USB
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMEQZSS_I2C = UBX_CFG_U1 | 0x20910386;     // Output rate of the UBX-NAV-TIMEQZSSmessage on port I2C
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMEQZSS_SPI = UBX_CFG_U1 | 0x2091038a;     // Output rate of the UBX-NAV-TIMEQZSSmessage on port SPI
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMEQZSS_UART1 = UBX_CFG_U1 | 0x20910387;   // Output rate of the UBX-NAV-TIMEQZSSmessage on port UART1
@@ -680,7 +707,7 @@ const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_PVAT_UART2 = UBX_CFG_U1 | 0x2091062c;   
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_PVAT_USB = UBX_CFG_U1 | 0x2091062d;     // Output rate of the UBX-NAV-PVAT message on port USB
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_PVAT_SPI = UBX_CFG_U1 | 0x2091062e;     // Output rate of the UBX-NAV-PVAT message on port SPI
 
-// Additional CFG_MSGOUT keys for the M10
+// Additional CFG_MSGOUT keys for the M10 / F10
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_AOPSTATUS_I2C = UBX_CFG_U1 | 0x20910079;
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_AOPSTATUS_SPI = UBX_CFG_U1 | 0x2091007d;
@@ -688,199 +715,214 @@ const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_AOPSTATUS_UART1 = UBX_CFG_U1 | 0x2091007
 
 // Additional CFG_MSGOUT keys for the ZED-F9T
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GGA_I2C = UBX_CFG_U1 | 0x20910661;    // Output rate of the NMEA-NAV2-GX-GGA message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GGA_SPI = UBX_CFG_U1 | 0x20910665;    // Output rate of the NMEA-NAV2-GX-GGA message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GGA_UART1 = UBX_CFG_U1 | 0x20910662;  // Output rate of the NMEA-NAV2-GX-GGA message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GGA_UART2 = UBX_CFG_U1 | 0x20910663;  // Output rate of the NMEA-NAV2-GX-GGA message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GGA_USB = UBX_CFG_U1 | 0x20910664;    // Output rate of the NMEA-NAV2-GX-GGA message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GLL_I2C = UBX_CFG_U1 | 0x20910670;    // Output rate of the NMEA-NAV2-GX-GLL message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GLL_SPI = UBX_CFG_U1 | 0x20910674;    // Output rate of the NMEA-NAV2-GX-GLL message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GLL_UART1 = UBX_CFG_U1 | 0x20910671;  // Output rate of the NMEA-NAV2-GX-GLL message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GLL_UART2 = UBX_CFG_U1 | 0x20910672;  // Output rate of the NMEA-NAV2-GX-GLL message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GLL_USB = UBX_CFG_U1 | 0x20910673;    // Output rate of the NMEA-NAV2-GX-GLL message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GNS_I2C = UBX_CFG_U1 | 0x2091065c;    // Output rate of the NMEA-NAV2-GX-GNS message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GNS_SPI = UBX_CFG_U1 | 0x20910660;    // Output rate of the NMEA-NAV2-GX-GNS message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GNS_UART1 = UBX_CFG_U1 | 0x2091065d;  // Output rate of the NMEA-NAV2-GX-GNS message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GNS_UART2 = UBX_CFG_U1 | 0x2091065e;  // Output rate of the NMEA-NAV2-GX-GNS message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GNS_USB = UBX_CFG_U1 | 0x2091065f;    // Output rate of the NMEA-NAV2-GX-GNS message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GSA_I2C = UBX_CFG_U1 | 0x20910666;    // Output rate of the NMEA-NAV2-GX-GSA message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GSA_SPI = UBX_CFG_U1 | 0x2091066a;    // Output rate of the NMEA-NAV2-GX-GSA message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GSA_UART1 = UBX_CFG_U1 | 0x20910667;  // Output rate of the NMEA-NAV2-GX-GSA message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GSA_UART2 = UBX_CFG_U1 | 0x20910668;  // Output rate of the NMEA-NAV2-GX-GSA message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GSA_USB = UBX_CFG_U1 | 0x20910669;    // Output rate of the NMEA-NAV2-GX-GSA message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_RMC_I2C = UBX_CFG_U1 | 0x20910652;    // Output rate of the NMEA-NAV2-GX-RMC message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_RMC_SPI = UBX_CFG_U1 | 0x20910656;    // Output rate of the NMEA-NAV2-GX-RMC message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_RMC_UART1 = UBX_CFG_U1 | 0x20910653;  // Output rate of the NMEA-NAV2-GX-RMC message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_RMC_UART2 = UBX_CFG_U1 | 0x20910654;  // Output rate of the NMEA-NAV2-GX-RMC message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_RMC_USB = UBX_CFG_U1 | 0x20910655;    // Output rate of the NMEA-NAV2-GX-RMC message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_VTG_I2C = UBX_CFG_U1 | 0x20910657;    // Output rate of the NMEA-NAV2-GX-VTG message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_VTG_SPI = UBX_CFG_U1 | 0x2091065b;    // Output rate of the NMEA-NAV2-GX-VTG message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_VTG_UART1 = UBX_CFG_U1 | 0x20910658;  // Output rate of the NMEA-NAV2-GX-VTG message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_VTG_UART2 = UBX_CFG_U1 | 0x20910659;  // Output rate of the NMEA-NAV2-GX-VTG message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_VTG_USB = UBX_CFG_U1 | 0x2091065a;    // Output rate of the NMEA-NAV2-GX-VTG message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_ZDA_I2C = UBX_CFG_U1 | 0x2091067f;    // Output rate of the NMEA-NAV2-GX-ZDA message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_ZDA_SPI = UBX_CFG_U1 | 0x20910683;    // Output rate of the NMEA-NAV2-GX-ZDA message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_ZDA_UART1 = UBX_CFG_U1 | 0x20910680;  // Output rate of the NMEA-NAV2-GX-ZDA message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_ZDA_UART2 = UBX_CFG_U1 | 0x20910681;  // Output rate of the NMEA-NAV2-GX-ZDA message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_ZDA_USB = UBX_CFG_U1 | 0x20910682;    // Output rate of the NMEA-NAV2-GX-ZDA message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_CLOCK_I2C = UBX_CFG_U1 | 0x20910430;      // Output rate of the UBX-NAV2-CLOCK message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_CLOCK_SPI = UBX_CFG_U1 | 0x20910434;      // Output rate of the UBX-NAV2-CLOCK message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_CLOCK_UART1 = UBX_CFG_U1 | 0x20910431;    // Output rate of the UBX-NAV2-CLOCK message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_CLOCK_UART2 = UBX_CFG_U1 | 0x20910432;    // Output rate of the UBX-NAV2-CLOCK message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_CLOCK_USB = UBX_CFG_U1 | 0x20910433;      // Output rate of the UBX-NAV2-CLOCK message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_COV_I2C = UBX_CFG_U1 | 0x20910435;        // Output rate of the UBX-NAV2-COV message onport I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_COV_SPI = UBX_CFG_U1 | 0x20910439;        // Output rate of the UBX-NAV2-COV message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_COV_UART1 = UBX_CFG_U1 | 0x20910436;      // Output rate of the UBX-NAV2-COV message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_COV_UART2 = UBX_CFG_U1 | 0x20910437;      // Output rate of the UBX-NAV2-COV message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_COV_USB = UBX_CFG_U1 | 0x20910438;        // Output rate of the UBX-NAV2-COV message onport USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_DOP_I2C = UBX_CFG_U1 | 0x20910465;        // Output rate of the UBX-NAV2-DOP message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_DOP_SPI = UBX_CFG_U1 | 0x20910469;        // Output rate of the UBX-NAV2-DOP message onport SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_DOP_UART1 = UBX_CFG_U1 | 0x20910466;      // Output rate of the UBX-NAV2-DOP message onport UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_DOP_UART2 = UBX_CFG_U1 | 0x20910467;      // Output rate of the UBX-NAV2-DOP message onport UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_DOP_USB = UBX_CFG_U1 | 0x20910468;        // Output rate of the UBX-NAV2-DOP message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GGA_I2C = UBX_CFG_U1 | 0x20910661;     // Output rate of the NMEA-NAV2-GX-GGA message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GGA_SPI = UBX_CFG_U1 | 0x20910665;     // Output rate of the NMEA-NAV2-GX-GGA message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GGA_UART1 = UBX_CFG_U1 | 0x20910662;   // Output rate of the NMEA-NAV2-GX-GGA message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GGA_UART2 = UBX_CFG_U1 | 0x20910663;   // Output rate of the NMEA-NAV2-GX-GGA message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GGA_USB = UBX_CFG_U1 | 0x20910664;     // Output rate of the NMEA-NAV2-GX-GGA message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GLL_I2C = UBX_CFG_U1 | 0x20910670;     // Output rate of the NMEA-NAV2-GX-GLL message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GLL_SPI = UBX_CFG_U1 | 0x20910674;     // Output rate of the NMEA-NAV2-GX-GLL message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GLL_UART1 = UBX_CFG_U1 | 0x20910671;   // Output rate of the NMEA-NAV2-GX-GLL message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GLL_UART2 = UBX_CFG_U1 | 0x20910672;   // Output rate of the NMEA-NAV2-GX-GLL message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GLL_USB = UBX_CFG_U1 | 0x20910673;     // Output rate of the NMEA-NAV2-GX-GLL message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GNS_I2C = UBX_CFG_U1 | 0x2091065c;     // Output rate of the NMEA-NAV2-GX-GNS message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GNS_SPI = UBX_CFG_U1 | 0x20910660;     // Output rate of the NMEA-NAV2-GX-GNS message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GNS_UART1 = UBX_CFG_U1 | 0x2091065d;   // Output rate of the NMEA-NAV2-GX-GNS message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GNS_UART2 = UBX_CFG_U1 | 0x2091065e;   // Output rate of the NMEA-NAV2-GX-GNS message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GNS_USB = UBX_CFG_U1 | 0x2091065f;     // Output rate of the NMEA-NAV2-GX-GNS message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GSA_I2C = UBX_CFG_U1 | 0x20910666;     // Output rate of the NMEA-NAV2-GX-GSA message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GSA_SPI = UBX_CFG_U1 | 0x2091066a;     // Output rate of the NMEA-NAV2-GX-GSA message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GSA_UART1 = UBX_CFG_U1 | 0x20910667;   // Output rate of the NMEA-NAV2-GX-GSA message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GSA_UART2 = UBX_CFG_U1 | 0x20910668;   // Output rate of the NMEA-NAV2-GX-GSA message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_GSA_USB = UBX_CFG_U1 | 0x20910669;     // Output rate of the NMEA-NAV2-GX-GSA message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_RMC_I2C = UBX_CFG_U1 | 0x20910652;     // Output rate of the NMEA-NAV2-GX-RMC message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_RMC_SPI = UBX_CFG_U1 | 0x20910656;     // Output rate of the NMEA-NAV2-GX-RMC message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_RMC_UART1 = UBX_CFG_U1 | 0x20910653;   // Output rate of the NMEA-NAV2-GX-RMC message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_RMC_UART2 = UBX_CFG_U1 | 0x20910654;   // Output rate of the NMEA-NAV2-GX-RMC message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_RMC_USB = UBX_CFG_U1 | 0x20910655;     // Output rate of the NMEA-NAV2-GX-RMC message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_VTG_I2C = UBX_CFG_U1 | 0x20910657;     // Output rate of the NMEA-NAV2-GX-VTG message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_VTG_SPI = UBX_CFG_U1 | 0x2091065b;     // Output rate of the NMEA-NAV2-GX-VTG message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_VTG_UART1 = UBX_CFG_U1 | 0x20910658;   // Output rate of the NMEA-NAV2-GX-VTG message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_VTG_UART2 = UBX_CFG_U1 | 0x20910659;   // Output rate of the NMEA-NAV2-GX-VTG message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_VTG_USB = UBX_CFG_U1 | 0x2091065a;     // Output rate of the NMEA-NAV2-GX-VTG message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_ZDA_I2C = UBX_CFG_U1 | 0x2091067f;     // Output rate of the NMEA-NAV2-GX-ZDA message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_ZDA_SPI = UBX_CFG_U1 | 0x20910683;     // Output rate of the NMEA-NAV2-GX-ZDA message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_ZDA_UART1 = UBX_CFG_U1 | 0x20910680;   // Output rate of the NMEA-NAV2-GX-ZDA message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_ZDA_UART2 = UBX_CFG_U1 | 0x20910681;   // Output rate of the NMEA-NAV2-GX-ZDA message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_NMEA_NAV2_ID_ZDA_USB = UBX_CFG_U1 | 0x20910682;     // Output rate of the NMEA-NAV2-GX-ZDA message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_CLOCK_I2C = UBX_CFG_U1 | 0x20910430;       // Output rate of the UBX-NAV2-CLOCK message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_CLOCK_SPI = UBX_CFG_U1 | 0x20910434;       // Output rate of the UBX-NAV2-CLOCK message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_CLOCK_UART1 = UBX_CFG_U1 | 0x20910431;     // Output rate of the UBX-NAV2-CLOCK message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_CLOCK_UART2 = UBX_CFG_U1 | 0x20910432;     // Output rate of the UBX-NAV2-CLOCK message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_CLOCK_USB = UBX_CFG_U1 | 0x20910433;       // Output rate of the UBX-NAV2-CLOCK message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_COV_I2C = UBX_CFG_U1 | 0x20910435;         // Output rate of the UBX-NAV2-COV message onport I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_COV_SPI = UBX_CFG_U1 | 0x20910439;         // Output rate of the UBX-NAV2-COV message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_COV_UART1 = UBX_CFG_U1 | 0x20910436;       // Output rate of the UBX-NAV2-COV message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_COV_UART2 = UBX_CFG_U1 | 0x20910437;       // Output rate of the UBX-NAV2-COV message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_COV_USB = UBX_CFG_U1 | 0x20910438;         // Output rate of the UBX-NAV2-COV message onport USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_DOP_I2C = UBX_CFG_U1 | 0x20910465;         // Output rate of the UBX-NAV2-DOP message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_DOP_SPI = UBX_CFG_U1 | 0x20910469;         // Output rate of the UBX-NAV2-DOP message onport SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_DOP_UART1 = UBX_CFG_U1 | 0x20910466;       // Output rate of the UBX-NAV2-DOP message onport UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_DOP_UART2 = UBX_CFG_U1 | 0x20910467;       // Output rate of the UBX-NAV2-DOP message onport UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_DOP_USB = UBX_CFG_U1 | 0x20910468;         // Output rate of the UBX-NAV2-DOP message on port USB
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EELL_I2C = UBX_CFG_U1 | 0x20910470;        // Output rate of the UBX-NAV2-EELL message onport I2C
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EELL_SPI = UBX_CFG_U1 | 0x20910474;        // Output rate of the UBX-NAV2-EELL message on port SPI
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EELL_UART1 = UBX_CFG_U1 | 0x20910471;      // Output rate of the UBX-NAV2-EELL message on port UART1
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EELL_UART2 = UBX_CFG_U1 | 0x20910472;      // Output rate of the UBX-NAV2-EELL message on port UART2
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EELL_USB = UBX_CFG_U1 | 0x20910473;        // Output rate of the UBX-NAV2-EELL message onport USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EOE_I2C = UBX_CFG_U1 | 0x20910565;        // Output rate of the UBX-NAV2-EOE message onport I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EOE_SPI = UBX_CFG_U1 | 0x20910569;        // Output rate of the UBX-NAV2-EOE message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EOE_UART1 = UBX_CFG_U1 | 0x20910566;      // Output rate of the UBX-NAV2-EOE message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EOE_UART2 = UBX_CFG_U1 | 0x20910567;      // Output rate of the UBX-NAV2-EOE message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EOE_USB = UBX_CFG_U1 | 0x20910568;        // Output rate of the UBX-NAV2-EOE message onport USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_ODO_I2C = UBX_CFG_U1 | 0x20910475;        // Output rate of the UBX-NAV2-ODO message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_ODO_SPI = UBX_CFG_U1 | 0x20910479;        // Output rate of the UBX-NAV2-ODO message onport SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_ODO_UART1 = UBX_CFG_U1 | 0x20910476;      // Output rate of the UBX-NAV2-ODO message onport UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_ODO_UART2 = UBX_CFG_U1 | 0x20910477;      // Output rate of the UBX-NAV2-ODO message onport UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_ODO_USB = UBX_CFG_U1 | 0x20910478;        // Output rate of the UBX-NAV2-ODO message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSECEF_I2C = UBX_CFG_U1 | 0x20910480;    // Output rate of the UBX-NAV2-POSECEF message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSECEF_SPI = UBX_CFG_U1 | 0x20910484;    // Output rate of the UBX-NAV2-POSECEF message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSECEF_UART1 = UBX_CFG_U1 | 0x20910481;  // Output rate of the UBX-NAV2-POSECEF message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSECEF_UART2 = UBX_CFG_U1 | 0x20910482;  // Output rate of the UBX-NAV2-POSECEF message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSECEF_USB = UBX_CFG_U1 | 0x20910483;    // Output rate of the UBX-NAV2-POSECEF message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSLLH_I2C = UBX_CFG_U1 | 0x20910485;     // Output rate of the UBX-NAV2-POSLLH message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSLLH_SPI = UBX_CFG_U1 | 0x20910489;     // Output rate of the UBX-NAV2-POSLLH message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSLLH_UART1 = UBX_CFG_U1 | 0x20910486;   // Output rate of the UBX-NAV2-POSLLH message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSLLH_UART2 = UBX_CFG_U1 | 0x20910487;   // Output rate of the UBX-NAV2-POSLLH message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSLLH_USB = UBX_CFG_U1 | 0x20910488;     // Output rate of the UBX-NAV2-POSLLH message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EOE_I2C = UBX_CFG_U1 | 0x20910565;         // Output rate of the UBX-NAV2-EOE message onport I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EOE_SPI = UBX_CFG_U1 | 0x20910569;         // Output rate of the UBX-NAV2-EOE message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EOE_UART1 = UBX_CFG_U1 | 0x20910566;       // Output rate of the UBX-NAV2-EOE message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EOE_UART2 = UBX_CFG_U1 | 0x20910567;       // Output rate of the UBX-NAV2-EOE message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_EOE_USB = UBX_CFG_U1 | 0x20910568;         // Output rate of the UBX-NAV2-EOE message onport USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_ODO_I2C = UBX_CFG_U1 | 0x20910475;         // Output rate of the UBX-NAV2-ODO message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_ODO_SPI = UBX_CFG_U1 | 0x20910479;         // Output rate of the UBX-NAV2-ODO message onport SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_ODO_UART1 = UBX_CFG_U1 | 0x20910476;       // Output rate of the UBX-NAV2-ODO message onport UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_ODO_UART2 = UBX_CFG_U1 | 0x20910477;       // Output rate of the UBX-NAV2-ODO message onport UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_ODO_USB = UBX_CFG_U1 | 0x20910478;         // Output rate of the UBX-NAV2-ODO message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSECEF_I2C = UBX_CFG_U1 | 0x20910480;     // Output rate of the UBX-NAV2-POSECEF message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSECEF_SPI = UBX_CFG_U1 | 0x20910484;     // Output rate of the UBX-NAV2-POSECEF message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSECEF_UART1 = UBX_CFG_U1 | 0x20910481;   // Output rate of the UBX-NAV2-POSECEF message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSECEF_UART2 = UBX_CFG_U1 | 0x20910482;   // Output rate of the UBX-NAV2-POSECEF message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSECEF_USB = UBX_CFG_U1 | 0x20910483;     // Output rate of the UBX-NAV2-POSECEF message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSLLH_I2C = UBX_CFG_U1 | 0x20910485;      // Output rate of the UBX-NAV2-POSLLH message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSLLH_SPI = UBX_CFG_U1 | 0x20910489;      // Output rate of the UBX-NAV2-POSLLH message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSLLH_UART1 = UBX_CFG_U1 | 0x20910486;    // Output rate of the UBX-NAV2-POSLLH message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSLLH_UART2 = UBX_CFG_U1 | 0x20910487;    // Output rate of the UBX-NAV2-POSLLH message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_POSLLH_USB = UBX_CFG_U1 | 0x20910488;      // Output rate of the UBX-NAV2-POSLLH message on port USB
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVAT_I2C = UBX_CFG_U1 | 0x2091062f;        // Output rate of the UBX-NAV2-PVAT message onport I2C
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVAT_SPI = UBX_CFG_U1 | 0x20910633;        // Output rate of the UBX-NAV2-PVAT message on port SPI
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVAT_UART1 = UBX_CFG_U1 | 0x20910630;      // Output rate of the UBX-NAV2-PVAT message on port UART1
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVAT_UART2 = UBX_CFG_U1 | 0x20910631;      // Output rate of the UBX-NAV2-PVAT message on port UART2
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVAT_USB = UBX_CFG_U1 | 0x20910632;        // Output rate of the UBX-NAV2-PVAT message onport USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVT_I2C = UBX_CFG_U1 | 0x20910490;        // Output rate of the UBX-NAV2-PVT message onport I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVT_SPI = UBX_CFG_U1 | 0x20910494;        // Output rate of the UBX-NAV2-PVT message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVT_UART1 = UBX_CFG_U1 | 0x20910491;      // Output rate of the UBX-NAV2-PVT message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVT_UART2 = UBX_CFG_U1 | 0x20910492;      // Output rate of the UBX-NAV2-PVT message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVT_USB = UBX_CFG_U1 | 0x20910493;        // Output rate of the UBX-NAV2-PVT message onport USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SAT_I2C = UBX_CFG_U1 | 0x20910495;        // Output rate of the UBX-NAV2-SAT message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SAT_SPI = UBX_CFG_U1 | 0x20910499;        // Output rate of the UBX-NAV2-SAT message onport SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SAT_UART1 = UBX_CFG_U1 | 0x20910496;      // Output rate of the UBX-NAV2-SAT message onport UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SAT_UART2 = UBX_CFG_U1 | 0x20910497;      // Output rate of the UBX-NAV2-SAT message onport UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SAT_USB = UBX_CFG_U1 | 0x20910498;        // Output rate of the UBX-NAV2-SAT message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SBAS_I2C = UBX_CFG_U1 | 0x20910500;       // Output rate of the UBX-NAV2-SBAS messageon port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SBAS_SPI = UBX_CFG_U1 | 0x20910504;       // Output rate of the UBX-NAV2-SBAS message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SBAS_UART1 = UBX_CFG_U1 | 0x20910501;     // Output rate of the UBX-NAV2-SBAS message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SBAS_UART2 = UBX_CFG_U1 | 0x20910502;     // Output rate of the UBX-NAV2-SBAS message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SBAS_USB = UBX_CFG_U1 | 0x20910503;       // Output rate of the UBX-NAV2-SBAS messageon port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SIG_I2C = UBX_CFG_U1 | 0x20910505;        // Output rate of the UBX-NAV2-SIG message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SIG_SPI = UBX_CFG_U1 | 0x20910509;        // Output rate of the UBX-NAV2-SIG message onport SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SIG_UART1 = UBX_CFG_U1 | 0x20910506;      // Output rate of the UBX-NAV2-SIG message onport UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SIG_UART2 = UBX_CFG_U1 | 0x20910507;      // Output rate of the UBX-NAV2-SIG message onport UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SIG_USB = UBX_CFG_U1 | 0x20910508;        // Output rate of the UBX-NAV2-SIG message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SLAS_I2C = UBX_CFG_U1 | 0x20910510;       // Output rate of the UBX-NAV2-SLAS message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SLAS_SPI = UBX_CFG_U1 | 0x20910514;       // Output rate of the UBX-NAV2-SLAS message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SLAS_UART1 = UBX_CFG_U1 | 0x20910511;     // Output rate of the UBX-NAV2-SLAS message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SLAS_UART2 = UBX_CFG_U1 | 0x20910512;     // Output rate of the UBX-NAV2-SLAS message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SLAS_USB = UBX_CFG_U1 | 0x20910513;       // Output rate of the UBX-NAV2-SLAS message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_STATUS_I2C = UBX_CFG_U1 | 0x20910515;     // Output rate of the UBX-NAV2-STATUS message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_STATUS_SPI = UBX_CFG_U1 | 0x20910519;     // Output rate of the UBX-NAV2-STATUS message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_STATUS_UART1 = UBX_CFG_U1 | 0x20910516;   // Output rate of the UBX-NAV2-STATUS message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_STATUS_UART2 = UBX_CFG_U1 | 0x20910517;   // Output rate of the UBX-NAV2-STATUS message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_STATUS_USB = UBX_CFG_U1 | 0x20910518;     // Output rate of the UBX-NAV2-STATUS message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SVIN_I2C = UBX_CFG_U1 | 0x20910520;       // Output rate of the UBX-NAV2-SVIN message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SVIN_SPI = UBX_CFG_U1 | 0x20910524;       // Output rate of the UBX-NAV2-SVIN message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SVIN_UART1 = UBX_CFG_U1 | 0x20910521;     // Output rate of the UBX-NAV2-SVIN message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SVIN_UART2 = UBX_CFG_U1 | 0x20910522;     // Output rate of the UBX-NAV2-SVIN message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SVIN_USB = UBX_CFG_U1 | 0x20910523;       // Output rate of the UBX-NAV2-SVIN message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEBDS_I2C = UBX_CFG_U1 | 0x20910525;    // Output rate of the UBX-NAV2-TIMEBDS message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEBDS_SPI = UBX_CFG_U1 | 0x20910529;    // Output rate of the UBX-NAV2-TIMEBDS message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEBDS_UART1 = UBX_CFG_U1 | 0x20910526;  // Output rate of the UBX-NAV2-TIMEBDS message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEBDS_UART2 = UBX_CFG_U1 | 0x20910527;  // Output rate of the UBX-NAV2-TIMEBDS message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEBDS_USB = UBX_CFG_U1 | 0x20910528;    // Output rate of the UBX-NAV2-TIMEBDS message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGAL_I2C = UBX_CFG_U1 | 0x20910530;    // Output rate of the UBX-NAV2-TIMEGAL message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGAL_SPI = UBX_CFG_U1 | 0x20910534;    // Output rate of the UBX-NAV2-TIMEGAL message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGAL_UART1 = UBX_CFG_U1 | 0x20910531;  // Output rate of the UBX-NAV2-TIMEGAL message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGAL_UART2 = UBX_CFG_U1 | 0x20910532;  // Output rate of the UBX-NAV2-TIMEGAL message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGAL_USB = UBX_CFG_U1 | 0x20910533;    // Output rate of the UBX-NAV2-TIMEGAL message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGLO_I2C = UBX_CFG_U1 | 0x20910535;    // Output rate of the UBX-NAV2-TIMEGLO message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGLO_SPI = UBX_CFG_U1 | 0x20910539;    // Output rate of the UBX-NAV2-TIMEGLO message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGLO_UART1 = UBX_CFG_U1 | 0x20910536;  // Output rate of the UBX-NAV2-TIMEGLO message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGLO_UART2 = UBX_CFG_U1 | 0x20910537;  // Output rate of the UBX-NAV2-TIMEGLO message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGLO_USB = UBX_CFG_U1 | 0x20910538;    // Output rate of the UBX-NAV2-TIMEGLO message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGPS_I2C = UBX_CFG_U1 | 0x20910540;    // Output rate of the UBX-NAV2-TIMEGPS message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGPS_SPI = UBX_CFG_U1 | 0x20910544;    // Output rate of the UBX-NAV2-TIMEGPS message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGPS_UART1 = UBX_CFG_U1 | 0x20910541;  // Output rate of the UBX-NAV2-TIMEGPS message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGPS_UART2 = UBX_CFG_U1 | 0x20910542;  // Output rate of the UBX-NAV2-TIMEGPS message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGPS_USB = UBX_CFG_U1 | 0x20910543;    // Output rate of the UBX-NAV2-TIMEGPS message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMELS_I2C = UBX_CFG_U1 | 0x20910545;     // Output rate of the UBX-NAV2-TIMELS message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMELS_SPI = UBX_CFG_U1 | 0x20910549;     // Output rate of the UBX-NAV2-TIMELS message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMELS_UART1 = UBX_CFG_U1 | 0x20910546;   // Output rate of the UBX-NAV2-TIMELS message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMELS_UART2 = UBX_CFG_U1 | 0x20910547;   // Output rate of the UBX-NAV2-TIMELS message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMELS_USB = UBX_CFG_U1 | 0x20910548;     // Output rate of the UBX-NAV2-TIMELS message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEQZSS_I2C = UBX_CFG_U1 | 0x20910575;   // Output rate of the UBX-NAV2-TIMEQZSS message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEQZSS_SPI = UBX_CFG_U1 | 0x20910579;   // Output rate of the UBX-NAV2-TIMEQZSS message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEQZSS_UART1 = UBX_CFG_U1 | 0x20910576; // Output rate of the UBX-NAV2-TIMEQZSS message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEQZSS_UART2 = UBX_CFG_U1 | 0x20910577; // Output rate of the UBX-NAV2-TIMEQZSS message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEQZSS_USB = UBX_CFG_U1 | 0x20910578;   // Output rate of the UBX-NAV2-TIMEQZSS message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEUTC_I2C = UBX_CFG_U1 | 0x20910550;    // Output rate of the UBX-NAV2-TIMEUTC message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEUTC_SPI = UBX_CFG_U1 | 0x20910554;    // Output rate of the UBX-NAV2-TIMEUTC message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEUTC_UART1 = UBX_CFG_U1 | 0x20910551;  // Output rate of the UBX-NAV2-TIMEUTC message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEUTC_UART2 = UBX_CFG_U1 | 0x20910552;  // Output rate of the UBX-NAV2-TIMEUTC message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEUTC_USB = UBX_CFG_U1 | 0x20910553;    // Output rate of the UBX-NAV2-TIMEUTC message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELECEF_I2C = UBX_CFG_U1 | 0x20910555;    // Output rate of the UBX-NAV2-VELECEF message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELECEF_SPI = UBX_CFG_U1 | 0x20910559;    // Output rate of the UBX-NAV2-VELECEF message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELECEF_UART1 = UBX_CFG_U1 | 0x20910556;  // Output rate of the UBX-NAV2-VELECEF message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELECEF_UART2 = UBX_CFG_U1 | 0x20910557;  // Output rate of the UBX-NAV2-VELECEF message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELECEF_USB = UBX_CFG_U1 | 0x20910558;    // Output rate of the UBX-NAV2-VELECEF message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELNED_I2C = UBX_CFG_U1 | 0x20910560;     // Output rate of the UBX-NAV2-VELNED message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELNED_SPI = UBX_CFG_U1 | 0x20910564;     // Output rate of the UBX-NAV2-VELNED message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELNED_UART1 = UBX_CFG_U1 | 0x20910561;   // Output rate of the UBX-NAV2-VELNED message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELNED_UART2 = UBX_CFG_U1 | 0x20910562;   // Output rate of the UBX-NAV2-VELNED message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELNED_USB = UBX_CFG_U1 | 0x20910563;     // Output rate of the UBX-NAV2-VELNED message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_NMI_I2C = UBX_CFG_U1 | 0x20910590;         // Output rate of the UBX-NAV-NMI message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_NMI_SPI = UBX_CFG_U1 | 0x20910594;         // Output rate of the UBX-NAV-NMI message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_NMI_UART1 = UBX_CFG_U1 | 0x20910591;       // Output rate of the UBX-NAV-NMI message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_NMI_UART2 = UBX_CFG_U1 | 0x20910592;       // Output rate of the UBX-NAV-NMI message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_NMI_USB = UBX_CFG_U1 | 0x20910593;         // Output rate of the UBX-NAV-NMI message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_TM_I2C = UBX_CFG_U1 | 0x20910610;          // Output rate of the UBX-RXM-TM message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_TM_SPI = UBX_CFG_U1 | 0x20910614;          // Output rate of the UBX-RXM-TM message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_TM_UART1 = UBX_CFG_U1 | 0x20910611;        // Output rate of the UBX-RXM-TM message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_TM_UART2 = UBX_CFG_U1 | 0x20910612;        // Output rate of the UBX-RXM-TM message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_TM_USB = UBX_CFG_U1 | 0x20910613;          // Output rate of the UBX-RXM-TM message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_SIGLOG_I2C = UBX_CFG_U1 | 0x20910689;      // Output rate of the UBX-SEC-SIGLOG message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_SIGLOG_SPI = UBX_CFG_U1 | 0x2091068d;      // Output rate of the UBX-SEC-SIGLOG message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_SIGLOG_UART1 = UBX_CFG_U1 | 0x2091068a;    // Output rate of the UBX-SEC-SIGLOG message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_SIGLOG_UART2 = UBX_CFG_U1 | 0x2091068b;    // Output rate of the UBX-SEC-SIGLOG message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_SIGLOG_USB = UBX_CFG_U1 | 0x2091068c;      // Output rate of the UBX-SEC-SIGLOG message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_TIM_SVIN_I2C = UBX_CFG_U1 | 0x20910097;        // Output rate of the UBX-TIM-SVIN message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_TIM_SVIN_SPI = UBX_CFG_U1 | 0x2091009b;        // Output rate of the UBX-TIM-SVIN message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_TIM_SVIN_UART1 = UBX_CFG_U1 | 0x20910098;      // Output rate of the UBX-TIM-SVIN message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_TIM_SVIN_UART2 = UBX_CFG_U1 | 0x20910099;      // Output rate of the UBX-TIM-SVIN message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_TIM_SVIN_USB = UBX_CFG_U1 | 0x2091009a;        // Output rate of the UBX-TIM-SVIN message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVT_I2C = UBX_CFG_U1 | 0x20910490;         // Output rate of the UBX-NAV2-PVT message onport I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVT_SPI = UBX_CFG_U1 | 0x20910494;         // Output rate of the UBX-NAV2-PVT message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVT_UART1 = UBX_CFG_U1 | 0x20910491;       // Output rate of the UBX-NAV2-PVT message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVT_UART2 = UBX_CFG_U1 | 0x20910492;       // Output rate of the UBX-NAV2-PVT message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_PVT_USB = UBX_CFG_U1 | 0x20910493;         // Output rate of the UBX-NAV2-PVT message onport USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SAT_I2C = UBX_CFG_U1 | 0x20910495;         // Output rate of the UBX-NAV2-SAT message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SAT_SPI = UBX_CFG_U1 | 0x20910499;         // Output rate of the UBX-NAV2-SAT message onport SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SAT_UART1 = UBX_CFG_U1 | 0x20910496;       // Output rate of the UBX-NAV2-SAT message onport UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SAT_UART2 = UBX_CFG_U1 | 0x20910497;       // Output rate of the UBX-NAV2-SAT message onport UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SAT_USB = UBX_CFG_U1 | 0x20910498;         // Output rate of the UBX-NAV2-SAT message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SBAS_I2C = UBX_CFG_U1 | 0x20910500;        // Output rate of the UBX-NAV2-SBAS messageon port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SBAS_SPI = UBX_CFG_U1 | 0x20910504;        // Output rate of the UBX-NAV2-SBAS message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SBAS_UART1 = UBX_CFG_U1 | 0x20910501;      // Output rate of the UBX-NAV2-SBAS message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SBAS_UART2 = UBX_CFG_U1 | 0x20910502;      // Output rate of the UBX-NAV2-SBAS message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SBAS_USB = UBX_CFG_U1 | 0x20910503;        // Output rate of the UBX-NAV2-SBAS messageon port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SIG_I2C = UBX_CFG_U1 | 0x20910505;         // Output rate of the UBX-NAV2-SIG message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SIG_SPI = UBX_CFG_U1 | 0x20910509;         // Output rate of the UBX-NAV2-SIG message onport SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SIG_UART1 = UBX_CFG_U1 | 0x20910506;       // Output rate of the UBX-NAV2-SIG message onport UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SIG_UART2 = UBX_CFG_U1 | 0x20910507;       // Output rate of the UBX-NAV2-SIG message onport UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SIG_USB = UBX_CFG_U1 | 0x20910508;         // Output rate of the UBX-NAV2-SIG message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SLAS_I2C = UBX_CFG_U1 | 0x20910510;        // Output rate of the UBX-NAV2-SLAS message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SLAS_SPI = UBX_CFG_U1 | 0x20910514;        // Output rate of the UBX-NAV2-SLAS message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SLAS_UART1 = UBX_CFG_U1 | 0x20910511;      // Output rate of the UBX-NAV2-SLAS message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SLAS_UART2 = UBX_CFG_U1 | 0x20910512;      // Output rate of the UBX-NAV2-SLAS message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SLAS_USB = UBX_CFG_U1 | 0x20910513;        // Output rate of the UBX-NAV2-SLAS message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_STATUS_I2C = UBX_CFG_U1 | 0x20910515;      // Output rate of the UBX-NAV2-STATUS message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_STATUS_SPI = UBX_CFG_U1 | 0x20910519;      // Output rate of the UBX-NAV2-STATUS message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_STATUS_UART1 = UBX_CFG_U1 | 0x20910516;    // Output rate of the UBX-NAV2-STATUS message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_STATUS_UART2 = UBX_CFG_U1 | 0x20910517;    // Output rate of the UBX-NAV2-STATUS message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_STATUS_USB = UBX_CFG_U1 | 0x20910518;      // Output rate of the UBX-NAV2-STATUS message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SVIN_I2C = UBX_CFG_U1 | 0x20910520;        // Output rate of the UBX-NAV2-SVIN message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SVIN_SPI = UBX_CFG_U1 | 0x20910524;        // Output rate of the UBX-NAV2-SVIN message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SVIN_UART1 = UBX_CFG_U1 | 0x20910521;      // Output rate of the UBX-NAV2-SVIN message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SVIN_UART2 = UBX_CFG_U1 | 0x20910522;      // Output rate of the UBX-NAV2-SVIN message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_SVIN_USB = UBX_CFG_U1 | 0x20910523;        // Output rate of the UBX-NAV2-SVIN message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEBDS_I2C = UBX_CFG_U1 | 0x20910525;     // Output rate of the UBX-NAV2-TIMEBDS message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEBDS_SPI = UBX_CFG_U1 | 0x20910529;     // Output rate of the UBX-NAV2-TIMEBDS message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEBDS_UART1 = UBX_CFG_U1 | 0x20910526;   // Output rate of the UBX-NAV2-TIMEBDS message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEBDS_UART2 = UBX_CFG_U1 | 0x20910527;   // Output rate of the UBX-NAV2-TIMEBDS message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEBDS_USB = UBX_CFG_U1 | 0x20910528;     // Output rate of the UBX-NAV2-TIMEBDS message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGAL_I2C = UBX_CFG_U1 | 0x20910530;     // Output rate of the UBX-NAV2-TIMEGAL message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGAL_SPI = UBX_CFG_U1 | 0x20910534;     // Output rate of the UBX-NAV2-TIMEGAL message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGAL_UART1 = UBX_CFG_U1 | 0x20910531;   // Output rate of the UBX-NAV2-TIMEGAL message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGAL_UART2 = UBX_CFG_U1 | 0x20910532;   // Output rate of the UBX-NAV2-TIMEGAL message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGAL_USB = UBX_CFG_U1 | 0x20910533;     // Output rate of the UBX-NAV2-TIMEGAL message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGLO_I2C = UBX_CFG_U1 | 0x20910535;     // Output rate of the UBX-NAV2-TIMEGLO message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGLO_SPI = UBX_CFG_U1 | 0x20910539;     // Output rate of the UBX-NAV2-TIMEGLO message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGLO_UART1 = UBX_CFG_U1 | 0x20910536;   // Output rate of the UBX-NAV2-TIMEGLO message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGLO_UART2 = UBX_CFG_U1 | 0x20910537;   // Output rate of the UBX-NAV2-TIMEGLO message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGLO_USB = UBX_CFG_U1 | 0x20910538;     // Output rate of the UBX-NAV2-TIMEGLO message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGPS_I2C = UBX_CFG_U1 | 0x20910540;     // Output rate of the UBX-NAV2-TIMEGPS message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGPS_SPI = UBX_CFG_U1 | 0x20910544;     // Output rate of the UBX-NAV2-TIMEGPS message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGPS_UART1 = UBX_CFG_U1 | 0x20910541;   // Output rate of the UBX-NAV2-TIMEGPS message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGPS_UART2 = UBX_CFG_U1 | 0x20910542;   // Output rate of the UBX-NAV2-TIMEGPS message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEGPS_USB = UBX_CFG_U1 | 0x20910543;     // Output rate of the UBX-NAV2-TIMEGPS message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMELS_I2C = UBX_CFG_U1 | 0x20910545;      // Output rate of the UBX-NAV2-TIMELS message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMELS_SPI = UBX_CFG_U1 | 0x20910549;      // Output rate of the UBX-NAV2-TIMELS message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMELS_UART1 = UBX_CFG_U1 | 0x20910546;    // Output rate of the UBX-NAV2-TIMELS message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMELS_UART2 = UBX_CFG_U1 | 0x20910547;    // Output rate of the UBX-NAV2-TIMELS message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMELS_USB = UBX_CFG_U1 | 0x20910548;      // Output rate of the UBX-NAV2-TIMELS message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMENAVIC_I2C = UBX_CFG_U1 | 0x209106a7;   // Output rate of the UBX-NAV2-TIMENAVIC message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMENAVIC_SPI = UBX_CFG_U1 | 0x209106ab;   // Output rate of the UBX-NAV2-TIMENAVIC message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMENAVIC_UART1 = UBX_CFG_U1 | 0x209106a8; // Output rate of the UBX-NAV2-TIMENAVIC message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMENAVIC_UART2 = UBX_CFG_U1 | 0x209106a9; // Output rate of the UBX-NAV2-TIMENAVIC message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMENAVIC_USB = UBX_CFG_U1 | 0x209106aa;   // Output rate of the UBX-NAV2-TIMENAVIC message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEQZSS_I2C = UBX_CFG_U1 | 0x20910575;    // Output rate of the UBX-NAV2-TIMEQZSS message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEQZSS_SPI = UBX_CFG_U1 | 0x20910579;    // Output rate of the UBX-NAV2-TIMEQZSS message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEQZSS_UART1 = UBX_CFG_U1 | 0x20910576;  // Output rate of the UBX-NAV2-TIMEQZSS message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEQZSS_UART2 = UBX_CFG_U1 | 0x20910577;  // Output rate of the UBX-NAV2-TIMEQZSS message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEQZSS_USB = UBX_CFG_U1 | 0x20910578;    // Output rate of the UBX-NAV2-TIMEQZSS message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEUTC_I2C = UBX_CFG_U1 | 0x20910550;     // Output rate of the UBX-NAV2-TIMEUTC message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEUTC_SPI = UBX_CFG_U1 | 0x20910554;     // Output rate of the UBX-NAV2-TIMEUTC message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEUTC_UART1 = UBX_CFG_U1 | 0x20910551;   // Output rate of the UBX-NAV2-TIMEUTC message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEUTC_UART2 = UBX_CFG_U1 | 0x20910552;   // Output rate of the UBX-NAV2-TIMEUTC message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_TIMEUTC_USB = UBX_CFG_U1 | 0x20910553;     // Output rate of the UBX-NAV2-TIMEUTC message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELECEF_I2C = UBX_CFG_U1 | 0x20910555;     // Output rate of the UBX-NAV2-VELECEF message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELECEF_SPI = UBX_CFG_U1 | 0x20910559;     // Output rate of the UBX-NAV2-VELECEF message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELECEF_UART1 = UBX_CFG_U1 | 0x20910556;   // Output rate of the UBX-NAV2-VELECEF message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELECEF_UART2 = UBX_CFG_U1 | 0x20910557;   // Output rate of the UBX-NAV2-VELECEF message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELECEF_USB = UBX_CFG_U1 | 0x20910558;     // Output rate of the UBX-NAV2-VELECEF message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELNED_I2C = UBX_CFG_U1 | 0x20910560;      // Output rate of the UBX-NAV2-VELNED message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELNED_SPI = UBX_CFG_U1 | 0x20910564;      // Output rate of the UBX-NAV2-VELNED message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELNED_UART1 = UBX_CFG_U1 | 0x20910561;    // Output rate of the UBX-NAV2-VELNED message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELNED_UART2 = UBX_CFG_U1 | 0x20910562;    // Output rate of the UBX-NAV2-VELNED message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV2_VELNED_USB = UBX_CFG_U1 | 0x20910563;      // Output rate of the UBX-NAV2-VELNED message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_NMI_I2C = UBX_CFG_U1 | 0x20910590;          // Output rate of the UBX-NAV-NMI message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_NMI_SPI = UBX_CFG_U1 | 0x20910594;          // Output rate of the UBX-NAV-NMI message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_NMI_UART1 = UBX_CFG_U1 | 0x20910591;        // Output rate of the UBX-NAV-NMI message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_NMI_UART2 = UBX_CFG_U1 | 0x20910592;        // Output rate of the UBX-NAV-NMI message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_NMI_USB = UBX_CFG_U1 | 0x20910593;          // Output rate of the UBX-NAV-NMI message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_TM_I2C = UBX_CFG_U1 | 0x20910610;           // Output rate of the UBX-RXM-TM message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_TM_SPI = UBX_CFG_U1 | 0x20910614;           // Output rate of the UBX-RXM-TM message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_TM_UART1 = UBX_CFG_U1 | 0x20910611;         // Output rate of the UBX-RXM-TM message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_TM_UART2 = UBX_CFG_U1 | 0x20910612;         // Output rate of the UBX-RXM-TM message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_TM_USB = UBX_CFG_U1 | 0x20910613;           // Output rate of the UBX-RXM-TM message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_SIGLOG_I2C = UBX_CFG_U1 | 0x20910689;       // Output rate of the UBX-SEC-SIGLOG message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_SIGLOG_SPI = UBX_CFG_U1 | 0x2091068d;       // Output rate of the UBX-SEC-SIGLOG message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_SIGLOG_UART1 = UBX_CFG_U1 | 0x2091068a;     // Output rate of the UBX-SEC-SIGLOG message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_SIGLOG_UART2 = UBX_CFG_U1 | 0x2091068b;     // Output rate of the UBX-SEC-SIGLOG message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_SIGLOG_USB = UBX_CFG_U1 | 0x2091068c;       // Output rate of the UBX-SEC-SIGLOG message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_TIM_SVIN_I2C = UBX_CFG_U1 | 0x20910097;         // Output rate of the UBX-TIM-SVIN message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_TIM_SVIN_SPI = UBX_CFG_U1 | 0x2091009b;         // Output rate of the UBX-TIM-SVIN message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_TIM_SVIN_UART1 = UBX_CFG_U1 | 0x20910098;       // Output rate of the UBX-TIM-SVIN message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_TIM_SVIN_UART2 = UBX_CFG_U1 | 0x20910099;       // Output rate of the UBX-TIM-SVIN message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_TIM_SVIN_USB = UBX_CFG_U1 | 0x2091009a;         // Output rate of the UBX-TIM-SVIN message on port USB
 
 // Additional CFG_MSGOUT keys for the NEO-D9S
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_I2C = UBX_CFG_U1 | 0x2091031d;   // Output rate of the UBX_RXM_PMP message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_SPI = UBX_CFG_U1 | 0x20910321;   // Output rate of the UBX_RXM_PMP message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART1 = UBX_CFG_U1 | 0x2091031e; // Output rate of the UBX_RXM_PMP message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART2 = UBX_CFG_U1 | 0x2091031f; // Output rate of the UBX_RXM_PMP message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_USB = UBX_CFG_U1 | 0x20910320;   // Output rate of the UBX_RXM_PMP message on port USB
-const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_I2C = UBX_CFG_U1 | 0x20910322;   // Output rate of the UBX_MON_PMP message on port I2C
-const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_SPI = UBX_CFG_U1 | 0x20910326;   // Output rate of the UBX_MON_PMP message on port SPI
-const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_UART1 = UBX_CFG_U1 | 0x20910323; // Output rate of the UBX_MON_PMP message on port UART1
-const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_UART2 = UBX_CFG_U1 | 0x20910324; // Output rate of the UBX_MON_PMP message on port UART2
-const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_USB = UBX_CFG_U1 | 0x20910325;   // Output rate of the UBX_MON_PMP message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_I2C = UBX_CFG_U1 | 0x2091031d;    // Output rate of the UBX_RXM_PMP message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_SPI = UBX_CFG_U1 | 0x20910321;    // Output rate of the UBX_RXM_PMP message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART1 = UBX_CFG_U1 | 0x2091031e;  // Output rate of the UBX_RXM_PMP message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_UART2 = UBX_CFG_U1 | 0x2091031f;  // Output rate of the UBX_RXM_PMP message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_PMP_USB = UBX_CFG_U1 | 0x20910320;    // Output rate of the UBX_RXM_PMP message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_I2C = UBX_CFG_U1 | 0x20910322;    // Output rate of the UBX_MON_PMP message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_SPI = UBX_CFG_U1 | 0x20910326;    // Output rate of the UBX_MON_PMP message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_UART1 = UBX_CFG_U1 | 0x20910323;  // Output rate of the UBX_MON_PMP message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_UART2 = UBX_CFG_U1 | 0x20910324;  // Output rate of the UBX_MON_PMP message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PMP_USB = UBX_CFG_U1 | 0x20910325;    // Output rate of the UBX_MON_PMP message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PT2_I2C = UBX_CFG_U1 | 0x20910209;    // Output rate of the UBX_MON_PT2 message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PT2_SPI = UBX_CFG_U1 | 0x2091020d;    // Output rate of the UBX_MON_PT2 message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PT2_UART1 = UBX_CFG_U1 | 0x2091020a;  // Output rate of the UBX_MON_PT2 message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PT2_UART2 = UBX_CFG_U1 | 0x2091020b;  // Output rate of the UBX_MON_PT2 message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_PT2_USB = UBX_CFG_U1 | 0x2091020c;    // Output rate of the UBX_MON_PT2 message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_TEMP_I2C = UBX_CFG_U1 | 0x20910331;   // Output rate of the UBX_MON_TEMP message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_TEMP_SPI = UBX_CFG_U1 | 0x20910335;   // Output rate of the UBX_MON_TEMP message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_TEMP_UART1 = UBX_CFG_U1 | 0x20910332; // Output rate of the UBX_MON_TEMP message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_TEMP_UART2 = UBX_CFG_U1 | 0x20910333; // Output rate of the UBX_MON_TEMP message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_MON_TEMP_USB = UBX_CFG_U1 | 0x20910334;   // Output rate of the UBX_MON_TEMP message on port USB
 
 // Additional CFG_MSGOUT keys for the NEO-D9S
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -898,6 +940,35 @@ const uint32_t UBLOX_CFG_NAV2_SBAS_USE_INTEGRITY = UBX_CFG_L | 0x10170002; // Us
 // CFG-NAVHPG: High precision navigation configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_NAVHPG_DGNSSMODE = UBX_CFG_E1 | 0x20140011; // Diﬀerential corrections mode
+
+// CFG-NAVMASK: Satellite Elevation Mask Configuration (ZED_F9T)
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_000_020 = UBX_CFG_X8 | 0x50180001; // Elevation masks for azimuth range 0 <= az < 20 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_020_040 = UBX_CFG_X8 | 0x50180002; // Elevation masks for azimuth range 20 <= az < 40 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_040_060 = UBX_CFG_X8 | 0x50180003; // Elevation masks for azimuth range 40 <= az < 60 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_060_080 = UBX_CFG_X8 | 0x50180004; // Elevation masks for azimuth range 60 <= az < 80 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_080_100 = UBX_CFG_X8 | 0x50180005; // Elevation masks for azimuth range 80 <= az < 100 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_100_120 = UBX_CFG_X8 | 0x50180006; // Elevation masks for azimuth range 100 <= az < 120 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_120_140 = UBX_CFG_X8 | 0x50180007; // Elevation masks for azimuth range 120 <= az < 140 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_140_160 = UBX_CFG_X8 | 0x50180008; // Elevation masks for azimuth range 140 <= az < 160 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_160_180 = UBX_CFG_X8 | 0x50180009; // Elevation masks for azimuth range 160 <= az < 180 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_180_200 = UBX_CFG_X8 | 0x5018000a; // Elevation masks for azimuth range 180 <= az < 200 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_200_220 = UBX_CFG_X8 | 0x5018000b; // Elevation masks for azimuth range 200 <= az < 220 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_220_240 = UBX_CFG_X8 | 0x5018000c; // Elevation masks for azimuth range 220 <= az < 240 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_240_260 = UBX_CFG_X8 | 0x5018000d; // Elevation masks for azimuth range 240 <= az < 260 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_260_280 = UBX_CFG_X8 | 0x5018000e; // Elevation masks for azimuth range 260 <= az < 280 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_280_300 = UBX_CFG_X8 | 0x5018000f; // Elevation masks for azimuth range 280 <= az < 300 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_300_320 = UBX_CFG_X8 | 0x50180010; // Elevation masks for azimuth range 300 <= az < 320 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_320_340 = UBX_CFG_X8 | 0x50180011; // Elevation masks for azimuth range 320 <= az < 340 deg
+const uint32_t UBLOX_CFG_NAVMASK_EL_MASK_340_360 = UBX_CFG_X8 | 0x50180012; // Elevation masks for azimuth range 340 <= az < 360 deg
+
+// CFG-NAVMASK: Satellite Mask Configuration (F10)
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+const uint32_t UBLOX_CFG_NAVMASK_SV_MASK_GPS = UBX_CFG_X8 | 0x50180013;   // Satellite mask for the GPS system
+const uint32_t UBLOX_CFG_NAVMASK_SV_MASK_GAL = UBX_CFG_X8 | 0x50180014;   // Satellite mask for the GALILEO system
+const uint32_t UBLOX_CFG_NAVMASK_SV_MASK_BDS = UBX_CFG_X8 | 0x50180016;   // Satellite mask for the BeiDou system
+const uint32_t UBLOX_CFG_NAVMASK_SV_MASK_QZSS = UBX_CFG_X8 | 0x50180017;  // Satellite mask for the QZSS system
+const uint32_t UBLOX_CFG_NAVMASK_SV_MASK_NAVIC = UBX_CFG_X8 | 0x50180018; // Satellite mask for the NavIC system
 
 // CFG-NAVSPG: Standard precision navigation configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -950,6 +1021,7 @@ const uint32_t UBLOX_CFG_NMEA_FILT_GAL = UBX_CFG_L | 0x10930013;      // Disable
 const uint32_t UBLOX_CFG_NMEA_FILT_QZSS = UBX_CFG_L | 0x10930015;     // Disable reporting of QZSS satellites
 const uint32_t UBLOX_CFG_NMEA_FILT_GLO = UBX_CFG_L | 0x10930016;      // Disable reporting of GLONASS satellites
 const uint32_t UBLOX_CFG_NMEA_FILT_BDS = UBX_CFG_L | 0x10930017;      // Disable reporting of BeiDou satellites
+const uint32_t UBLOX_CFG_NMEA_FILT_NAVIC = UBX_CFG_L | 0x10930018;    // Disable reporting of NavIC satellites
 const uint32_t UBLOX_CFG_NMEA_OUT_INVFIX = UBX_CFG_L | 0x10930021;    // Enable position output for failed or invalid fixes
 const uint32_t UBLOX_CFG_NMEA_OUT_MSKFIX = UBX_CFG_L | 0x10930022;    // Enable position output for invalid fixes
 const uint32_t UBLOX_CFG_NMEA_OUT_INVTIME = UBX_CFG_L | 0x10930023;   // Enable time output for invalid times
@@ -1043,17 +1115,20 @@ const uint32_t UBLOX_CFG_RTCM_DF003_IN_FILTER = UBX_CFG_E1 | 0x20090009; // RTCM
 
 // CFG-SBAS: SBAS configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_SBAS_USE_TESTMODE = UBX_CFG_L | 0x10360002;  // Use SBAS data when it is in test mode (SBAS msg 0)
-const uint32_t UBLOX_CFG_SBAS_USE_RANGING = UBX_CFG_L | 0x10360003;   // Use SBAS GEOs as a ranging source (for navigation)
-const uint32_t UBLOX_CFG_SBAS_USE_DIFFCORR = UBX_CFG_L | 0x10360004;  // Use SBAS diﬀerential corrections
-const uint32_t UBLOX_CFG_SBAS_USE_INTEGRITY = UBX_CFG_L | 0x10360005; // Use SBAS integrity information
-const uint32_t UBLOX_CFG_SBAS_PRNSCANMASK = UBX_CFG_X8 | 0x50360006;  // SBAS PRN search configuration
+const uint32_t UBLOX_CFG_SBAS_USE_TESTMODE = UBX_CFG_L | 0x10360002;           // Use SBAS data when it is in test mode (SBAS msg 0)
+const uint32_t UBLOX_CFG_SBAS_USE_RANGING = UBX_CFG_L | 0x10360003;            // Use SBAS GEOs as a ranging source (for navigation)
+const uint32_t UBLOX_CFG_SBAS_USE_DIFFCORR = UBX_CFG_L | 0x10360004;           // Use SBAS diﬀerential corrections
+const uint32_t UBLOX_CFG_SBAS_USE_INTEGRITY = UBX_CFG_L | 0x10360005;          // Use SBAS integrity information
+const uint32_t UBLOX_CFG_SBAS_ACCEPT_NOT_IN_PRNMASK = UBX_CFG_X2 | 0x30360008; // Accept corrections from SBAS SV
+const uint32_t UBLOX_CFG_SBAS_USE_IONOONLY = UBX_CFG_L | 0x10360007;           // Use SBAS ionosphere correction only
+const uint32_t UBLOX_CFG_SBAS_PRNSCANMASK = UBX_CFG_X8 | 0x50360006;           // SBAS PRN search configuration
 
-// CFG-SEC: Security configuration (ZED-F9R)
+// CFG-SEC: Security configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_SEC_CFG_LOCK = UBX_CFG_L | 0x10f60009;             // Configuration lockdown
-const uint32_t UBLOX_CFG_SEC_CFG_LOCK_UNLOCKGRP1 = UBX_CFG_U2 | 0x30f6000a; // Configuration lockdown exempted group 1
-const uint32_t UBLOX_CFG_SEC_CFG_LOCK_UNLOCKGRP2 = UBX_CFG_U2 | 0x30f6000b; // Configuration lockdown exempted group 2
+const uint32_t UBLOX_CFG_SEC_CFG_LOCK = UBX_CFG_L | 0x10f60009;              // Configuration lockdown
+const uint32_t UBLOX_CFG_SEC_CFG_LOCK_UNLOCKGRP1 = UBX_CFG_U2 | 0x30f6000a;  // Configuration lockdown exempted group 1
+const uint32_t UBLOX_CFG_SEC_CFG_LOCK_UNLOCKGRP2 = UBX_CFG_U2 | 0x30f6000b;  // Configuration lockdown exempted group 2
+const uint32_t UBLOX_CFG_SEC_JAMDET_SENSITIVITY_HI = UBX_CFG_L | 0x10f60051; // go for a more sensitive jamming detection
 
 // CFG-SFCORE: Sensor fusion (SF) core configuration (ZED-F9R)
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1122,6 +1197,8 @@ const uint32_t UBLOX_CFG_SIGNAL_QZSS_L2C_ENA = UBX_CFG_L | 0x10310015;  // QZSS 
 const uint32_t UBLOX_CFG_SIGNAL_GLO_ENA = UBX_CFG_L | 0x10310025;       // GLONASS enable
 const uint32_t UBLOX_CFG_SIGNAL_GLO_L1_ENA = UBX_CFG_L | 0x10310018;    // GLONASS L1
 const uint32_t UBLOX_CFG_SIGNAL_GLO_L2_ENA = UBX_CFG_L | 0x1031001a;    // GLONASS L2 (only on u-blox F9 platform products)
+const uint32_t UBLOX_CFG_SIGNAL_NAVIC_ENA = UBX_CFG_L | 0x10310026;     // NavIC
+const uint32_t UBLOX_CFG_SIGNAL_NAVIC_L5_ENA = UBX_CFG_L | 0x1031001d;  // NavIC L5
 
 // CFG-SPARTN: Configuration of the SPARTN interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1129,7 +1206,7 @@ const uint32_t UBLOX_CFG_SPARTN_USE_SOURCE = UBX_CFG_E1 | 0x20a70001;
 
 // CFG-SPI: Configuration of the SPI interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_SPI_MAXFF = UBX_CFG_U1 | 0x20640001;           // Number of bytes containing 0xFF to receive before switching oﬀ reception. Range: 0 (mechanism oﬀ) - 63
+const uint32_t UBLOX_CFG_SPI_MAXFF = UBX_CFG_U1 | 0x20640001;          // Number of bytes containing 0xFF to receive before switching oﬀ reception. Range: 0 (mechanism oﬀ) - 63
 const uint32_t UBLOX_CFG_SPI_CPOLARITY = UBX_CFG_L | 0x10640002;       // Clock polarity select: 0: Active Hight Clock, SCLK idles low, 1: Active Low Clock, SCLK idles high
 const uint32_t UBLOX_CFG_SPI_CPHASE = UBX_CFG_L | 0x10640003;          // Clock phase select: 0: Data captured on first edge of SCLK, 1: Data captured on second edge of SCLK
 const uint32_t UBLOX_CFG_SPI_EXTENDEDTIMEOUT = UBX_CFG_L | 0x10640005; // Flag to disable timeouting the interface after 1.5s
@@ -1182,11 +1259,11 @@ const uint32_t UBLOX_CFG_TP_LEN_LOCK_TP1 = UBX_CFG_U4 | 0x40050005;     // Time 
 const uint32_t UBLOX_CFG_TP_DUTY_TP1 = UBX_CFG_R8 | 0x5005002a;         // Time pulse duty cycle (TP1)
 const uint32_t UBLOX_CFG_TP_DUTY_LOCK_TP1 = UBX_CFG_R8 | 0x5005002b;    // Time pulse duty cycle when locked to GNSS time (TP1)
 const uint32_t UBLOX_CFG_TP_USER_DELAY_TP1 = UBX_CFG_I4 | 0x40050006;   // User-configurable time pulse delay (TP1)
-const uint32_t UBLOX_CFG_TP_TP1_ENA = UBX_CFG_L | 0x10050007;          // Enable the first timepulse
-const uint32_t UBLOX_CFG_TP_SYNC_GNSS_TP1 = UBX_CFG_L | 0x10050008;    // Sync time pulse to GNSS time or local clock (TP1)
-const uint32_t UBLOX_CFG_TP_USE_LOCKED_TP1 = UBX_CFG_L | 0x10050009;   // Use locked parameters when possible (TP1)
-const uint32_t UBLOX_CFG_TP_ALIGN_TO_TOW_TP1 = UBX_CFG_L | 0x1005000a; // Align time pulse to top of second (TP1)
-const uint32_t UBLOX_CFG_TP_POL_TP1 = UBX_CFG_L | 0x1005000b;          // Set time pulse polarity (TP1)
+const uint32_t UBLOX_CFG_TP_TP1_ENA = UBX_CFG_L | 0x10050007;           // Enable the first timepulse
+const uint32_t UBLOX_CFG_TP_SYNC_GNSS_TP1 = UBX_CFG_L | 0x10050008;     // Sync time pulse to GNSS time or local clock (TP1)
+const uint32_t UBLOX_CFG_TP_USE_LOCKED_TP1 = UBX_CFG_L | 0x10050009;    // Use locked parameters when possible (TP1)
+const uint32_t UBLOX_CFG_TP_ALIGN_TO_TOW_TP1 = UBX_CFG_L | 0x1005000a;  // Align time pulse to top of second (TP1)
+const uint32_t UBLOX_CFG_TP_POL_TP1 = UBX_CFG_L | 0x1005000b;           // Set time pulse polarity (TP1)
 const uint32_t UBLOX_CFG_TP_TIMEGRID_TP1 = UBX_CFG_E1 | 0x2005000c;     // Time grid to use (TP1)
 const uint32_t UBLOX_CFG_TP_PERIOD_TP2 = UBX_CFG_U4 | 0x4005000d;       // Time pulse period (TP2)
 const uint32_t UBLOX_CFG_TP_PERIOD_LOCK_TP2 = UBX_CFG_U4 | 0x4005000e;  // Time pulse period when locked to GNSS time
@@ -1197,19 +1274,19 @@ const uint32_t UBLOX_CFG_TP_LEN_LOCK_TP2 = UBX_CFG_U4 | 0x40050010;     // Time 
 const uint32_t UBLOX_CFG_TP_DUTY_TP2 = UBX_CFG_R8 | 0x5005002c;         // Time pulse duty cycle (TP2)
 const uint32_t UBLOX_CFG_TP_DUTY_LOCK_TP2 = UBX_CFG_R8 | 0x5005002d;    // Time pulse duty cycle when locked to GNSS time
 const uint32_t UBLOX_CFG_TP_USER_DELAY_TP2 = UBX_CFG_I4 | 0x40050011;   // User-configurable time pulse delay (TP2)
-const uint32_t UBLOX_CFG_TP_TP2_ENA = UBX_CFG_L | 0x10050012;          // Enable the second timepulse
-const uint32_t UBLOX_CFG_TP_SYNC_GNSS_TP2 = UBX_CFG_L | 0x10050013;    // Sync time pulse to GNSS time or local clock
-const uint32_t UBLOX_CFG_TP_USE_LOCKED_TP2 = UBX_CFG_L | 0x10050014;   // Use locked parameters when possible (TP2)
-const uint32_t UBLOX_CFG_TP_ALIGN_TO_TOW_TP2 = UBX_CFG_L | 0x10050015; // Align time pulse to top of second (TP2)
-const uint32_t UBLOX_CFG_TP_POL_TP2 = UBX_CFG_L | 0x10050016;          // Set time pulse polarity (TP2)
+const uint32_t UBLOX_CFG_TP_TP2_ENA = UBX_CFG_L | 0x10050012;           // Enable the second timepulse
+const uint32_t UBLOX_CFG_TP_SYNC_GNSS_TP2 = UBX_CFG_L | 0x10050013;     // Sync time pulse to GNSS time or local clock
+const uint32_t UBLOX_CFG_TP_USE_LOCKED_TP2 = UBX_CFG_L | 0x10050014;    // Use locked parameters when possible (TP2)
+const uint32_t UBLOX_CFG_TP_ALIGN_TO_TOW_TP2 = UBX_CFG_L | 0x10050015;  // Align time pulse to top of second (TP2)
+const uint32_t UBLOX_CFG_TP_POL_TP2 = UBX_CFG_L | 0x10050016;           // Set time pulse polarity (TP2)
 const uint32_t UBLOX_CFG_TP_TIMEGRID_TP2 = UBX_CFG_E1 | 0x20050017;     // Time grid to use (TP2)
 const uint32_t UBLOX_CFG_TP_DRSTR_TP1 = UBX_CFG_E1 | 0x20050035;        // Set drive strength of TP1
 const uint32_t UBLOX_CFG_TP_DRSTR_TP2 = UBX_CFG_E1 | 0x20050036;        // Set drive strength of TP2
 
 // CFG-TXREADY: TX ready configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_TXREADY_ENABLED = UBX_CFG_L | 0x10a20001;   // Flag to indicate if TX ready pin mechanism should be enabled
-const uint32_t UBLOX_CFG_TXREADY_POLARITY = UBX_CFG_L | 0x10a20002;  // The polarity of the TX ready pin: false:high- active, true:low-active
+const uint32_t UBLOX_CFG_TXREADY_ENABLED = UBX_CFG_L | 0x10a20001;    // Flag to indicate if TX ready pin mechanism should be enabled
+const uint32_t UBLOX_CFG_TXREADY_POLARITY = UBX_CFG_L | 0x10a20002;   // The polarity of the TX ready pin: false:high- active, true:low-active
 const uint32_t UBLOX_CFG_TXREADY_PIN = UBX_CFG_U1 | 0x20a20003;       // Pin number to use for the TX ready functionality
 const uint32_t UBLOX_CFG_TXREADY_THRESHOLD = UBX_CFG_U2 | 0x30a20004; // Amount of data that should be ready on the interface before triggering the TX ready pin
 const uint32_t UBLOX_CFG_TXREADY_INTERFACE = UBX_CFG_E1 | 0x20a20005; // Interface where the TX ready feature should be linked to
@@ -1220,12 +1297,14 @@ const uint32_t UBLOX_CFG_UART1_BAUDRATE = UBX_CFG_U4 | 0x40520001; // The baud r
 const uint32_t UBLOX_CFG_UART1_STOPBITS = UBX_CFG_E1 | 0x20520002; // Number of stopbits that should be used on UART1
 const uint32_t UBLOX_CFG_UART1_DATABITS = UBX_CFG_E1 | 0x20520003; // Number of databits that should be used on UART1
 const uint32_t UBLOX_CFG_UART1_PARITY = UBX_CFG_E1 | 0x20520004;   // Parity mode that should be used on UART1
-const uint32_t UBLOX_CFG_UART1_ENABLED = UBX_CFG_L | 0x10520005;  // Flag to indicate if the UART1 should be enabled
+const uint32_t UBLOX_CFG_UART1_ENABLED = UBX_CFG_L | 0x10520005;   // Flag to indicate if the UART1 should be enabled
+const uint32_t UBLOX_CFG_UART1_REMAP = UBX_CFG_L | 0x10520006;     // UART1 Remapping
 
 // CFG-UART1INPROT: Input protocol configuration of the UART1 interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_UART1INPROT_UBX = UBX_CFG_L | 0x10730001;    // Flag to indicate if UBX should be an input protocol on UART1
 const uint32_t UBLOX_CFG_UART1INPROT_NMEA = UBX_CFG_L | 0x10730002;   // Flag to indicate if NMEA should be an input protocol on UART1
+const uint32_t UBLOX_CFG_UART1INPROT_RTCM2X = UBX_CFG_L | 0x10730003; // Flag to indicate if RTCM2X should be an input protocol on UART1
 const uint32_t UBLOX_CFG_UART1INPROT_RTCM3X = UBX_CFG_L | 0x10730004; // Flag to indicate if RTCM3X should be an input protocol on UART1
 const uint32_t UBLOX_CFG_UART1INPROT_SPARTN = UBX_CFG_L | 0x10730005; // Flag to indicate if SPARTN should be an input protocol on UART1
 
@@ -1241,8 +1320,8 @@ const uint32_t UBLOX_CFG_UART2_BAUDRATE = UBX_CFG_U4 | 0x40530001; // The baud r
 const uint32_t UBLOX_CFG_UART2_STOPBITS = UBX_CFG_E1 | 0x20530002; // Number of stopbits that should be used on UART2
 const uint32_t UBLOX_CFG_UART2_DATABITS = UBX_CFG_E1 | 0x20530003; // Number of databits that should be used on UART2
 const uint32_t UBLOX_CFG_UART2_PARITY = UBX_CFG_E1 | 0x20530004;   // Parity mode that should be used on UART2
-const uint32_t UBLOX_CFG_UART2_ENABLED = UBX_CFG_L | 0x10530005;  // Flag to indicate if the UART2 should be enabled
-const uint32_t UBLOX_CFG_UART2_REMAP = UBX_CFG_L | 0x10530006;    // UART2 Remapping
+const uint32_t UBLOX_CFG_UART2_ENABLED = UBX_CFG_L | 0x10530005;   // Flag to indicate if the UART2 should be enabled
+const uint32_t UBLOX_CFG_UART2_REMAP = UBX_CFG_L | 0x10530006;     // UART2 Remapping
 
 // CFG-UART2INPROT: Input protocol configuration of the UART2 interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1259,8 +1338,8 @@ const uint32_t UBLOX_CFG_UART2OUTPROT_RTCM3X = UBX_CFG_L | 0x10760004; // Flag t
 
 // CFG-USB: Configuration of the USB interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_USB_ENABLED = UBX_CFG_L | 0x10650001;        // Flag to indicate if the USB interface should be enabled
-const uint32_t UBLOX_CFG_USB_SELFPOW = UBX_CFG_L | 0x10650002;        // Self-powered device
+const uint32_t UBLOX_CFG_USB_ENABLED = UBX_CFG_L | 0x10650001;         // Flag to indicate if the USB interface should be enabled
+const uint32_t UBLOX_CFG_USB_SELFPOW = UBX_CFG_L | 0x10650002;         // Self-powered device
 const uint32_t UBLOX_CFG_USB_VENDOR_ID = UBX_CFG_U2 | 0x3065000a;      // Vendor ID
 const uint32_t UBLOX_CFG_USB_PRODUCT_ID = UBX_CFG_U2 | 0x3065000b;     // Vendor ID
 const uint32_t UBLOX_CFG_USB_POWER = UBX_CFG_U2 | 0x3065000c;          // Power consumption
@@ -1281,6 +1360,7 @@ const uint32_t UBLOX_CFG_USB_SERIAL_NO_STR3 = UBX_CFG_X8 | 0x50650018; // Serial
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_USBINPROT_UBX = UBX_CFG_L | 0x10770001;    // Flag to indicate if UBX should be an input protocol on USB
 const uint32_t UBLOX_CFG_USBINPROT_NMEA = UBX_CFG_L | 0x10770002;   // Flag to indicate if NMEA should be an input protocol on USB
+const uint32_t UBLOX_CFG_USBINPROT_RTCM2X = UBX_CFG_L | 0x10770003; // Flag to indicate if RTCM2X should be an input protocol on USB
 const uint32_t UBLOX_CFG_USBINPROT_RTCM3X = UBX_CFG_L | 0x10770004; // Flag to indicate if RTCM3X should be an input protocol on USB
 const uint32_t UBLOX_CFG_USBINPROT_SPARTN = UBX_CFG_L | 0x10770005; // Flag to indicate if SPARTN should be an input protocol on USB
 

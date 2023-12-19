@@ -226,11 +226,14 @@ const uint8_t UBX_MON_HW = 0x09;    // Hardware Status
 const uint8_t UBX_MON_IO = 0x02;    // I/O Subsystem Status
 const uint8_t UBX_MON_MSGPP = 0x06; // Message Parse and Process Status
 const uint8_t UBX_MON_PATCH = 0x27; // Output information about installed patches
+const uint8_t UBX_MON_PMP = 0x35;   // PMP monitoring data
+const uint8_t UBX_MON_PT2 = 0x2B;   // Multi-GNSS production test monitor
 const uint8_t UBX_MON_RF = 0x38;    // RF information
 const uint8_t UBX_MON_RXBUF = 0x07; // Receiver Buffer Status
 const uint8_t UBX_MON_RXR = 0x21;   // Receiver Status Information
 const uint8_t UBX_MON_SPAN = 0x31;  // Signal characteristics
 const uint8_t UBX_MON_SYS = 0x39;   // Current system performance information
+const uint8_t UBX_MON_TEMP = 0x0E;  // Temperature value and state
 const uint8_t UBX_MON_TXBUF = 0x08; // Transmitter Buffer Status. Used for query tx buffer size/state.
 const uint8_t UBX_MON_VER = 0x04;   // Receiver/Software Version. Used for obtaining Protocol Version.
 
@@ -265,6 +268,7 @@ const uint8_t UBX_NAV_TIMEGAL = 0x25;   // Galileo Time Solution
 const uint8_t UBX_NAV_TIMEGLO = 0x23;   // GLO Time Solution
 const uint8_t UBX_NAV_TIMEGPS = 0x20;   // GPS Time Solution
 const uint8_t UBX_NAV_TIMELS = 0x26;    // Leap second event information
+const uint8_t UBX_NAV_TIMENAVIC = 0x63; // NavIC time solution
 const uint8_t UBX_NAV_TIMEUTC = 0x21;   // UTC Time Solution
 const uint8_t UBX_NAV_VELECEF = 0x11;   // Velocity Solution in ECEF
 const uint8_t UBX_NAV_VELNED = 0x12;    // Velocity Solution in NED
@@ -470,4 +474,12 @@ enum sfe_ublox_antenna_status_e
   SFE_UBLOX_ANTENNA_STATUS_OK,
   SFE_UBLOX_ANTENNA_STATUS_SHORT,
   SFE_UBLOX_ANTENNA_STATUS_OPEN
+};
+
+// NEO-F10N LNA Mode
+enum sfe_ublox_lna_mode_e
+{
+  SFE_UBLOX_LNA_MODE_NORMAL, // Default - full gain
+  SFE_UBLOX_LNA_MODE_LOWGAIN,
+  SFE_UBLOX_LNA_MODE_BYPASS
 };
