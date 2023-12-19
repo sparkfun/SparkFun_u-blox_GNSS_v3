@@ -9185,13 +9185,27 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
         {
           spartn[3] = incoming; // Restore TF005 and TF006 now we know the data is valid
           parseState = TF007;
-          //Serial.println("Header CRC is valid");
-          //Serial.printf("payloadLength %d EAF %d crcType %d\n", payloadLength, EAF, crcType);
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+          if (_printDebug == true)
+          {
+            _debugSerial.print(F("SPARTN Header CRC is valid: payloadLength "));
+            _debugSerial.print(payloadLength);
+            _debugSerial.print(F(" EAF "));
+            _debugSerial.print(EAF);
+            _debugSerial.print(F(" crcType "));
+            _debugSerial.println(crcType);
+          }
+#endif
         }
         else
         {
           parseState = waitingFor73;
-          //Serial.println("Header CRC is INVALID");
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+          if (_printDebug == true)
+          {
+            _debugSerial.println(F("SPARTN Header CRC is INVALID"));
+          }
+#endif
         }
       }
       frameCount++;
@@ -9200,7 +9214,13 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
       spartn[4] = incoming;
       messageSubtype = incoming >> 4;
       timeTagType = (incoming >> 3) & 0x01;
-      //Serial.printf("timeTagType %d\n", timeTagType);
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+      if (_printDebug == true)
+      {
+        _debugSerial.print(F("SPARTN timeTagType "));
+        _debugSerial.println(timeTagType);
+      }
+#endif
       if (timeTagType == 0)
         TF007toTF016 = 4;
       else
@@ -9223,7 +9243,13 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
         else
         {
           authenticationIndicator = (incoming >> 3) & 0x07;
-          //Serial.printf("authenticationIndicator %d\n", authenticationIndicator);
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+          if (_printDebug == true)
+          {
+            _debugSerial.print(F("SPARTN authenticationIndicator "));
+            _debugSerial.println(authenticationIndicator);
+          }
+#endif
           if (authenticationIndicator <= 1)
             embeddedApplicationLengthBytes = 0;
           else
@@ -9247,7 +9273,13 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
                 break;
             }
           }
-          //Serial.printf("embeddedApplicationLengthBytes %d\n", embeddedApplicationLengthBytes);
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+          if (_printDebug == true)
+          {
+            _debugSerial.print(F("SPARTN embeddedApplicationLengthBytes "));
+            _debugSerial.println(embeddedApplicationLengthBytes);
+          }
+#endif
         }
         parseState = TF016;
         frameCount = 0;                  
@@ -9286,7 +9318,13 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
       {
           parseState = waitingFor73;
           uint16_t numBytes = 4 + TF007toTF016 + payloadLength + embeddedApplicationLengthBytes;
-          //Serial.printf("numBytes %d\n", numBytes);
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+          if (_printDebug == true)
+          {
+            _debugSerial.print(F("SPARTN numBytes "));
+            _debugSerial.println(numBytes);
+          }
+#endif
           uint8_t *ptr = &spartn[numBytes];
           switch (crcType)
           {
@@ -9297,11 +9335,6 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
               {
                 valid = true;
                 len = numBytes + 1;
-                //Serial.println("SPARTN CRC-8 is valid");
-              }
-              else
-              {
-                //Serial.println("SPARTN CRC-8 is INVALID");
               }
             }
             break;
@@ -9314,11 +9347,6 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
               {
                 valid = true;
                 len = numBytes + 2;
-                //Serial.println("SPARTN CRC-16 is valid");
-              }
-              else
-              {
-                //Serial.println("SPARTN CRC-16 is INVALID");
               }
             }
             break;
@@ -9334,11 +9362,18 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
               {
                 valid = true;
                 len = numBytes + 3;
-                //Serial.println("SPARTN CRC-24 is valid");
               }
               else
               {
-                //Serial.printf("SPARTN CRC-24 is INVALID: 0x%06X vs 0x%06X\n", expected, crc);
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+                if (_printDebug == true)
+                {
+                  _debugSerial.print(F("SPARTN CRC-24 is INVALID: 0x"));
+                  _debugSerial.print(expected, HEX);
+                  _debugSerial.print(F(" vs 0x"));
+                  _debugSerial.println(crc, HEX);
+                }
+#endif
               }
             }
             break;
@@ -9355,11 +9390,6 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
               {
                 valid = true;
                 len = numBytes + 4;
-                //Serial.println("SPARTN CRC-32 is valid");
-              }
-              else
-              {
-                //Serial.println("SPARTN CRC-32 is INVALID");
               }
             }
             break;
