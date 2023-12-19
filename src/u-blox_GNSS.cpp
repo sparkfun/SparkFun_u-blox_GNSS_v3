@@ -4121,17 +4121,23 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         packetUBXRXMSFRBX->moduleQueried = true;
 
         // Check if we need to copy the data for the callback
-        if ((packetUBXRXMSFRBX->callbackData != nullptr)                                  // If RAM has been allocated for the copy of the data
-            && (packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid == false)) // AND the data is stale
+        if (packetUBXRXMSFRBX->callbackData != nullptr) // If RAM has been allocated for the copies of the data
         {
-          memcpy(&packetUBXRXMSFRBX->callbackData->gnssId, &packetUBXRXMSFRBX->data.gnssId, sizeof(UBX_RXM_SFRBX_data_t));
-          packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid = true;
+          for (uint32_t i = 0; i < UBX_RXM_SFRBX_CALLBACK_BUFFERS; i++) // Check all available buffers
+          {
+            if ((packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid & (1 << i)) == 0) // AND the buffer is empty
+            {
+              memcpy(&packetUBXRXMSFRBX->callbackData[i].gnssId, &packetUBXRXMSFRBX->data.gnssId, sizeof(UBX_RXM_SFRBX_data_t));
+              packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid |= (1 << i);
+              break; // Only copy once - into first available buffer
+            }
+          }
         }
 
         // Check if we need to copy the data for the message callbacks
-        if (packetUBXRXMSFRBX->callbackMessageData != nullptr) // If RAM has been allocated for the copy of the data
+        if (packetUBXRXMSFRBX->callbackMessageData != nullptr) // If RAM has been allocated for the copies of the data
         {
-          for (uint16_t i = 0; i < UBX_RXM_SFRBX_MESSAGE_CALLBACK_BUFFERS; i++) // Check all available buffers
+          for (uint32_t i = 0; i < UBX_RXM_SFRBX_CALLBACK_BUFFERS; i++) // Check all available buffers
           {
             if ((packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackMessageCopyValid & (1 << i)) == 0) // AND the buffer is empty
             {
@@ -4142,13 +4148,13 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
               packetUBXRXMSFRBX->callbackMessageData[i].lengthLSB = msg->len & 0xFF;
               packetUBXRXMSFRBX->callbackMessageData[i].lengthMSB = msg->len >> 8;
 
-              memcpy(packetUBXRXMSFRBX->callbackMessageData[i].payload, msg->payload, msg->len);
+              memcpy(&packetUBXRXMSFRBX->callbackMessageData[i].payload, msg->payload, msg->len);
 
               packetUBXRXMSFRBX->callbackMessageData[i].checksumA = msg->checksumA;
               packetUBXRXMSFRBX->callbackMessageData[i].checksumB = msg->checksumB;
 
               packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackMessageCopyValid |= (1 << i);
-              break; // abort when added
+              break; // Only copy once - into first available buffer
             }
           }
         }
@@ -5820,22 +5826,25 @@ void DevUBLOXGNSS::checkCallbacks(void)
 
   if (packetUBXRXMSFRBX != nullptr) // If RAM has been allocated for message storage
   {
-    if (packetUBXRXMSFRBX->callbackData != nullptr) // If RAM has been allocated for the copy of the data
+    if (packetUBXRXMSFRBX->callbackData != nullptr) // If RAM has been allocated for the copies of the data
     {
-      if (packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid == true) // If the copy of the data is valid
+      for (uint32_t i = 0; i < UBX_RXM_SFRBX_CALLBACK_BUFFERS; i++)
       {
-        if (packetUBXRXMSFRBX->callbackPointerPtr != nullptr) // If the pointer to the callback has been defined
+        if ((packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid & (1 << i)) != 0) // If the copy of the data is valid
         {
-          packetUBXRXMSFRBX->callbackPointerPtr(packetUBXRXMSFRBX->callbackData); // Call the callback
+          if (packetUBXRXMSFRBX->callbackPointerPtr != nullptr) // If the pointer to the callback has been defined
+          {
+            packetUBXRXMSFRBX->callbackPointerPtr(&packetUBXRXMSFRBX->callbackData[i]); // Call the callback
+          }
+          packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid &= ~(1 << i); // Mark the data as stale
         }
-        packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackCopyValid = false; // Mark the data as stale
       }
     }
-    if (packetUBXRXMSFRBX->callbackMessageData != nullptr) // If RAM has been allocated for the copy of the data
+    if (packetUBXRXMSFRBX->callbackMessageData != nullptr) // If RAM has been allocated for the copies of the data
     {
-      for (uint16_t i = 0; i < UBX_RXM_SFRBX_MESSAGE_CALLBACK_BUFFERS; i++)
+      for (uint32_t i = 0; i < UBX_RXM_SFRBX_CALLBACK_BUFFERS; i++)
       {
-        if ((packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackMessageCopyValid & (1 << i)) > 0) // If the copy of the data is valid
+        if ((packetUBXRXMSFRBX->automaticFlags.flags.bits.callbackMessageCopyValid & (1 << i)) != 0) // If the copy of the data is valid
         {
           if (packetUBXRXMSFRBX->callbackMessagePointerPtr != nullptr) // If the pointer to the callback has been defined
           {
@@ -13163,7 +13172,7 @@ bool DevUBLOXGNSS::setAutoRXMSFRBXcallbackPtr(void (*callbackPointerPtr)(UBX_RXM
 
   if (packetUBXRXMSFRBX->callbackData == nullptr) // Check if RAM has been allocated for the callback copy
   {
-    packetUBXRXMSFRBX->callbackData = new UBX_RXM_SFRBX_data_t; // Allocate RAM for the main struct
+    packetUBXRXMSFRBX->callbackData = new UBX_RXM_SFRBX_data_t[UBX_RXM_SFRBX_CALLBACK_BUFFERS]; // Allocate RAM for the main struct
   }
 
   if (packetUBXRXMSFRBX->callbackData == nullptr)
@@ -13188,7 +13197,7 @@ bool DevUBLOXGNSS::setAutoRXMSFRBXmessageCallbackPtr(void (*callbackMessagePoint
 
   if (packetUBXRXMSFRBX->callbackMessageData == nullptr) // Check if RAM has been allocated for the callback copy
   {
-    packetUBXRXMSFRBX->callbackMessageData = new UBX_RXM_SFRBX_message_data_t[UBX_RXM_SFRBX_MESSAGE_CALLBACK_BUFFERS]; // Allocate RAM for the main struct
+    packetUBXRXMSFRBX->callbackMessageData = new UBX_RXM_SFRBX_message_data_t[UBX_RXM_SFRBX_CALLBACK_BUFFERS]; // Allocate RAM for the main struct
   }
 
   if (packetUBXRXMSFRBX->callbackMessageData == nullptr)

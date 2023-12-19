@@ -1426,10 +1426,11 @@ typedef struct
 // RXM-specific structs
 
 // UBX-RXM-SFRBX (0x02 0x13): Broadcast navigation data subframe
+// Note: SFRBX is output-only. Polling is not possible
 // Note: length is variable
 // Note: on protocol version 17: numWords is (0..16)
 //       on protocol version 18+: numWords is (0..10)
-#define UBX_RXM_SFRBX_MESSAGE_CALLBACK_BUFFERS 12
+#define UBX_RXM_SFRBX_CALLBACK_BUFFERS 14 // 14 data buffers, 14 message buffers, 3 flags, in uint32_t
 const uint8_t UBX_RXM_SFRBX_MAX_WORDS = 16;
 const uint16_t UBX_RXM_SFRBX_MAX_LEN = 8 + (4 * UBX_RXM_SFRBX_MAX_WORDS);
 
@@ -1465,14 +1466,14 @@ struct ubxSFRBXAutomaticFlags
 {
   union
   {
-    uint16_t all;
+    uint32_t all;
     struct
     {
-      uint16_t automatic : 1;                                                     // Will this message be delivered and parsed "automatically" (without polling)
-      uint16_t implicitUpdate : 1;                                                // Is the update triggered by accessing stale data (=true) or by a call to checkUblox (=false)
-      uint16_t addToFileBuffer : 1;                                               // Should the raw UBX data be added to the file buffer?
-      uint16_t callbackCopyValid : 1;                                             // Is the copy of the data struct used by the callback valid/fresh?
-      uint16_t callbackMessageCopyValid : UBX_RXM_SFRBX_MESSAGE_CALLBACK_BUFFERS; // Are the copies of the data structs used by the callback valid/fresh?
+      uint32_t automatic : 1;                                             // Will this message be delivered and parsed "automatically" (without polling)
+      uint32_t implicitUpdate : 1;                                        // Is the update triggered by accessing stale data (=true) or by a call to checkUblox (=false)
+      uint32_t addToFileBuffer : 1;                                       // Should the raw UBX data be added to the file buffer?
+      uint32_t callbackCopyValid : UBX_RXM_SFRBX_CALLBACK_BUFFERS;        // Are the copies of the data struct used by the callback valid/fresh?
+      uint32_t callbackMessageCopyValid : UBX_RXM_SFRBX_CALLBACK_BUFFERS; // Are the copies of the data structs used by the callback valid/fresh?
     } bits;
   } flags;
 };
@@ -1483,9 +1484,9 @@ typedef struct
   UBX_RXM_SFRBX_data_t data;
   bool moduleQueried;
   void (*callbackPointerPtr)(UBX_RXM_SFRBX_data_t *);
-  UBX_RXM_SFRBX_data_t *callbackData;
+  UBX_RXM_SFRBX_data_t *callbackData; // This is an array of buffers
   void (*callbackMessagePointerPtr)(UBX_RXM_SFRBX_message_data_t *);
-  UBX_RXM_SFRBX_message_data_t *callbackMessageData;
+  UBX_RXM_SFRBX_message_data_t *callbackMessageData; // This is an array of buffers
 } UBX_RXM_SFRBX_t;
 
 // UBX-RXM-MEASX (0x02 0x14): Receiver Manager Messages: i.e. Satellite Status, RTC Status.
