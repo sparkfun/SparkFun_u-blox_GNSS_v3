@@ -244,6 +244,7 @@ setAopCfg	KEYWORD2
 
 setDynamicSPARTNKey	KEYWORD2
 setDynamicSPARTNKeys	KEYWORD2
+parseSPARTN	KEYWORD2
 
 getUniqueChipId	KEYWORD2
 getUniqueChipIdStr	KEYWORD2

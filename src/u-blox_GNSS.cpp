@@ -9015,6 +9015,365 @@ bool DevUBLOXGNSS::setDynamicSPARTNKeys(uint8_t keyLengthBytes1, uint16_t validF
   return (sendCommand(&packetCfg, 0) == SFE_UBLOX_STATUS_SUCCESS); // UBX-RXM-SPARTNKEY is silent. It does not ACK (or NACK)
 }
 
+// Support for SPARTN parsing
+// Mostly stolen from https://github.com/u-blox/ubxlib/blob/master/common/spartn/src/u_spartn_crc.c
+
+uint8_t DevUBLOXGNSS::uSpartnCrc4(const uint8_t *pU8Msg, size_t size)
+{
+    // Initialize local variables
+    uint8_t u8TableRemainder;
+    uint8_t u8Remainder = 0; // Initial remainder
+
+    // Compute the CRC value
+    // Divide each byte of the message by the corresponding polynomial
+    for (size_t x = 0; x < size; x++) {
+        u8TableRemainder = pU8Msg[x] ^ u8Remainder;
+        u8Remainder = sfe_ublox_u8Crc4Table[u8TableRemainder];
+    }
+
+    return u8Remainder;
+}
+
+uint8_t DevUBLOXGNSS::uSpartnCrc8(const uint8_t *pU8Msg, size_t size)
+{
+    // Initialize local variables
+    uint8_t u8TableRemainder;
+    uint8_t u8Remainder = 0; // Initial remainder
+
+    // Compute the CRC value
+    // Divide each byte of the message by the corresponding polynomial
+    for (size_t x = 0; x < size; x++) {
+        u8TableRemainder = pU8Msg[x] ^ u8Remainder;
+        u8Remainder = sfe_ublox_u8Crc8Table[u8TableRemainder];
+    }
+
+    return u8Remainder;
+}
+
+uint16_t DevUBLOXGNSS::uSpartnCrc16(const uint8_t *pU8Msg, size_t size)
+{
+    // Initialize local variables
+    uint16_t u16TableRemainder;
+    uint16_t u16Remainder = 0; // Initial remainder
+    uint8_t  u8NumBitsInCrc = (8 * sizeof(uint16_t));
+
+    // Compute the CRC value
+    // Divide each byte of the message by the corresponding polynomial
+    for (size_t x = 0; x < size; x++) {
+        u16TableRemainder = pU8Msg[x] ^ (u16Remainder >> (u8NumBitsInCrc - 8));
+        u16Remainder = sfe_ublox_u16Crc16Table[u16TableRemainder] ^ (u16Remainder << 8);
+    }
+
+    return u16Remainder;
+}
+
+uint32_t DevUBLOXGNSS::uSpartnCrc24(const uint8_t *pU8Msg, size_t size)
+{
+    // Initialize local variables
+    uint32_t u32TableRemainder;
+    uint32_t u32Remainder = 0; // Initial remainder
+    uint8_t u8NumBitsInCrc = (8 * sizeof(uint8_t) * 3);
+
+    // Compute the CRC value
+    // Divide each byte of the message by the corresponding polynomial
+    for (size_t x = 0; x < size; x++) {
+        u32TableRemainder = pU8Msg[x] ^ (u32Remainder >> (u8NumBitsInCrc - 8));
+        u32Remainder = sfe_ublox_u32Crc24Table[u32TableRemainder] ^ (u32Remainder << 8);
+        u32Remainder = u32Remainder & 0x00FFFFFF; // Only interested in 24 bits
+    }
+
+    return u32Remainder;
+}
+
+uint32_t DevUBLOXGNSS::uSpartnCrc32(const uint8_t *pU8Msg, size_t size)
+{
+    // Initialize local variables
+    uint32_t u32TableRemainder;
+    uint32_t u32Remainder = 0xFFFFFFFFU; // Initial remainder
+    uint8_t u8NumBitsInCrc = (8 * sizeof(uint32_t));
+    uint32_t u32FinalXORValue = 0xFFFFFFFFU;
+
+    // Compute the CRC value
+    // Divide each byte of the message by the corresponding polynomial
+    for (size_t x = 0; x < size; x++) {
+        u32TableRemainder = pU8Msg[x] ^ (u32Remainder >> (u8NumBitsInCrc - 8));
+        u32Remainder = sfe_ublox_u32Crc32Table[u32TableRemainder] ^ (u32Remainder << 8);
+    }
+
+    u32Remainder = u32Remainder ^ u32FinalXORValue;
+
+    return u32Remainder;
+}
+
+// Parse SPARTN data
+uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len)
+{
+  typedef enum {
+    waitingFor73,
+    TF002_TF006,
+    TF007,
+    TF009,
+    TF016,
+    TF017,
+    TF018
+  } parseStates;
+  static parseStates parseState = waitingFor73;
+
+  static uint8_t spartn[1100];
+
+  static uint16_t frameCount;
+  static uint8_t messageType;
+  static uint16_t payloadLength;
+  static uint16_t EAF;
+  static uint8_t crcType;
+  static uint16_t crcBytes;
+  static uint8_t frameCRC;
+  static uint8_t messageSubtype;
+  static uint16_t timeTagType;
+  static uint16_t authenticationIndicator;
+  static uint16_t embeddedApplicationLengthBytes;
+  static uint16_t TF007toTF016;
+
+  valid = false;
+
+  switch(parseState)
+  {
+    case waitingFor73:
+      if (incoming == 0x73)
+      {
+        parseState = TF002_TF006;
+        frameCount = 0;
+        spartn[0] = incoming;
+      }
+      break;
+    case TF002_TF006:
+      spartn[1 + frameCount] = incoming;
+      if (frameCount == 0)
+      {
+        messageType = incoming >> 1;
+        payloadLength = incoming & 0x01;
+      }
+      if (frameCount == 1)
+      {
+        payloadLength <<= 8;
+        payloadLength |= incoming;
+      }
+      if (frameCount == 2)
+      {
+        payloadLength <<= 1;
+        payloadLength |= incoming >> 7;
+        EAF = (incoming >> 6) & 0x01;
+        crcType = (incoming >> 4) & 0x03;
+        switch (crcType)
+        {
+          case 0:
+            crcBytes = 1;
+            break;
+          case 1:
+            crcBytes = 2;
+            break;
+          case 2:
+            crcBytes = 3;
+            break;
+          default:
+            crcBytes = 4;
+            break;
+        }
+        frameCRC = incoming & 0x0F;
+        spartn[3] = spartn[3] & 0xF0; // Zero the 4 LSBs before calculating the CRC
+        if (uSpartnCrc4(&spartn[1], 3) == frameCRC)
+        {
+          spartn[3] = incoming; // Restore TF005 and TF006 now we know the data is valid
+          parseState = TF007;
+          //Serial.println("Header CRC is valid");
+          //Serial.printf("payloadLength %d EAF %d crcType %d\n", payloadLength, EAF, crcType);
+        }
+        else
+        {
+          parseState = waitingFor73;
+          //Serial.println("Header CRC is INVALID");
+        }
+      }
+      frameCount++;
+      break;
+    case TF007:
+      spartn[4] = incoming;
+      messageSubtype = incoming >> 4;
+      timeTagType = (incoming >> 3) & 0x01;
+      //Serial.printf("timeTagType %d\n", timeTagType);
+      if (timeTagType == 0)
+        TF007toTF016 = 4;
+      else
+        TF007toTF016 = 6;
+      if (EAF > 0)
+        TF007toTF016 += 2;
+      parseState = TF009;
+      frameCount = 1;          
+      break;
+    case TF009:
+      spartn[4 + frameCount] = incoming;
+      frameCount++;
+      if (frameCount == TF007toTF016)
+      {
+        if (EAF == 0)
+        {
+          authenticationIndicator = 0;
+          embeddedApplicationLengthBytes = 0;
+        }
+        else
+        {
+          authenticationIndicator = (incoming >> 3) & 0x07;
+          //Serial.printf("authenticationIndicator %d\n", authenticationIndicator);
+          if (authenticationIndicator <= 1)
+            embeddedApplicationLengthBytes = 0;
+          else
+          {
+            switch(incoming & 0x07)
+            {
+              case 0:
+                embeddedApplicationLengthBytes = 8; // 64 bits
+                break;
+              case 1:
+                embeddedApplicationLengthBytes = 12; // 96 bits
+                break;
+              case 2:
+                embeddedApplicationLengthBytes = 16; // 128 bits
+                break;
+              case 3:
+                embeddedApplicationLengthBytes = 32; // 256 bits
+                break;
+              default:
+                embeddedApplicationLengthBytes = 64; // 512 / TBD bits
+                break;
+            }
+          }
+          //Serial.printf("embeddedApplicationLengthBytes %d\n", embeddedApplicationLengthBytes);
+        }
+        parseState = TF016;
+        frameCount = 0;                  
+      }
+      break;
+    case TF016:
+      spartn[4 + TF007toTF016 + frameCount] = incoming;
+      frameCount++;
+      if (frameCount == payloadLength)
+      {
+        if (embeddedApplicationLengthBytes > 0)
+        {
+          parseState = TF017;
+          frameCount = 0;
+        }
+        else               
+        {
+          parseState = TF018;
+          frameCount = 0;
+        }
+      }
+      break;
+    case TF017:
+      spartn[4 + TF007toTF016 + payloadLength + frameCount] = incoming;
+      frameCount++;
+      if (frameCount == embeddedApplicationLengthBytes)
+      {
+        parseState = TF018;
+        frameCount = 0;        
+      }
+      break;
+    case TF018:
+      spartn[4 + TF007toTF016 + payloadLength + embeddedApplicationLengthBytes + frameCount] = incoming;
+      frameCount++;
+      if (frameCount == crcBytes)
+      {
+          parseState = waitingFor73;
+          uint16_t numBytes = 4 + TF007toTF016 + payloadLength + embeddedApplicationLengthBytes;
+          //Serial.printf("numBytes %d\n", numBytes);
+          uint8_t *ptr = &spartn[numBytes];
+          switch (crcType)
+          {
+            case 0:
+            {
+              uint8_t expected = *ptr;
+              if (uSpartnCrc8(&spartn[1], numBytes - 1) == expected) // Don't include the preamble in the CRC
+              {
+                valid = true;
+                len = numBytes + 1;
+                //Serial.println("SPARTN CRC-8 is valid");
+              }
+              else
+              {
+                //Serial.println("SPARTN CRC-8 is INVALID");
+              }
+            }
+            break;
+            case 1:
+            {
+              uint16_t expected = *ptr++;
+              expected <<= 8;
+              expected |= *ptr;
+              if (uSpartnCrc16(&spartn[1], numBytes - 1) == expected) // Don't include the preamble in the CRC
+              {
+                valid = true;
+                len = numBytes + 2;
+                //Serial.println("SPARTN CRC-16 is valid");
+              }
+              else
+              {
+                //Serial.println("SPARTN CRC-16 is INVALID");
+              }
+            }
+            break;
+            case 2:
+            {
+              uint32_t expected = *ptr++;
+              expected <<= 8;
+              expected |= *ptr++;
+              expected <<= 8;
+              expected |= *ptr;
+              uint32_t crc = uSpartnCrc24(&spartn[1], numBytes - 1); // Don't include the preamble in the CRC
+              if (crc == expected)
+              {
+                valid = true;
+                len = numBytes + 3;
+                //Serial.println("SPARTN CRC-24 is valid");
+              }
+              else
+              {
+                //Serial.printf("SPARTN CRC-24 is INVALID: 0x%06X vs 0x%06X\n", expected, crc);
+              }
+            }
+            break;
+            default:
+            {
+              uint32_t expected = *ptr++;
+              expected <<= 8;
+              expected |= *ptr++;
+              expected <<= 8;
+              expected |= *ptr++;
+              expected <<= 8;
+              expected |= *ptr;
+              if (uSpartnCrc32(&spartn[1], numBytes - 1) == expected)
+              {
+                valid = true;
+                len = numBytes + 4;
+                //Serial.println("SPARTN CRC-32 is valid");
+              }
+              else
+              {
+                //Serial.println("SPARTN CRC-32 is INVALID");
+              }
+            }
+            break;
+          }
+      }
+      break;
+  }
+
+  (void)messageType; // Avoid pesky compiler warnings-as-errors
+  (void)messageSubtype;
+
+  return &spartn[0];
+}
+
 // Get the unique chip ID using UBX-SEC-UNIQID
 // The ID is five bytes on the F9 and M9 (version 1) but six bytes on the M10 (version 2)
 bool DevUBLOXGNSS::getUniqueChipId(UBX_SEC_UNIQID_data_t *data, uint16_t maxWait)
