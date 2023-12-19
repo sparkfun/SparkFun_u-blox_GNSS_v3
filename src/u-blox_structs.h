@@ -2237,6 +2237,7 @@ typedef struct
 // UBX-ESF-MEAS (0x10 0x02): External sensor fusion measurements
 // Note: length is variable
 // Note: ESF RAW data cannot be polled. It is "Output" only
+#define UBX_ESF_MEAS_CALLBACK_BUFFERS 6
 const uint16_t UBX_ESF_MEAS_MAX_LEN = 8 + (4 * DEF_MAX_NUM_ESF_MEAS) + 4;
 
 typedef struct
@@ -2273,12 +2274,27 @@ typedef struct
   uint32_t calibTtag; // OPTIONAL: Receiver local time calibrated: ms
 } UBX_ESF_MEAS_data_t;
 
+struct ubxESFMEASAutomaticFlags
+{
+  union
+  {
+    uint16_t all;
+    struct
+    {
+      uint16_t automatic : 1;                                     // Will this message be delivered and parsed "automatically" (without polling)
+      uint16_t implicitUpdate : 1;                                // Is the update triggered by accessing stale data (=true) or by a call to checkUblox (=false)
+      uint16_t addToFileBuffer : 1;                               // Should the raw UBX data be added to the file buffer?
+      uint16_t callbackCopyValid : UBX_ESF_MEAS_CALLBACK_BUFFERS; // Are the copies of the data struct used by the callback valid/fresh?
+    } bits;
+  } flags;
+};
+
 typedef struct
 {
-  ubxAutomaticFlags automaticFlags;
+  ubxESFMEASAutomaticFlags automaticFlags;
   UBX_ESF_MEAS_data_t data;
   void (*callbackPointerPtr)(UBX_ESF_MEAS_data_t *);
-  UBX_ESF_MEAS_data_t *callbackData;
+  UBX_ESF_MEAS_data_t *callbackData; // This is an array of buffers
 } UBX_ESF_MEAS_t;
 
 // UBX-ESF-RAW (0x10 0x03): Raw sensor measurements

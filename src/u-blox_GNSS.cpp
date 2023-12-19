@@ -469,7 +469,7 @@ void DevUBLOXGNSS::end(void)
   {
     if (packetUBXESFMEAS->callbackData != nullptr)
     {
-      delete packetUBXESFMEAS->callbackData;
+      delete[] packetUBXESFMEAS->callbackData;
     }
     delete packetUBXESFMEAS;
     packetUBXESFMEAS = nullptr;
@@ -4466,11 +4466,17 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
           packetUBXESFMEAS->data.calibTtag = extractLong(msg, 8 + (packetUBXESFMEAS->data.flags.bits.numMeas * 4));
 
         // Check if we need to copy the data for the callback
-        if ((packetUBXESFMEAS->callbackData != nullptr)                                  // If RAM has been allocated for the copy of the data
-            && (packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid == false)) // AND the data is stale
+        if (packetUBXESFMEAS->callbackData != nullptr) // If RAM has been allocated for the copy of the data
         {
-          memcpy(&packetUBXESFMEAS->callbackData->timeTag, &packetUBXESFMEAS->data.timeTag, sizeof(UBX_ESF_MEAS_data_t));
-          packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid = true;
+          for (uint16_t i = 0; i < UBX_ESF_MEAS_CALLBACK_BUFFERS; i++)
+          {
+            if ((packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid & (1 << i)) == 0) // AND the data is stale
+            {
+              memcpy(&packetUBXESFMEAS->callbackData[i].timeTag, &packetUBXESFMEAS->data.timeTag, sizeof(UBX_ESF_MEAS_data_t));
+              packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid |= (1 << i);
+              break; // Only copy once
+            }
+          }
         }
 
         // Check if we need to copy the data into the file buffer
@@ -5937,13 +5943,16 @@ void DevUBLOXGNSS::checkCallbacks(void)
 
   if (packetUBXESFMEAS != nullptr)                                               // If RAM has been allocated for message storage
     if (packetUBXESFMEAS->callbackData != nullptr)                               // If RAM has been allocated for the copy of the data
-      if (packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid == true) // If the copy of the data is valid
+      for (uint16_t i = 0; i < UBX_ESF_MEAS_CALLBACK_BUFFERS; i++)
       {
-        if (packetUBXESFMEAS->callbackPointerPtr != nullptr) // If the pointer to the callback has been defined
+        if ((packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid & (1 << i)) != 0) // If the copy of the data is valid
         {
-          packetUBXESFMEAS->callbackPointerPtr(packetUBXESFMEAS->callbackData); // Call the callback
+          if (packetUBXESFMEAS->callbackPointerPtr != nullptr) // If the pointer to the callback has been defined
+          {
+            packetUBXESFMEAS->callbackPointerPtr(&packetUBXESFMEAS->callbackData[i]); // Call the callback
+          }
+          packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid &= ~(1 << i); // Mark the data as stale
         }
-        packetUBXESFMEAS->automaticFlags.flags.bits.callbackCopyValid = false; // Mark the data as stale
       }
 
   if (packetUBXESFRAW != nullptr)                                               // If RAM has been allocated for message storage
@@ -14693,7 +14702,7 @@ bool DevUBLOXGNSS::setAutoESFMEAScallbackPtr(void (*callbackPointerPtr)(UBX_ESF_
 
   if (packetUBXESFMEAS->callbackData == nullptr) // Check if RAM has been allocated for the callback copy
   {
-    packetUBXESFMEAS->callbackData = new UBX_ESF_MEAS_data_t; // Allocate RAM for the main struct
+    packetUBXESFMEAS->callbackData = new UBX_ESF_MEAS_data_t[UBX_ESF_MEAS_CALLBACK_BUFFERS]; // Allocate RAM for the main struct
   }
 
   if (packetUBXESFMEAS->callbackData == nullptr)
