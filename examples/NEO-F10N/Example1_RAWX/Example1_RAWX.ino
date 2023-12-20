@@ -209,9 +209,9 @@ void newRAWX(UBX_RXM_RAWX_data_t *ubxDataStruct)
   else if (ubxDataStruct->blocks[block].svId < 100) sprintf(&SV[14], "%d  ", ubxDataStruct->blocks[block].svId); // Align the svId
   else sprintf(&SV[14], "%d ", ubxDataStruct->blocks[block].svId); // Align the svId
 
-  if (ubxDataStruct->blocks[block].cno < 10) sprintf(&SV[18], "  %d ", ubxDataStruct->blocks[block].cno); // Align the svId
-  else if (ubxDataStruct->blocks[block].cno < 100) sprintf(&SV[18], " %d ", ubxDataStruct->blocks[block].cno); // Align the svId
-  else sprintf(&SV[18], "%d ", ubxDataStruct->blocks[block].cno); // Align the svId
+  if (ubxDataStruct->blocks[block].cno < 10) sprintf(&SV[18], "  %d ", ubxDataStruct->blocks[block].cno); // Align the cno
+  else if (ubxDataStruct->blocks[block].cno < 100) sprintf(&SV[18], " %d ", ubxDataStruct->blocks[block].cno); // Align the cno
+  else sprintf(&SV[18], "%d ", ubxDataStruct->blocks[block].cno); // Align the cno
 
   // Print cno as a bar chart
   uint8_t cno;
