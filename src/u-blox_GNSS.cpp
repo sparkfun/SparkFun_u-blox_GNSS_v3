@@ -9106,7 +9106,7 @@ uint32_t DevUBLOXGNSS::uSpartnCrc32(const uint8_t *pU8Msg, size_t size)
 }
 
 // Parse SPARTN data
-uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len)
+uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len, sfe_ublox_spartn_header_t *header)
 {
   typedef enum {
     waitingFor73,
@@ -9121,17 +9121,9 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
 
   static uint8_t spartn[1100];
 
+  static sfe_ublox_spartn_header_t _header;
   static uint16_t frameCount;
-  static uint8_t messageType;
-  static uint16_t payloadLength;
-  static uint16_t EAF;
-  static uint8_t crcType;
   static uint16_t crcBytes;
-  static uint8_t frameCRC;
-  static uint8_t messageSubtype;
-  static uint16_t timeTagType;
-  static uint16_t authenticationIndicator;
-  static uint16_t embeddedApplicationLengthBytes;
   static uint16_t TF007toTF016;
 
   valid = false;
@@ -9150,21 +9142,21 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
       spartn[1 + frameCount] = incoming;
       if (frameCount == 0)
       {
-        messageType = incoming >> 1;
-        payloadLength = incoming & 0x01;
+        _header.messageType = incoming >> 1;
+        _header.payloadLength = incoming & 0x01;
       }
       if (frameCount == 1)
       {
-        payloadLength <<= 8;
-        payloadLength |= incoming;
+        _header.payloadLength <<= 8;
+        _header.payloadLength |= incoming;
       }
       if (frameCount == 2)
       {
-        payloadLength <<= 1;
-        payloadLength |= incoming >> 7;
-        EAF = (incoming >> 6) & 0x01;
-        crcType = (incoming >> 4) & 0x03;
-        switch (crcType)
+        _header.payloadLength <<= 1;
+        _header.payloadLength |= incoming >> 7;
+        _header.EAF = (incoming >> 6) & 0x01;
+        _header.crcType = (incoming >> 4) & 0x03;
+        switch (_header.crcType)
         {
           case 0:
             crcBytes = 1;
@@ -9179,9 +9171,9 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
             crcBytes = 4;
             break;
         }
-        frameCRC = incoming & 0x0F;
+        _header.frameCRC = incoming & 0x0F;
         spartn[3] = spartn[3] & 0xF0; // Zero the 4 LSBs before calculating the CRC
-        if (uSpartnCrc4(&spartn[1], 3) == frameCRC)
+        if (uSpartnCrc4(&spartn[1], 3) == _header.frameCRC)
         {
           spartn[3] = incoming; // Restore TF005 and TF006 now we know the data is valid
           parseState = TF007;
@@ -9189,11 +9181,11 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
           if (_printDebug == true)
           {
             _debugSerial.print(F("SPARTN Header CRC is valid: payloadLength "));
-            _debugSerial.print(payloadLength);
+            _debugSerial.print(_header.payloadLength);
             _debugSerial.print(F(" EAF "));
-            _debugSerial.print(EAF);
+            _debugSerial.print(_header.EAF);
             _debugSerial.print(F(" crcType "));
-            _debugSerial.println(crcType);
+            _debugSerial.println(_header.crcType);
           }
 #endif
         }
@@ -9212,20 +9204,20 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
       break;
     case TF007:
       spartn[4] = incoming;
-      messageSubtype = incoming >> 4;
-      timeTagType = (incoming >> 3) & 0x01;
+      _header.messageSubtype = incoming >> 4;
+      _header.timeTagType = (incoming >> 3) & 0x01;
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
       if (_printDebug == true)
       {
         _debugSerial.print(F("SPARTN timeTagType "));
-        _debugSerial.println(timeTagType);
+        _debugSerial.println(_header.timeTagType);
       }
 #endif
-      if (timeTagType == 0)
+      if (_header.timeTagType == 0)
         TF007toTF016 = 4;
       else
         TF007toTF016 = 6;
-      if (EAF > 0)
+      if (_header.EAF > 0)
         TF007toTF016 += 2;
       parseState = TF009;
       frameCount = 1;          
@@ -9235,41 +9227,41 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
       frameCount++;
       if (frameCount == TF007toTF016)
       {
-        if (EAF == 0)
+        if (_header.EAF == 0)
         {
-          authenticationIndicator = 0;
-          embeddedApplicationLengthBytes = 0;
+          _header.authenticationIndicator = 0;
+          _header.embeddedApplicationLengthBytes = 0;
         }
         else
         {
-          authenticationIndicator = (incoming >> 3) & 0x07;
+          _header.authenticationIndicator = (incoming >> 3) & 0x07;
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
           if (_printDebug == true)
           {
             _debugSerial.print(F("SPARTN authenticationIndicator "));
-            _debugSerial.println(authenticationIndicator);
+            _debugSerial.println(_header.authenticationIndicator);
           }
 #endif
-          if (authenticationIndicator <= 1)
-            embeddedApplicationLengthBytes = 0;
+          if (_header.authenticationIndicator <= 1)
+            _header.embeddedApplicationLengthBytes = 0;
           else
           {
             switch(incoming & 0x07)
             {
               case 0:
-                embeddedApplicationLengthBytes = 8; // 64 bits
+                _header.embeddedApplicationLengthBytes = 8; // 64 bits
                 break;
               case 1:
-                embeddedApplicationLengthBytes = 12; // 96 bits
+                _header.embeddedApplicationLengthBytes = 12; // 96 bits
                 break;
               case 2:
-                embeddedApplicationLengthBytes = 16; // 128 bits
+                _header.embeddedApplicationLengthBytes = 16; // 128 bits
                 break;
               case 3:
-                embeddedApplicationLengthBytes = 32; // 256 bits
+                _header.embeddedApplicationLengthBytes = 32; // 256 bits
                 break;
               default:
-                embeddedApplicationLengthBytes = 64; // 512 / TBD bits
+                _header.embeddedApplicationLengthBytes = 64; // 512 / TBD bits
                 break;
             }
           }
@@ -9277,7 +9269,7 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
           if (_printDebug == true)
           {
             _debugSerial.print(F("SPARTN embeddedApplicationLengthBytes "));
-            _debugSerial.println(embeddedApplicationLengthBytes);
+            _debugSerial.println(_header.embeddedApplicationLengthBytes);
           }
 #endif
         }
@@ -9288,9 +9280,9 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
     case TF016:
       spartn[4 + TF007toTF016 + frameCount] = incoming;
       frameCount++;
-      if (frameCount == payloadLength)
+      if (frameCount == _header.payloadLength)
       {
-        if (embeddedApplicationLengthBytes > 0)
+        if (_header.embeddedApplicationLengthBytes > 0)
         {
           parseState = TF017;
           frameCount = 0;
@@ -9303,21 +9295,21 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
       }
       break;
     case TF017:
-      spartn[4 + TF007toTF016 + payloadLength + frameCount] = incoming;
+      spartn[4 + TF007toTF016 + _header.payloadLength + frameCount] = incoming;
       frameCount++;
-      if (frameCount == embeddedApplicationLengthBytes)
+      if (frameCount == _header.embeddedApplicationLengthBytes)
       {
         parseState = TF018;
         frameCount = 0;        
       }
       break;
     case TF018:
-      spartn[4 + TF007toTF016 + payloadLength + embeddedApplicationLengthBytes + frameCount] = incoming;
+      spartn[4 + TF007toTF016 + _header.payloadLength + _header.embeddedApplicationLengthBytes + frameCount] = incoming;
       frameCount++;
       if (frameCount == crcBytes)
       {
           parseState = waitingFor73;
-          uint16_t numBytes = 4 + TF007toTF016 + payloadLength + embeddedApplicationLengthBytes;
+          uint16_t numBytes = 4 + TF007toTF016 + _header.payloadLength + _header.embeddedApplicationLengthBytes;
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
           if (_printDebug == true)
           {
@@ -9326,7 +9318,7 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
           }
 #endif
           uint8_t *ptr = &spartn[numBytes];
-          switch (crcType)
+          switch (_header.crcType)
           {
             case 0:
             {
@@ -9398,8 +9390,8 @@ uint8_t * DevUBLOXGNSS::parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len
       break;
   }
 
-  (void)messageType; // Avoid pesky compiler warnings-as-errors
-  (void)messageSubtype;
+  if (header != nullptr)
+    memcpy(header, &_header, sizeof(sfe_ublox_spartn_header_t));
 
   return &spartn[0];
 }

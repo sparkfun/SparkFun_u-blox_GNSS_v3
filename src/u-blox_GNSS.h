@@ -470,7 +470,7 @@ public:
   uint16_t uSpartnCrc16(const uint8_t *pU8Msg, size_t size);
   uint32_t uSpartnCrc24(const uint8_t *pU8Msg, size_t size);
   uint32_t uSpartnCrc32(const uint8_t *pU8Msg, size_t size);
-  uint8_t * parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len);
+  uint8_t * parseSPARTN(uint8_t incoming, bool &valid, uint16_t &len, sfe_ublox_spartn_header_t *header = nullptr);
 
   // Get unique chip ID - UBX-SEC-UNIQID
   bool getUniqueChipId(UBX_SEC_UNIQID_data_t *data = nullptr, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the unique chip ID using UBX_SEC_UNIQID
