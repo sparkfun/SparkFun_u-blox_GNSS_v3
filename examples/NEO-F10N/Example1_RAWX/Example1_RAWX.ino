@@ -246,6 +246,8 @@ void setup()
 
   myGNSS.setMeasurementRate(5000); //Produce one solution every five seconds (RAWX produces a _lot_ of data!)
 
+  myGNSS.setVal8(UBLOX_CFG_SIGNAL_GPS_L5_ENA, 1); // Make sure the GPS L5 band is enabled (needed on the NEO-F9P)
+
   myGNSS.setGPSL5HealthOverride(true); // Mark L5 signals as healthy - store in RAM and BBR
 
   myGNSS.setLNAMode(SFE_UBLOX_LNA_MODE_NORMAL); // Set the LNA gain to normal (full). Other options: LOWGAIN, BYPASS
