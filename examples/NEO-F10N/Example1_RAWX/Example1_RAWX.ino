@@ -263,5 +263,5 @@ void loop()
   myGNSS.checkCallbacks(); // Check if any callbacks are waiting to be processed.
 
   Serial.print(".");
-  delay(50);
+  delay(200);
 }
