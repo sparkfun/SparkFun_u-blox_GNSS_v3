@@ -260,7 +260,7 @@ void setup()
     Serial.println(myGNSS.getFirmwareVersionLow()); // Returns uint8_t
     
     Serial.print(F("Firmware: "));
-    Serial.println(myGNSS.getFirmwareType()); // Returns HPG, SPG etc. as (const char *)
+    Serial.println(myGNSS.getFirmwareType()); // Returns HPG, SPG, SPGL1L5 etc. as (const char *)
 
     Serial.print(F("PROTVER: "));
     Serial.print(myGNSS.getProtocolVersionHigh()); // Returns uint8_t
@@ -272,11 +272,6 @@ void setup()
   }
   else
     Serial.println(F("Error: could not read module info!"));
-
-  // Use the helper method to read the unique chip ID as a string
-  // Returns "000000000000" if the read fails
-  Serial.print(F("Unique chip ID: 0x"));
-  Serial.println(myGNSS.getUniqueChipIdStr());
 
   myGNSS.setUART1Output(COM_TYPE_UBX); //Set the UART1 port to output UBX only (turn off NMEA noise)
   myGNSS.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the communications port settings to flash and BBR
