@@ -253,7 +253,7 @@ struct sfe_ublox_ubx_logging_list_t
 
 #ifndef MAX_PAYLOAD_SIZE
 // v2.0: keep this for backwards-compatibility, but this is largely superseded by setPacketCfgPayloadSize
-#define MAX_PAYLOAD_SIZE 246 // We need ~220 bytes for getProtocolVersion on most ublox modules
+#define MAX_PAYLOAD_SIZE 276 // We need >=250 bytes for getProtocolVersion on the NEO-F10N
 // #define MAX_PAYLOAD_SIZE 768 //Worst case: UBX_CFG_VALSET packet with 64 keyIDs each with 64 bit values
 #endif
 
@@ -303,7 +303,7 @@ typedef struct
 } geofenceParams_t;
 
 // Struct to hold the module software version
-#define firmwareTypeLen 3 // HPG, SPG, etc.
+#define firmwareTypeLen 7 // HPG, SPG, SPGL1L5, etc.
 #define moduleNameMaxLen 13 // Allow for: 4-chars minus 4-chars minus 3-chars
 typedef struct
 {

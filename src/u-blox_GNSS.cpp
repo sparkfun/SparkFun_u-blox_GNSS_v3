@@ -8140,7 +8140,7 @@ bool DevUBLOXGNSS::getModuleInfo(uint16_t maxWait)
     {
       ptr += strlen("FWVER="); // Point to the firmware type (HPG etc.)
       int i = 0;
-      while ((i < firmwareTypeLen) && (*ptr != '\0') && (*ptr != ' ')) // Extract the firmware type (3 chars)
+      while ((i < firmwareTypeLen) && (*ptr != '\0') && (*ptr != ' ')) // Extract the firmware type (3-7 chars)
         moduleSWVersion->firmwareType[i++] = *ptr++;
       moduleSWVersion->firmwareType[i] = '\0'; // NULL-terminate
 
