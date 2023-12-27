@@ -1,38 +1,27 @@
 /*
-  Configuring the NEO-F10N GNSS to send RXM RAWX reports over Serial and display them using a callback
+  Configuring the NEO-F9P GNSS to send RXM RAWX reports over I2C and display them using a callback
   By: Paul Clark
   SparkFun Electronics
   Date: November 24th, 2023
   License: MIT. See license file for more information.
 
-  This example shows how to configure the u-blox NEO-F10N GNSS to send RXM RAWX reports automatically
+  This example shows how to configure the u-blox NEO-F9P GNSS to send RXM RAWX reports automatically
   and access the data via a callback. It also demonstrates how to mark the L5 signals as healthy.
-
-  Note: the NEO-F10N only supports UART1. It does not support I2C, SPI or built-in USB.
-  To run this example on the SparkFun NEO-F10N breakout, you need to open the USB-TX and USB-RX jumpers
-  to isolate the on-board CH340 USB interface chip. See Hardware Connections below.
-
-  Note: the engineering sample of the NEO-F10N-00B supports RXM-RAWX. Production firmware may not.
 
   Feel like supporting open source hardware?
   Buy a board from SparkFun!
-  NEO-F10N: https://www.sparkfun.com/products/24114
+  NEO-F9P: https://www.sparkfun.com/products/23288
 
   Hardware Connections:
-  Open the USB-TX and USB-RX jumpers to isolate the on-board CH340 USB interface chip.
-  Solder header pins (9-way) to the board so you can access the UART1 TX and RX connections.
-  Use jumper wires to connect:
-  * TX to Serial1 RX on your Arduino board.
-  * RX to Serial1 TX on your Arduino board.
-  * GND to GND
-  * 5V to 5V (or 3V3 to 3V3)
+  Plug a Qwiic cable into the GPS and a BlackBoard
+  If you don't have a platform with a Qwiic connection use the SparkFun Qwiic Breadboard Jumper (https://www.sparkfun.com/products/14425)
   Open the serial monitor at 115200 baud to see the output
 */
 
 #include <Wire.h> //Needed for I2C to GPS
 
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
-SFE_UBLOX_GNSS_SERIAL myGNSS;
+SFE_UBLOX_GNSS myGNSS;
 
 // Callback: newRAWX will be called when new RXM RAWX data arrives
 // See u-blox_structs.h for the full definition of UBX_RXMRAWX_data_t
@@ -242,43 +231,17 @@ void setup()
   while (!Serial); //Wait for user to open terminal
   Serial.println("SparkFun u-blox Example");
 
-  Serial1.begin(38400); // The NEO-F10N defaults to 38400 baud
+  Wire.begin();
 
   //myGNSS.enableDebugging(); // Uncomment this line to enable helpful debug messages on Serial
 
-  while (myGNSS.begin(Serial1) == false) //Connect to the u-blox module using Serial1 (UART)
+  if (myGNSS.begin() == false) //Connect to the u-blox module using Wire port
   {
-    Serial.println(F("u-blox GNSS not detected. Please check wiring. Retrying..."));
-    delay(1000);
+    Serial.println(F("u-blox GNSS not detected at default I2C address. Please check wiring. Freezing."));
+    while (1);
   }
 
-  if (myGNSS.getModuleInfo())
-  {
-    Serial.print(F("FWVER: "));
-    Serial.print(myGNSS.getFirmwareVersionHigh()); // Returns uint8_t
-    Serial.print(F("."));
-    Serial.println(myGNSS.getFirmwareVersionLow()); // Returns uint8_t
-    
-    Serial.print(F("Firmware: "));
-    Serial.println(myGNSS.getFirmwareType()); // Returns HPG, SPG etc. as (const char *)
-
-    Serial.print(F("PROTVER: "));
-    Serial.print(myGNSS.getProtocolVersionHigh()); // Returns uint8_t
-    Serial.print(F("."));
-    Serial.println(myGNSS.getProtocolVersionLow()); // Returns uint8_t
-    
-    Serial.print(F("MOD: "));
-    Serial.println(myGNSS.getModuleName()); // Returns ZED-F9P, MAX-M10S etc. as (const char *)
-  }
-  else
-    Serial.println(F("Error: could not read module info!"));
-
-  // Use the helper method to read the unique chip ID as a string
-  // Returns "000000000000" if the read fails
-  Serial.print(F("Unique chip ID: 0x"));
-  Serial.println(myGNSS.getUniqueChipIdStr());
-
-  myGNSS.setUART1Output(COM_TYPE_UBX); //Set the UART1 port to output UBX only (turn off NMEA noise)
+  myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
   myGNSS.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the communications port settings to flash and BBR
 
   myGNSS.setMeasurementRate(5000); //Produce one solution every five seconds (RAWX produces a _lot_ of data!)
@@ -286,8 +249,6 @@ void setup()
   myGNSS.setVal8(UBLOX_CFG_SIGNAL_GPS_L5_ENA, 1); // Make sure the GPS L5 band is enabled (needed on the NEO-F9P)
 
   myGNSS.setGPSL5HealthOverride(true); // Mark L5 signals as healthy - store in RAM and BBR
-
-  myGNSS.setLNAMode(SFE_UBLOX_LNA_MODE_NORMAL); // Set the LNA gain to normal (full). Other options: LOWGAIN, BYPASS
 
   myGNSS.softwareResetGNSSOnly(); // Restart the GNSS to apply the L5 health override
 
@@ -299,15 +260,6 @@ void loop()
   myGNSS.checkUblox(); // Check for the arrival of new data and process it.
   myGNSS.checkCallbacks(); // Check if any callbacks are waiting to be processed.
 
-  printDot();
-}
-
-void printDot() // Print a dot every 200ms - without using delay
-{
-  static unsigned long lastPrint = millis();
-  if (millis() > (lastPrint + 200))
-  {
-    Serial.print(".");
-    lastPrint = millis();
-  }
+  Serial.print(".");
+  delay(200);
 }
