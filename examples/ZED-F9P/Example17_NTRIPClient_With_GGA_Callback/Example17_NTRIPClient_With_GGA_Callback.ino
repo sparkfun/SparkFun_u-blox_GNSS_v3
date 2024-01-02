@@ -115,7 +115,7 @@ void printPVTdata(UBX_NAV_PVT_data_t *ubxDataStruct)
     Serial.print(F(" (2D)"));
   else if (fixType == 3)
     Serial.print(F(" (3D)"));
-  else if (fixType == 3)
+  else if (fixType == 4)
     Serial.print(F(" (GNSS + Dead Reckoning)"));
   else if (fixType == 5)
     Serial.print(F(" (Time Only)"));
