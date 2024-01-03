@@ -253,7 +253,7 @@ struct sfe_ublox_ubx_logging_list_t
 
 #ifndef MAX_PAYLOAD_SIZE
 // v2.0: keep this for backwards-compatibility, but this is largely superseded by setPacketCfgPayloadSize
-#define MAX_PAYLOAD_SIZE 246 // We need ~220 bytes for getProtocolVersion on most ublox modules
+#define MAX_PAYLOAD_SIZE 276 // We need >=250 bytes for getProtocolVersion on the NEO-F10N
 // #define MAX_PAYLOAD_SIZE 768 //Worst case: UBX_CFG_VALSET packet with 64 keyIDs each with 64 bit values
 #endif
 
@@ -303,7 +303,7 @@ typedef struct
 } geofenceParams_t;
 
 // Struct to hold the module software version
-#define firmwareTypeLen 3 // HPG, SPG, etc.
+#define firmwareTypeLen 7 // HPG, SPG, SPGL1L5, etc.
 #define moduleNameMaxLen 13 // Allow for: 4-chars minus 4-chars minus 3-chars
 typedef struct
 {
@@ -341,6 +341,19 @@ const uint32_t SFE_UBLOX_SECS_PER_WEEK = 60 * 60 * 24 * 7; // Seconds per week
 
 // SPARTN CRC calculation
 // Stolen from https://github.com/u-blox/ubxlib/blob/master/common/spartn/src/u_spartn_crc.c
+
+typedef struct
+{
+  uint8_t messageType;
+  uint16_t payloadLength;
+  uint16_t EAF;
+  uint8_t crcType;
+  uint8_t frameCRC;
+  uint8_t messageSubtype;
+  uint16_t timeTagType;
+  uint16_t authenticationIndicator;
+  uint16_t embeddedApplicationLengthBytes;
+} sfe_ublox_spartn_header_t;
 
 const uint8_t sfe_ublox_u8Crc4Table[] = {
     0x00U, 0x0BU, 0x05U, 0x0EU, 0x0AU, 0x01U, 0x0FU, 0x04U,
