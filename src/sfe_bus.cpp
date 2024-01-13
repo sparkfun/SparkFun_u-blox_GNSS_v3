@@ -464,7 +464,10 @@ namespace SparkFun_UBLOX_GNSS
 
     if (length == 0)
       return 0;
-
+#ifdef PARTICLE
+    return _serialPort->readBytes((char *)data, length);
+#else
     return _serialPort->readBytes(data, length);
+#endif
   }
 }
