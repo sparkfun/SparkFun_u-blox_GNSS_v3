@@ -898,6 +898,15 @@ public:
   bool assumeAutoNAVSAT(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and NAVSAT is send cyclically already
   void flushNAVSAT();                                                                                                                                              // Mark all the NAVSAT data as read/stale
   void logNAVSAT(bool enabled = true);                                                                                                                             // Log data to file buffer
+
+  bool getNAVSIG(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // Query module for latest AssistNow Autonomous status and load global vars:. If autoNAVSIG is disabled, performs an explicit poll and waits, if enabled does not block. Returns true if new NAVSIG is available.
+  bool setAutoNAVSIG(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic NAVSIG reports at the navigation frequency
+  bool setAutoNAVSIG(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic NAVSIG reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
+  bool setAutoNAVSIGrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic NAVSIG reports
+  bool setAutoNAVSIGcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_SIG_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic NAVSIG reports at the navigation frequency. Data is accessed from the callback.
+  bool assumeAutoNAVSIG(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and NAVSIG is send cyclically already
+  void flushNAVSIG();                                                                                                                                              // Mark all the NAVSIG data as read/stale
+  void logNAVSIG(bool enabled = true);                                                                                                                             // Log data to file buffer
 #endif
 
   bool getRELPOSNED(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                           // Get Relative Positioning Information of the NED frame
@@ -1364,6 +1373,7 @@ public:
 
 #ifndef SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
   UBX_NAV_SAT_t *packetUBXNAVSAT = nullptr;                      // Pointer to struct. RAM will be allocated for this if/when necessary
+  UBX_NAV_SIG_t *packetUBXNAVSIG = nullptr;                      // Pointer to struct. RAM will be allocated for this if/when necessary
   UBX_RXM_PMP_t *packetUBXRXMPMP = nullptr;                      // Pointer to struct. RAM will be allocated for this if/when necessary
   UBX_RXM_PMP_message_t *packetUBXRXMPMPmessage = nullptr;       // Pointer to struct. RAM will be allocated for this if/when necessary
   UBX_RXM_QZSSL6_message_t *packetUBXRXMQZSSL6message = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
@@ -1479,6 +1489,7 @@ protected:
   bool initPacketUBXNAVAOPSTATUS();     // Allocate RAM for packetUBXNAVAOPSTATUS and initialize it
   bool initPacketUBXNAVEOE();           // Allocate RAM for packetUBXNAVEOE and initialize it
   bool initPacketUBXNAVSAT();           // Allocate RAM for packetUBXNAVSAT and initialize it
+  bool initPacketUBXNAVSIG();           // Allocate RAM for packetUBXNAVSIG and initialize it
   bool initPacketUBXRXMPMP();           // Allocate RAM for packetUBXRXMPMP and initialize it
   bool initPacketUBXRXMPMPmessage();    // Allocate RAM for packetUBXRXMPMPRaw and initialize it
   bool initPacketUBXRXMQZSSL6message(); // Allocate RAM for packetUBXRXMQZSSL6raw and initialize it

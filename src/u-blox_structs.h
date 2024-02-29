@@ -1190,6 +1190,84 @@ typedef struct
   UBX_NAV_SAT_data_t *callbackData;
 } UBX_NAV_SAT_t;
 
+// UBX-NAV-SIG (0x01 0x43): Signal information
+// Note: length is variable
+const uint8_t UBX_NAV_SIG_MAX_BLOCKS = 92;
+const uint16_t UBX_NAV_SIG_MAX_LEN = 8 + (16 * UBX_NAV_SIG_MAX_BLOCKS);
+
+typedef struct
+{
+  uint32_t iTOW;   // GPS time of week
+  uint8_t version; // Message version (0x00 for this version)
+  uint8_t numSigs; // Number of signals
+  uint8_t reserved0[2];
+} UBX_NAV_SIG_header_t;
+
+typedef struct
+{
+  uint8_t gnssId;     // GNSS identifier
+  uint8_t svId;       // Satellite identifier
+  uint8_t sigId;      // New signal identifier
+  uint8_t freqId;     // GLONASS frequency slot
+  int16_t prRes;      // Pseudorange residual: m * 0.1
+  uint8_t cno;        // Carrier-to-noise density ratio: dB-Hz
+  uint8_t qualityInd; // Signal quality indicator:
+                      // 0 = no signal
+                      // 1 = searching signal
+                      // 2 = signal acquired
+                      // 3 = signal detected but unusable
+                      // 4 = code locked and time synchronized
+                      // 5, 6, 7 = code and carrier locked and timesynchronized
+  uint8_t corrSource; // Correction source:
+                      // 0 = no corrections
+                      // 1 = SBAS corrections
+                      // 2 = BeiDou corrections
+                      // 3 = RTCM2 corrections
+                      // 4 = RTCM3 OSR corrections
+                      // 5 = RTCM3 SSR corrections
+                      // 6 = QZSS SLAS corrections
+                      // 7 = SPARTN corrections
+                      // 8 = CLAS corrections
+  uint8_t ionoModel;  // Ionospheric model used:
+                      // 0 = no model
+                      // 1 = Klobuchar model transmitted by GPS
+                      // 2 = SBAS model
+                      // 3 = Klobuchar model transmitted by BeiDou
+                      // 8 = Iono delay derived from dual frequency observations
+  union
+  {
+    uint16_t all;
+    struct
+    {
+      uint16_t health : 1;     // Signal health flag: 0 = unknown; 1 = healthy; 2 = unhealthy
+      uint16_t prSmoothed : 1; // 1 = Pseudorange has been smoothed
+      uint16_t prUsed : 1;     // 1 = Pseudorange has been used for this signal
+      uint16_t crUsed : 1;     // 1 = Carrier range has been used for this signal
+      uint16_t doUsed : 1;     // 1 = Range rate (Doppler) has been used for this signal
+      uint16_t prCorrUsed : 1; // 1 = Pseudorange corrections have been used for this signal
+      uint16_t crCorrUsed : 1; // 1 = Carrier range corrections have been used for this signal
+      uint16_t doCorrUsed : 1; // 1 = Range rate (Doppler) corrections have been usedfor this signal
+      uint16_t authStatus : 1; // Authentication status of the navigation data: 0 = Unknown; 1 = Authenticated
+    } bits;
+  } sigFlags;
+  uint8_t reserved1[4];
+} UBX_NAV_SIG_block_t;
+
+typedef struct
+{
+  UBX_NAV_SIG_header_t header;
+  UBX_NAV_SIG_block_t blocks[UBX_NAV_SIG_MAX_BLOCKS];
+} UBX_NAV_SIG_data_t;
+
+typedef struct
+{
+  ubxAutomaticFlags automaticFlags;
+  UBX_NAV_SIG_data_t data;
+  bool moduleQueried;
+  void (*callbackPointerPtr)(UBX_NAV_SIG_data_t *);
+  UBX_NAV_SIG_data_t *callbackData;
+} UBX_NAV_SIG_t;
+
 // UBX-NAV-SVIN (0x01 0x3B): Survey-in data
 const uint16_t UBX_NAV_SVIN_LEN = 40;
 
