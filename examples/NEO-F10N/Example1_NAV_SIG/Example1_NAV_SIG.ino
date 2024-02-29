@@ -1,18 +1,16 @@
 /*
-  Configuring the NEO-F10N GNSS to send RXM RAWX reports over Serial and display them using a callback
+  Configuring the NEO-F10N GNSS to send NAV SIG reports over Serial and display them using a callback
   By: Paul Clark
   SparkFun Electronics
-  Date: November 24th, 2023
+  Date: February 29th, 2024
   License: MIT. See license file for more information.
 
-  This example shows how to configure the u-blox NEO-F10N GNSS to send RXM RAWX reports automatically
+  This example shows how to configure the u-blox NEO-F10N GNSS to send NAV SIG reports automatically
   and access the data via a callback. It also demonstrates how to mark the L5 signals as healthy.
 
   Note: the NEO-F10N only supports UART1. It does not support I2C, SPI or built-in USB.
   To run this example on the SparkFun NEO-F10N breakout, you need to open the USB-TX and USB-RX jumpers
   to isolate the on-board CH340 USB interface chip. See Hardware Connections below.
-
-  Note: the engineering sample of the NEO-F10N-00B supports RXM-RAWX. Production firmware may not.
 
   Feel like supporting open source hardware?
   Buy a board from SparkFun!
@@ -32,22 +30,22 @@
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
 SFE_UBLOX_GNSS_SERIAL myGNSS;
 
-// Callback: newRAWX will be called when new RXM RAWX data arrives
-// See u-blox_structs.h for the full definition of UBX_RXMRAWX_data_t
-//         _____  You can use any name you like for the callback. Use the same name when you call setAutoRXMRAWXcallback
-//        /             _____  This _must_ be UBX_RXM_RAWX_data_t
+// Callback: newSIG will be called when new NAV SIG data arrives
+// See u-blox_structs.h for the full definition of UBX_NAV_SIG_data_t
+//         _____  You can use any name you like for the callback. Use the same name when you call setAutoNAVSIGcallback
+//        /             _____  This _must_ be UBX_NAV_SIG_data_t
 //        |            /                _____ You can use any name you like for the struct
 //        |            |               /
 //        |            |               |
-void newRAWX(UBX_RXM_RAWX_data_t *ubxDataStruct)
+void newSIG(UBX_NAV_SIG_data_t *ubxDataStruct)
 {
   Serial.println();
 
-  Serial.print(F("New RAWX data received. It contains "));
-  Serial.print(ubxDataStruct->header.numMeas); // Print numMeas (Number of measurements / blocks)
+  Serial.print(F("New NAV SIG data received. It contains "));
+  Serial.print(ubxDataStruct->header.numSigs); // Print numSigs (Number of signals / blocks)
   Serial.println(F(" data blocks:"));
 
-  for (uint8_t block = 0; block < ubxDataStruct->header.numMeas; block++) // For each block
+  for (uint8_t block = 0; block < ubxDataStruct->header.numSigs; block++) // For each block
   {
     char SV[14 + 4 + 4 + 256 + 1]; // Allocate space for sigId plus svId plus cno plus bars plus NULL
     switch (ubxDataStruct->blocks[block].gnssId)
@@ -274,7 +272,7 @@ void setup()
   myGNSS.setUART1Output(COM_TYPE_UBX); //Set the UART1 port to output UBX only (turn off NMEA noise)
   myGNSS.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the communications port settings to flash and BBR
 
-  myGNSS.setMeasurementRate(5000); //Produce one solution every five seconds (RAWX produces a _lot_ of data!)
+  myGNSS.setMeasurementRate(5000); //Produce one solution every five seconds (NAV SIG produces a _lot_ of data!)
 
   myGNSS.setVal8(UBLOX_CFG_SIGNAL_GPS_L5_ENA, 1); // Make sure the GPS L5 band is enabled (needed on the NEO-F9P)
 
@@ -284,7 +282,7 @@ void setup()
 
   myGNSS.softwareResetGNSSOnly(); // Restart the GNSS to apply the L5 health override
 
-  myGNSS.setAutoRXMRAWXcallbackPtr(&newRAWX); // Enable automatic RXM RAWX messages with callback to newRAWX
+  myGNSS.setAutoNAVSIGcallbackPtr(&newSIG); // Enable automatic NAV SIG messages with callback to newSIG
 }
 
 void loop()
