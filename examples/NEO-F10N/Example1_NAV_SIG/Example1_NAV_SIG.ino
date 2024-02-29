@@ -30,6 +30,9 @@
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
 SFE_UBLOX_GNSS_SERIAL myGNSS;
 
+#define Serial1 Serial2  //Use Serial2 on ESP32-WROOM (RX2 = 16, TX2 = 17), this is easier to access with the IoT RedBoard - ESP32
+                         //Comment out the define if using a different microcontroller
+
 // Callback: newSIG will be called when new NAV SIG data arrives
 // See u-blox_structs.h for the full definition of UBX_NAV_SIG_data_t
 //         _____  You can use any name you like for the callback. Use the same name when you call setAutoNAVSIGcallback
@@ -238,7 +241,8 @@ void setup()
   while (!Serial); //Wait for user to open terminal
   Serial.println("SparkFun u-blox Example");
 
-  Serial1.begin(38400); // The NEO-F10N defaults to 38400 baud
+  //Serial1.begin(38400); // The NEO-F10N defaults to 38400 baud
+  Serial1.begin(38400, SERIAL_8N1, 16, 17); //Setup Serial port for ESP32-WROOM (RX2 = 16, TX2 = 17), make sure to Serial1 is defined as Serial2
 
   //myGNSS.enableDebugging(); // Uncomment this line to enable helpful debug messages on Serial
 
