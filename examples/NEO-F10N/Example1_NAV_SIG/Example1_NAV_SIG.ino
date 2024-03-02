@@ -8,7 +8,7 @@
   This example shows how to configure the u-blox NEO-F10N GNSS to send NAV SIG reports automatically
   and access the data via a callback. It also demonstrates how to mark the L5 signals as healthy.
 
-  Note: the NEO-F10N only supports UART1. It does not support I2C, SPI or built-in USB.
+  Note: The NEO-F10N only supports UART1. It does not support I2C, SPI or built-in USB.
   To run this example on the SparkFun NEO-F10N breakout, you need to open the USB-TX and USB-RX jumpers
   to isolate the on-board CH340 USB interface chip. See Hardware Connections below.
 
@@ -30,8 +30,7 @@
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
 SFE_UBLOX_GNSS_SERIAL myGNSS;
 
-#define Serial1 Serial2  //Use Serial2 on ESP32-WROOM (RX2 = 16, TX2 = 17), this is easier to access with the IoT RedBoard - ESP32
-                         //Comment out the define if using a different microcontroller
+#define mySerial Serial2 // Change this to (e.g.) Serial1 if needed
 
 // Callback: newSIG will be called when new NAV SIG data arrives
 // See u-blox_structs.h for the full definition of UBX_NAV_SIG_data_t
@@ -240,13 +239,12 @@ void setup()
   Serial.begin(115200);
   while (!Serial); //Wait for user to open terminal
   Serial.println("SparkFun u-blox Example");
-
-  //Serial1.begin(38400); // The NEO-F10N defaults to 38400 baud
-  Serial1.begin(38400, SERIAL_8N1, 16, 17); //Setup Serial port for ESP32-WROOM (RX2 = 16, TX2 = 17), make sure to Serial1 is defined as Serial2
+  
+  mySerial.begin(38400); // The NEO-F10N defaults to 38400 baud
 
   //myGNSS.enableDebugging(); // Uncomment this line to enable helpful debug messages on Serial
 
-  while (myGNSS.begin(Serial1) == false) //Connect to the u-blox module using Serial1 (UART)
+  while (myGNSS.begin(mySerial) == false) //Connect to the u-blox module using mySerial (UART)
   {
     Serial.println(F("u-blox GNSS not detected. Please check wiring. Retrying..."));
     delay(1000);
