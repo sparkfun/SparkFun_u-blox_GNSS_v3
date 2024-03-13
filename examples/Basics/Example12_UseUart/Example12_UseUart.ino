@@ -23,8 +23,8 @@
   SparkFun ZED-F9R Breakout (GPS-16344)      https://www.sparkfun.com/products/16344
 
   Hardware Connections:
-  Connect the U-Blox serial TX pin to Serial1 RX on your Arduino board.
-  Connect the U-Blox serial RX pin to Serial1 TX on your Arduino board.
+  Connect the U-Blox serial TX pin to Serial RX on your Arduino board.
+  Connect the U-Blox serial RX pin to Serial TX on your Arduino board.
   Open the serial monitor at 115200 baud to see the output
 */
 
