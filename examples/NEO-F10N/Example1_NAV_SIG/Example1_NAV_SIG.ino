@@ -20,8 +20,8 @@
   Open the USB-TX and USB-RX jumpers to isolate the on-board CH340 USB interface chip.
   Solder header pins (9-way) to the board so you can access the UART1 TX and RX connections.
   Use jumper wires to connect:
-  * TX to Serial1 RX on your Arduino board.
-  * RX to Serial1 TX on your Arduino board.
+  * TX to Serial RX on your Arduino board.
+  * RX to Serial TX on your Arduino board.
   * GND to GND
   * 5V to 5V (or 3V3 to 3V3)
   Open the serial monitor at 115200 baud to see the output
