@@ -23,16 +23,15 @@
   SparkFun ZED-F9R Breakout (GPS-16344)      https://www.sparkfun.com/products/16344
 
   Hardware Connections:
-  Connect the U-Blox serial TX pin to Uno pin 10
-  Connect the U-Blox serial RX pin to Uno pin 11
+  Connect the U-Blox serial TX pin to Serial1 RX on your Arduino board.
+  Connect the U-Blox serial RX pin to Serial1 TX on your Arduino board.
   Open the serial monitor at 115200 baud to see the output
 */
 
 #include <SparkFun_u-blox_GNSS_v3.h> //http://librarymanager/All#SparkFun_u-blox_GNSS_v3
 SFE_UBLOX_GNSS_SERIAL myGNSS;
 
-#include <SoftwareSerial.h>
-SoftwareSerial mySerial(10, 11); // RX, TX. Pin 10 on Uno goes to TX pin on GNSS module.
+#define mySerial Serial2 // Change this to (e.g.) Serial1 if needed
 
 long lastTime = 0; //Simple local timer. Limits amount of I2C traffic to u-blox module.
 
@@ -64,7 +63,7 @@ void setup()
   Serial.println("GNSS serial connected");
 
   myGNSS.setUART1Output(COM_TYPE_UBX); //Set the UART port to output UBX only
-  myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
+  //myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
   myGNSS.saveConfiguration(); //Save the current settings to flash and BBR
 }
 
