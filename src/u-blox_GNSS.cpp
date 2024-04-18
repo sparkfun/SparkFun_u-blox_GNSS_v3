@@ -8205,11 +8205,11 @@ bool DevUBLOXGNSS::getModuleInfo(uint16_t maxWait)
   uint8_t fwProtMod = 0; // Flags to show if we extracted the FWVER, PROTVER and MOD data
   for (uint8_t extensionNumber = 0; extensionNumber < ((packetCfg.len - 40) / 30); extensionNumber++)
   {
-    ptr = strstr((const char *)&payloadCfg[(30 * extensionNumber)], "FWVER="); // Check for FWVER (should be in extension 1)
+    // Check for FWVER (should be in extension 1)
+    ptr = strstr((const char *)&payloadCfg[(30 * extensionNumber)], "FWVER=");
     if (ptr != nullptr)
     {
-      // Point to the firmware type (HPG etc.)
-      ptr += strlen("FWVER=");
+      ptr += strlen("FWVER="); // Point to the firmware type (HPG etc.)
       int i = 0;
       while ((i < firmwareTypeLen) && (*ptr != '\0') && (*ptr != ' ')) // Extract the firmware type (3-7 chars)
         moduleSWVersion->firmwareType[i++] = *ptr++;
@@ -8229,8 +8229,8 @@ bool DevUBLOXGNSS::getModuleInfo(uint16_t maxWait)
       }
     }
     // Check for PROTVER (should be in extension 2)
-    if (ptr != nullptr)
     ptr = strstr((const char *)&payloadCfg[(30 * extensionNumber)], "PROTVER=");
+    if (ptr != nullptr)
     {
       ptr += strlen("PROTVER="); // Point to the protocol version
       int protHi = 0;
