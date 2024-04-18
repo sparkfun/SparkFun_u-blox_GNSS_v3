@@ -8205,7 +8205,8 @@ bool DevUBLOXGNSS::getModuleInfo(uint16_t maxWait)
   uint8_t fwProtMod = 0; // Flags to show if we extracted the FWVER, PROTVER and MOD data
   for (uint8_t extensionNumber = 0; extensionNumber < ((packetCfg.len - 40) / 30); extensionNumber++)
   {
-    ptr = strstr((const char *)&payloadCfg[(30 * extensionNumber)], "FWVER="); // Check for FWVER (should be in extension 1)
+    // Check for FWVER (should be in extension 1)
+    ptr = strstr((const char *)&payloadCfg[(30 * extensionNumber)], "FWVER=");
     if (ptr != nullptr)
     {
       ptr += strlen("FWVER="); // Point to the firmware type (HPG etc.)
@@ -8227,7 +8228,8 @@ bool DevUBLOXGNSS::getModuleInfo(uint16_t maxWait)
         fwProtMod |= 0x01; // Record that we got the FWVER
       }
     }
-    ptr = strstr((const char *)&payloadCfg[(30 * extensionNumber)], "PROTVER="); // Check for PROTVER (should be in extension 2)
+    // Check for PROTVER (should be in extension 2)
+    ptr = strstr((const char *)&payloadCfg[(30 * extensionNumber)], "PROTVER=");
     if (ptr != nullptr)
     {
       ptr += strlen("PROTVER="); // Point to the protocol version
@@ -8241,7 +8243,9 @@ bool DevUBLOXGNSS::getModuleInfo(uint16_t maxWait)
         fwProtMod |= 0x02; // Record that we got the PROTVER
       }
     }
-    ptr = strstr((const char *)&payloadCfg[(30 * extensionNumber)], "MOD="); // Check for MOD (should be in extension 3)
+    // Check for MOD (should be in extension 3)
+    // Note: see issue #55. It appears that the UBX-M10050-KB chip does not report MOD
+    ptr = strstr((const char *)&payloadCfg[(30 * extensionNumber)], "MOD=");
     if (ptr != nullptr)
     {
       ptr += strlen("MOD="); // Point to the module name
@@ -8251,6 +8255,12 @@ bool DevUBLOXGNSS::getModuleInfo(uint16_t maxWait)
       moduleSWVersion->moduleName[i] = '\0'; // NULL-terminate
       fwProtMod |= 0x04;                     // Record that we got the MOD
     }
+  }
+
+  if ((fwProtMod & 0x04) == 0) // Is MOD missing?
+  {
+    strncpy(moduleSWVersion->moduleName, "NONE", moduleNameMaxLen);
+    fwProtMod |= 0x04; // Record that we updated the MOD
   }
 
   if (fwProtMod == 0x07) // Did we extract all three?
