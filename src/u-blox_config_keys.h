@@ -132,6 +132,12 @@ const uint32_t UBLOX_CFG_BDS_USE_PRN_1_TO_5 = UBX_CFG_L | 0x10340014; // Use Bei
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_CLOCK_OSC_FREQ = UBX_CFG_U4 | 0x40a4000d; // Oscillator speed
 
+// CFG-GAL: Galileo system configuration
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+const uint32_t UBLOX_CFG_GAL_USE_OSNMA = UBX_CFG_L | 0x10350005;           // Enable using Galileo Open Service Navigation Message Authentication (OSNMA) protocol
+const uint32_t UBLOX_CFG_GAL_OSNMA_MINTAGLENGTH = UBX_CFG_U1 | 0x20350007; // Minimum equivalent tag length
+const uint32_t UBLOX_CFG_GAL_OSNMA_TIMESYNC = UBX_CFG_L | 0x10350009;      // Apply the time synchronization requirement
+
 // CFG-GEOFENCE: Geofencing configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_GEOFENCE_CONFLVL = UBX_CFG_E1 | 0x20240011;    // Required confidence level for state evaluation
@@ -588,6 +594,11 @@ const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMEQZSS_SPI = UBX_CFG_U1 | 0x2091038a; 
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMEQZSS_UART1 = UBX_CFG_U1 | 0x20910387;   // Output rate of the UBX-NAV-TIMEQZSSmessage on port UART1
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMEQZSS_UART2 = UBX_CFG_U1 | 0x20910388;   // Output rate of the UBX-NAV-TIMEQZSSmessage on port UART2
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMEQZSS_USB = UBX_CFG_U1 | 0x20910389;     // Output rate of the UBX-NAV-TIMEQZSSmessage on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMETRUSTED_I2C = UBX_CFG_U1 | 0x209103a8;  // Output rate of the UBX-NAV-TIMETRUSTED message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMETRUSTED_SPI = UBX_CFG_U1 | 0x209103ac;  // Output rate of the UBX-NAV-TIMETRUSTED message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMETRUSTED_UART1 = UBX_CFG_U1 | 0x209103a9; // Output rate of the UBX-NAV-TIMETRUSTED message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMETRUSTED_UART2 = UBX_CFG_U1 | 0x209103aa; // Output rate of the UBX-NAV-TIMETRUSTED message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMETRUSTED_USB = UBX_CFG_U1 | 0x209103ab;  // Output rate of the UBX-NAV-TIMETRUSTED message on port USB
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMEUTC_I2C = UBX_CFG_U1 | 0x2091005b;      // Output rate of the UBX-NAV-TIMEUTC message on port I2C
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMEUTC_SPI = UBX_CFG_U1 | 0x2091005f;      // Output rate of the UBX-NAV-TIMEUTC message on port SPI
 const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_TIMEUTC_UART1 = UBX_CFG_U1 | 0x2091005c;    // Output rate of the UBX-NAV-TIMEUTC message on port UART1
@@ -643,6 +654,11 @@ const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_SIG_SPI = UBX_CFG_U1 | 0x20910638;      
 const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_SIG_UART1 = UBX_CFG_U1 | 0x20910635;        // Output rate of the UBX-SEC-SIG message on port UART1
 const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_SIG_UART2 = UBX_CFG_U1 | 0x20910636;        // Output rate of the UBX-SEC-SIG message on port UART2
 const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_SIG_USB = UBX_CFG_U1 | 0x20910637;          // Output rate of the UBX-SEC-SIG message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_OSNMA_I2C = UBX_CFG_U1 | 0x209106ca;        // Output rate of the UBX-SEC-OSNMA message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_OSNMA_SPI = UBX_CFG_U1 | 0x209106ce;        // Output rate of the UBX-SEC-OSNMA message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_OSNMA_UART1 = UBX_CFG_U1 | 0x209106cb;      // Output rate of the UBX-SEC-OSNMA message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_OSNMA_UART2 = UBX_CFG_U1 | 0x209106cc;      // Output rate of the UBX-SEC-OSNMA message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_SEC_OSNMA_USB = UBX_CFG_U1 | 0x209106cd;        // Output rate of the UBX-SEC-OSNMA message on port USB
 const uint32_t UBLOX_CFG_MSGOUT_UBX_TIM_TM2_I2C = UBX_CFG_U1 | 0x20910178;          // Output rate of the UBX-TIM-TM2 message on port I2C
 const uint32_t UBLOX_CFG_MSGOUT_UBX_TIM_TM2_SPI = UBX_CFG_U1 | 0x2091017c;          // Output rate of the UBX-TIM-TM2 message on port SPI
 const uint32_t UBLOX_CFG_MSGOUT_UBX_TIM_TM2_UART1 = UBX_CFG_U1 | 0x20910179;        // Output rate of the UBX-TIM-TM2 message on port UART1
@@ -934,8 +950,9 @@ const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_USB = UBX_CFG_U1 | 0x2091033d;   
 
 // CFG-NAV2: Secondary output configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_NAV2_OUT_ENABLED = UBX_CFG_L | 0x10170001;        // Enable secondary (NAV2) output
-const uint32_t UBLOX_CFG_NAV2_SBAS_USE_INTEGRITY = UBX_CFG_L | 0x10170002; // Use SBAS integrity information in the secondary output
+const uint32_t UBLOX_CFG_NAV2_OUT_ENABLED = UBX_CFG_L | 0x10170001;          // Enable secondary (NAV2) output
+const uint32_t UBLOX_CFG_NAV2_SBAS_USE_INTEGRITY = UBX_CFG_L | 0x10170002;   // Use SBAS integrity information in the secondary output
+const uint32_t UBLOX_CFG_NAV2_NAVSPG_ONLY_AUTHDATA = UBX_CFG_L | 0x10170003; // Enable using only signals with authenticated navigation data
 
 // CFG-NAVHPG: High precision navigation configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1005,6 +1022,8 @@ const uint32_t UBLOX_CFG_NAVSPG_CONSTR_ALTVAR = UBX_CFG_U4 | 0x401100c2;  // Fix
 const uint32_t UBLOX_CFG_NAVSPG_CONSTR_DGNSSTO = UBX_CFG_U1 | 0x201100c4; // DGNSS timeout
 const uint32_t UBLOX_CFG_NAVSPG_SIGATTCOMP = UBX_CFG_E1 | 0x201100d6;     // Permanently attenuated signal compensation mode
 const uint32_t UBLOX_CFG_NAVSPG_PL_ENA = UBX_CFG_L | 0x101100d7;          // Enable Protection level. If enabled, protection level computing will be on.
+const uint32_t UBLOX_CFG_NAVSPG_ONLY_AUTHDATA = UBX_CFG_L | 0x101100dd;   // Enable using only signals with authenticated navigation data
+const uint32_t UBLOX_CFG_NAVSPG_MAX_TIMETRUSTED_ACC = UBX_CFG_U2 | 0x301100de; // Maximum trusted time accuracy
 
 // CFG-NMEA: NMEA protocol configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1128,6 +1147,7 @@ const uint32_t UBLOX_CFG_SBAS_PRNSCANMASK = UBX_CFG_X8 | 0x50360006;           /
 const uint32_t UBLOX_CFG_SEC_CFG_LOCK = UBX_CFG_L | 0x10f60009;              // Configuration lockdown
 const uint32_t UBLOX_CFG_SEC_CFG_LOCK_UNLOCKGRP1 = UBX_CFG_U2 | 0x30f6000a;  // Configuration lockdown exempted group 1
 const uint32_t UBLOX_CFG_SEC_CFG_LOCK_UNLOCKGRP2 = UBX_CFG_U2 | 0x30f6000b;  // Configuration lockdown exempted group 2
+const uint32_t UBLOX_CFG_SEC_SPOOFDET_SIM_SIG_DIS = UBX_CFG_L | 0x10f6005d;  // Disabling the simulated signal spoofing detection
 const uint32_t UBLOX_CFG_SEC_JAMDET_SENSITIVITY_HI = UBX_CFG_L | 0x10f60051; // go for a more sensitive jamming detection
 
 // CFG-SFCORE: Sensor fusion (SF) core configuration (ZED-F9R)

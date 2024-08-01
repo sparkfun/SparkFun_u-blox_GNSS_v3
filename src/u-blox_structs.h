@@ -428,11 +428,11 @@ typedef struct
   uint16_t pDOP;    // Position DOP * 0.01
   union
   {
-    uint8_t all;
+    uint16_t all;
     struct
     {
-      uint8_t invalidLlh : 1;        // 1 = Invalid lon, lat, height and hMSL
-      uint8_t lastCorrectionAge : 4; // Age of the most recently received differential correction:
+      uint16_t invalidLlh : 1;        // 1 = Invalid lon, lat, height and hMSL
+      uint16_t lastCorrectionAge : 4; // Age of the most recently received differential correction:
                                      // 0: Not available
                                      // 1: Age between 0 and 1 second
                                      // 2: Age between 1 (inclusive) and 2 seconds
@@ -446,9 +446,16 @@ typedef struct
                                      // 10: Age between 60 (inclusive) and 90 seconds
                                      // 11: Age between 90 (inclusive) and 120 seconds
                                      // >=12: Age greater or equal than 120 seconds
+      uint16_t reserved : 8;
+      uint16_t authTime : 1;     // Flag that indicates if the output time has been validated
+                                 // against an external trusted time source
+      uint16_t nmaFixStatus : 1; // Flag assigned to a fix that has been computed
+                                 // mixing satellites with data authenticated through
+                                 // Navigation Message Authentication (NMA) methods
+                                 // and satellites using unauthenticated data.
     } bits;
   } flags3;
-  uint8_t reserved1[5];
+  uint8_t reserved0[4];
   int32_t headVeh; // Heading of vehicle (2-D): deg * 1e-5
   int16_t magDec;  // Magnetic declination: deg * 1e-2
   uint16_t magAcc; // Magnetic declination accuracy: deg * 1e-2
@@ -513,6 +520,9 @@ typedef struct
       uint32_t pDOP : 1;
 
       uint32_t invalidLlh : 1;
+      uint32_t lastCorrectionAge : 1;
+      uint32_t authTime : 1;
+      uint32_t nmaFixStatus : 1;
 
       uint32_t headVeh : 1;
       uint32_t magDec : 1;
