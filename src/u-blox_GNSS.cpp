@@ -3474,7 +3474,7 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         packetUBXNAVPVT->data.sAcc = extractLong(msg, 68);
         packetUBXNAVPVT->data.headAcc = extractLong(msg, 72);
         packetUBXNAVPVT->data.pDOP = extractInt(msg, 76);
-        packetUBXNAVPVT->data.flags3.all = extractByte(msg, 78);
+        packetUBXNAVPVT->data.flags3.all = extractInt(msg, 78);
         packetUBXNAVPVT->data.headVeh = extractSignedLong(msg, 84);
         packetUBXNAVPVT->data.magDec = extractSignedInt(msg, 88);
         packetUBXNAVPVT->data.magAcc = extractInt(msg, 90);
