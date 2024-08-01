@@ -18477,9 +18477,9 @@ uint32_t DevUBLOXGNSS::getTIMTPAsEpoch(uint32_t &microsecond, uint16_t maxWait)
   uint32_t us = packetUBXTIMTP->data.towMS % 1000; // Extract the milliseconds
   us *= 1000;                                      // Convert to microseconds
 
-  double subMS = packetUBXTIMTP->data.towSubMS; // Get towSubMS (ms * 2^-32)
-  subMS *= pow(2.0, -32.0);                     // Convert to milliseconds
-  subMS *= 1000;                                // Convert to microseconds
+  double subMS = packetUBXTIMTP->data.towSubMS;         // Get towSubMS (ms * 2^-32)
+  subMS *= 2.3283064365386963e-10; // pow(2.0, -32.0);  // Convert to milliseconds
+  subMS *= 1000;                                        // Convert to microseconds
 
   us += (uint32_t)subMS; // Add subMS
 
