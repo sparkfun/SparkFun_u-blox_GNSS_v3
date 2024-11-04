@@ -143,6 +143,7 @@ void setup()
   Wire.begin();
 
   //myGNSS.enableDebugging(); // Uncomment this line to enable helpful debug messages on Serial
+  //myGNSS.enableDebugging(Serial, true); // Uncomment this line to enable only the major debug messages on Serial
 
   if (myGNSS.begin() == false) //Connect to the u-blox module using Wire port
   {

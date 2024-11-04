@@ -344,6 +344,8 @@ const uint8_t COM_PORT_UART2 = 2;
 const uint8_t COM_PORT_USB = 3;
 const uint8_t COM_PORT_SPI = 4;
 
+// Port IDs used by MON-COMMS
+// UBX-18010802 - R15 also documents 0x0101 and 0x0200 - both are "Reserved"
 const uint16_t COM_PORT_ID_I2C = 0x0000; // Port IDs used by MON-COMMS
 const uint16_t COM_PORT_ID_UART1 = 0x0100;
 const uint16_t COM_PORT_ID_UART2 = 0x0201;

@@ -1889,7 +1889,7 @@ typedef struct
 
 // UBX-MON-COMMS (0x0A 0x36): Communication port information
 // Note: length is variable
-const uint8_t UBX_MON_COMMS_MAX_PORTS = 5; // I2C, UART1, UART2, USB, SPI
+const uint16_t UBX_MON_COMMS_MAX_PORTS = 7; // I2C, UART1, UART2, USB, SPI, 0x0101, 0x0200
 const uint16_t UBX_MON_COMMS_MAX_LEN = 8 + (40 * UBX_MON_COMMS_MAX_PORTS);
 
 typedef struct
