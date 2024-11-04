@@ -159,7 +159,7 @@ void setup()
   Serial.println("Polling MON COMMS data:");
   UBX_MON_COMMS_data_t portInfo;
   if (myGNSS.getCommsPortInfo(&portInfo))
-    newMONCOMMS(&portInfo);
+    newMONCOMMS(&portInfo); // Call the callback manually to print the data
   else
     Serial.println("getCommsPortInfo failed!");
 
