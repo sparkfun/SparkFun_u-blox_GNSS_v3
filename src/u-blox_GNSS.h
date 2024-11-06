@@ -995,6 +995,17 @@ public:
   void flushTIMTP();                                                                                                                                             // Mark all the data as read/stale
   void logTIMTP(bool enabled = true);                                                                                                                            // Log data to file buffer
 
+  // Receiver status (MON)
+
+  bool getMONCOMMS(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                    // MON COMMS
+  bool setAutoMONCOMMS(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                               // Enable/disable automatic MON COMMS reports at the navigation frequency
+  bool setAutoMONCOMMS(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                          // Enable/disable automatic MON COMMS reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
+  bool setAutoMONCOMMSrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);               // Set the rate for automatic MON COMMS reports
+  bool setAutoMONCOMMScallbackPtr(void (*callbackPointerPtr)(UBX_MON_COMMS_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic MON COMMS reports at the navigation frequency. Data is accessed from the callback.
+  bool assumeAutoMONCOMMS(bool enabled, bool implicitUpdate = true);                                                                                                // In case no config access to the GPS is possible and MON COMMS is send cyclically already
+  void flushMONCOMMS();                                                                                                                                             // Mark all the data as read/stale
+  void logMONCOMMS(bool enabled = true);                                                                                                                            // Log data to file buffer
+
   bool getMONHW(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                    // MON HW
   bool setAutoMONHW(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                               // Enable/disable automatic MON HW reports at the navigation frequency
   bool setAutoMONHW(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                          // Enable/disable automatic MON HW reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
@@ -1240,6 +1251,10 @@ public:
   uint16_t getTIMTPweek(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Returns the UBX-TIM-TP time pulse week according to time base
   uint32_t getTIMTPAsEpoch(uint32_t &microsecond, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Convert TIM TP to Unix Epoch - CAUTION! Assumes the time base is UTC and the week number is GPS
 
+  // Helper function for MON COMMS
+
+  bool getCommsPortInfo(UBX_MON_COMMS_data_t *data, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Get the communication port information using UBX_MON_COMMS
+
   // Helper function for hardware status (including jamming)
   // For safety, call getAntennaStatus inside an if(getMONHW())
 
@@ -1386,7 +1401,8 @@ public:
   UBX_TIM_TM2_t *packetUBXTIMTM2 = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
   UBX_TIM_TP_t *packetUBXTIMTP = nullptr;   // Pointer to struct. RAM will be allocated for this if/when necessary
 
-  UBX_MON_HW_t *packetUBXMONHW = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
+  UBX_MON_COMMS_t *packetUBXMONCOMMS = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
+  UBX_MON_HW_t *packetUBXMONHW = nullptr;       // Pointer to struct. RAM will be allocated for this if/when necessary
 
 #ifndef SFE_UBLOX_DISABLE_ESF
   UBX_ESF_ALG_t *packetUBXESFALG = nullptr;       // Pointer to struct. RAM will be allocated for this if/when necessary
@@ -1499,6 +1515,7 @@ protected:
   bool initPacketUBXRXMMEASX();         // Allocate RAM for packetUBXRXMMEASX and initialize it
   bool initPacketUBXTIMTM2();           // Allocate RAM for packetUBXTIMTM2 and initialize it
   bool initPacketUBXTIMTP();            // Allocate RAM for packetUBXTIMTP and initialize it
+  bool initPacketUBXMONCOMMS();         // Allocate RAM for packetUBXMONCOMMS and initialize it
   bool initPacketUBXMONHW();            // Allocate RAM for packetUBXMONHW and initialize it
   bool initPacketUBXESFALG();           // Allocate RAM for packetUBXESFALG and initialize it
   bool initPacketUBXESFSTATUS();        // Allocate RAM for packetUBXESFSTATUS and initialize it

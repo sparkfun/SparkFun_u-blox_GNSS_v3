@@ -1887,6 +1887,63 @@ typedef struct
 
 // MON-specific structs
 
+// UBX-MON-COMMS (0x0A 0x36): Communication port information
+// Note: length is variable
+const uint16_t UBX_MON_COMMS_MAX_PORTS = 7; // I2C, UART1, UART2, USB, SPI, 0x0101, 0x0200
+const uint16_t UBX_MON_COMMS_MAX_LEN = 8 + (40 * UBX_MON_COMMS_MAX_PORTS);
+
+typedef struct
+{
+  uint8_t version; // Message version (0x00 for this version)
+  uint8_t nPorts;  //  Number of ports included
+  union
+  {
+    uint8_t all;
+    struct
+    {
+      uint8_t mem : 1;   // Memory Allocation error
+      uint8_t alloc : 1; // Allocation error (TX buffer full)
+    } bits;
+  } txErrors; // TX error bitmask
+  uint8_t reserved0;
+  uint8_t protIds[4]; // The identifiers of the protocols reported in the msgs array.
+                      // 0: UBX, 1: NMEA, 2: RTCM2, 5: RTCM3, 6: SPARTN, 0xFF: No protocol reported.
+
+} UBX_MON_COMMS_header_t;
+
+typedef struct
+{
+  uint16_t portId;      // Unique identifier for the port
+  uint16_t txPending;   // Number of bytes pending in transmitter buffer
+  uint32_t txBytes;     // Number of bytes ever sent
+  uint8_t txUsage;      // % Maximum usage transmitter buffer during the last sysmon period
+  uint8_t txPeakUsage;  // % Maximum usage transmitter buffer
+  uint16_t rxPending;   // Number of bytes in receiver buffer
+  uint32_t rxBytes;     // Number of bytes ever received
+  uint8_t rxUsage;      // % Maximum usage receiver buffer during the last sysmon period
+  uint8_t rxPeakUsage;  // % Maximum usage receiver buffer
+  uint16_t overrunErrs; // Number of 100 ms timeslots with overrun errors
+  uint16_t msgs[4];     // Number of successfully parsed messages for each protocol
+  uint8_t reserved1[8];
+  uint32_t skipped;     // Number of skipped bytes
+} UBX_MON_COMMS_port_t;
+
+typedef struct
+{
+  UBX_MON_COMMS_header_t header;
+  UBX_MON_COMMS_port_t port[UBX_MON_COMMS_MAX_PORTS];
+} UBX_MON_COMMS_data_t;
+
+typedef struct
+{
+  ubxAutomaticFlags automaticFlags;
+  UBX_MON_COMMS_data_t data;
+  bool moduleQueried;
+  void (*callbackPointerPtr)(UBX_MON_COMMS_data_t *);
+  UBX_MON_COMMS_data_t *callbackData;
+} UBX_MON_COMMS_t;
+
+
 // UBX-MON-HW (0x0A 0x09): Hardware status
 const uint16_t UBX_MON_HW_LEN = 60;
 

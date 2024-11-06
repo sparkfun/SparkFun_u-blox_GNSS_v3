@@ -50,11 +50,11 @@ uint8_t uartI2cRingBuffer[ringBufferSize];
 uint16_t uartI2cBufferHead = 0;
 uint16_t uartI2cBufferTail = 0;
 
-const unsigned long uartI2cSendInterval_ms = 50;
+const unsigned long uartI2cSendInterval_ms = 5;
 unsigned long uartI2cLastSend_ms = 0;
 const uint16_t uartI2cSendLimit = 16;
 
-const unsigned long i2cUartSendInterval_ms = 50;
+const unsigned long i2cUartSendInterval_ms = 5;
 unsigned long i2cUartLastSend_ms = 0;
 const uint16_t i2cUartSendLimit = 16;
 
@@ -66,12 +66,19 @@ const uint16_t i2cReadLimit = 16;
 void setup()
 {
 
-    delay(1000); // Wait for ESP32 to start up
+    delay(2000); // Wait for ESP32 and GNSS to start up
 
     mySerial.begin(115200); // Baud rate for u-center
 
     myWire.begin();          // Start I2C
     myWire.setClock(400000); // 400kHz
+
+    // Give I2C a kickstart - if needed. Request UBX-MON-VER
+    const uint8_t pollUbxMonVer[] = { 0xB5, 0x62, 0x0A, 0x04, 0x00, 0x00, 0x0E, 0x34 };
+    for (int i = 0; i < (sizeof(pollUbxMonVer) / sizeof(uint8_t)); i++) {
+        addToUartI2cBuffer(pollUbxMonVer[i]);
+    }
+
 } // /setup
 
 void loop()
@@ -147,6 +154,7 @@ void loop()
             i2cUartLastSend_ms = millis();
         }
     }
+
 } // /loop
 
 // Read how many bytes are available in the GNSS I2C buffer.
