@@ -44,93 +44,92 @@ void newMONCOMMS(UBX_MON_COMMS_data_t *ubxDataStruct)
   // Mimic the data shown in u-center
   for (uint8_t port = 0; port < ubxDataStruct->header.nPorts; port++) // For each port
   {
-    bool known = true;
-    switch (ubxDataStruct->port[port].portId) // Check the port ID is valid
+    // Check the port ID is valid (skip 0x0101 and 0x0200)
+    bool validPort = false;
+    switch (ubxDataStruct->port[port].portId)
     {
       case COM_PORT_ID_I2C:
       case COM_PORT_ID_UART1:
       case COM_PORT_ID_UART2:
       case COM_PORT_ID_USB:
       case COM_PORT_ID_SPI:
-      break;
-      default:
-        known = false;
+        validPort = true;
       break;      
-    }
-    if (!known)
-      break; // Skip if port ID is not known
-
-    switch (ubxDataStruct->port[port].portId) // Print the port ID
-    {
-      case COM_PORT_ID_I2C:
-        Serial.print(F("I2C     "));
-      break;
-      case COM_PORT_ID_UART1:
-        Serial.print(F("UART1   "));
-      break;
-      case COM_PORT_ID_UART2:
-        Serial.print(F("UART2   "));
-      break;
-      case COM_PORT_ID_USB:
-        Serial.print(F("USB     "));
-      break;
-      case COM_PORT_ID_SPI:
-        Serial.print(F("SPI     "));
-      break;
       default:
-        Serial.print(F("UNKNOWN "));
-        //Serial.printf("0x%04X  ", ubxDataStruct->port[port].portId);
+        //Serial.printf("Unknown / reserved portId 0x%04X\r\n", ubxDataStruct->port[port].portId);
       break;      
     }
 
-    Serial.print(": txBytes ");
-    String txBytes = String(ubxDataStruct->port[port].txBytes);
-    Serial.print(txBytes);
-    for (int i = 0; i < 10 - txBytes.length(); i++)
-      Serial.print(" ");
-    
-    Serial.print(" : rxBytes ");
-    String rxBytes = String(ubxDataStruct->port[port].rxBytes);
-    Serial.print(rxBytes);
-    for (int i = 0; i < 10 - rxBytes.length(); i++)
-      Serial.print(" ");
-
-    for (int i = 0; i < 4; i++)
+    if (validPort)
     {
-      if (ubxDataStruct->header.protIds[i] < 0xFF)
+      switch (ubxDataStruct->port[port].portId) // Print the port ID
       {
-        switch (ubxDataStruct->header.protIds[i])
-        {
-          case 0:
-            Serial.print(F(" : UBX     "));
-          break;
-          case 1:
-            Serial.print(F(" : NMEA    "));
-          break;
-          case 2:
-            Serial.print(F(" : RTCM2   "));
-          break;
-          case 5:
-            Serial.print(F(" : RTCM3   "));
-          break;
-          case 6:
-            Serial.print(F(" : SPARTN  "));
-          break;
-          default:
-            Serial.print(F(" : UNKNOWN "));
-          break;
-        }
-        String msgs = String(ubxDataStruct->port[port].msgs[i]);
-        Serial.print(msgs);
-        for (int i = 0; i < 5 - msgs.length(); i++)
-          Serial.print(" ");
+        case COM_PORT_ID_I2C:
+          Serial.print(F("I2C     "));
+        break;
+        case COM_PORT_ID_UART1:
+          Serial.print(F("UART1   "));
+        break;
+        case COM_PORT_ID_UART2:
+          Serial.print(F("UART2   "));
+        break;
+        case COM_PORT_ID_USB:
+          Serial.print(F("USB     "));
+        break;
+        case COM_PORT_ID_SPI:
+          Serial.print(F("SPI     "));
+        break;
       }
+
+      Serial.print(": txBytes ");
+      String txBytes = String(ubxDataStruct->port[port].txBytes);
+      Serial.print(txBytes);
+      for (int i = 0; i < 10 - txBytes.length(); i++)
+        Serial.print(" ");
+      
+      Serial.print(" : rxBytes ");
+      String rxBytes = String(ubxDataStruct->port[port].rxBytes);
+      Serial.print(rxBytes);
+      for (int i = 0; i < 10 - rxBytes.length(); i++)
+        Serial.print(" ");
+
+      for (int i = 0; i < 4; i++)
+      {
+        if (ubxDataStruct->header.protIds[i] < 0xFF)
+        {
+          switch (ubxDataStruct->header.protIds[i])
+          {
+            case 0:
+              Serial.print(F(" : UBX     "));
+            break;
+            case 1:
+              Serial.print(F(" : NMEA    "));
+            break;
+            case 2:
+              Serial.print(F(" : RTCM2   "));
+            break;
+            case 5:
+              Serial.print(F(" : RTCM3   "));
+            break;
+            case 6:
+              Serial.print(F(" : SPARTN  "));
+            break;
+            default:
+              Serial.print(F(" : UNKNOWN "));
+            break;
+          }
+          String msgs = String(ubxDataStruct->port[port].msgs[i]);
+          Serial.print(msgs);
+          for (int i = 0; i < 5 - msgs.length(); i++)
+            Serial.print(" ");
+        }
+      }
+      
+      Serial.print(" : skipped ");
+      Serial.print(ubxDataStruct->port[port].skipped);
+      
+      Serial.println();
     }
-    
-    Serial.print(" : skipped ");
-    Serial.print(ubxDataStruct->port[port].skipped);
-    
-    Serial.println();
   }
 }
 
