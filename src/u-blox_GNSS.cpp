@@ -1592,6 +1592,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
   // by other threads without overwriting the requested / expected Class and ID.
   volatile static uint8_t storedClass = 0;
   volatile static uint8_t storedID = 0;
+  static size_t payloadAutoBytes;
   if (requestedClass || requestedID) // If either is non-zero, store the requested Class and ID
   {
     storedClass = requestedClass;
@@ -1695,21 +1696,28 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
             }
 #endif
           }
-          if (payloadAuto != nullptr) // Check if memory is already allocated - this should be impossible!
-          {
-#ifndef SFE_UBLOX_REDUCED_PROG_MEM
-            if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
-            {
-              _debugSerial.println(F("process: memory is already allocated for payloadAuto! Deleting..."));
-            }
-#endif
-            delete[] payloadAuto; // Created with new[]
-            payloadAuto = nullptr;
-            packetAuto.payload = payloadAuto;
-          }
+
+          // Determine the payload length
           if ((!logBecauseAuto) && (logBecauseEnabled))
             maxPayload = SFE_UBX_MAX_LENGTH;
-          payloadAuto = new uint8_t[maxPayload]; // Allocate RAM for payloadAuto
+
+          // Increase the payloadAuto buffer size if necessary, by removing
+          // the previous buffer
+          if (payloadAuto && (payloadAutoBytes < maxPayload))
+          {
+            delete[] payloadAuto; // Created with new[] below
+            payloadAuto = nullptr;
+            payloadAutoBytes = 0;
+          }
+
+          // Allocate the payloadAuto buffer if necessary
+          if (payloadAuto == nullptr)
+          {
+            payloadAuto = new uint8_t[maxPayload];
+            if (payloadAuto)
+              payloadAutoBytes = maxPayload;
+          }
+
           packetAuto.payload = payloadAuto;
           if (payloadAuto == nullptr) // Check if the alloc failed
           {
@@ -3271,11 +3279,7 @@ void DevUBLOXGNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t 
     // Now that the packet is complete and has been processed, we need to delete the memory
     // allocated for packetAuto
     if (activePacketBuffer == SFE_UBLOX_PACKET_PACKETAUTO)
-    {
-      delete[] payloadAuto; // Created with new[]
-      payloadAuto = nullptr;
-      packetAuto.payload = payloadAuto;
-    }
+      packetAuto.payload = nullptr;
   }
   else // Load this byte into the payload array
   {
