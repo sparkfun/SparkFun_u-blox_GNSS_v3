@@ -290,6 +290,7 @@ const uint8_t UBX_RXM_SPARTNKEY = 0x36; // Poll/transfer dynamic SPARTN keys
 
 // Class: SEC
 // The following are used to configure the SEC UBX messages (security feature messages). Descriptions from UBX messages overview (ZED_F9P Interface Description Document page 36)
+const uint8_t UBX_SEC_SIG = 0x09;    // Signal security information
 const uint8_t UBX_SEC_UNIQID = 0x03; // Unique chip ID
 
 // Class: TIM
@@ -402,10 +403,11 @@ enum dynModel // Possible values for the dynamic platform model, which provide m
   DYN_MODEL_AIRBORNE1g,     // Airborne <1g acceleration. Used for applications with a higher dynamic range and greater vertical acceleration than a passenger car. No 2D position fixes supported.
   DYN_MODEL_AIRBORNE2g,     // Airborne <2g acceleration. Recommended for typical airborne environments. No 2D position fixes supported.
   DYN_MODEL_AIRBORNE4g,     // Airborne <4g acceleration. Only recommended for extremely dynamic environments. No 2D position fixes supported.
-  DYN_MODEL_WRIST,          // Not supported in protocol versions less than 18. Only recommended for wrist worn applications. Receiver will filter out arm motion.
-  DYN_MODEL_BIKE,           // Supported in protocol versions 19.2. (not available in all products)
-  DYN_MODEL_MOWER,          // Added in HPS 1.21 (not available in all products)
-  DYN_MODEL_ESCOOTER,       // Added in HPS 1.21 (not available in all products)
+  DYN_MODEL_WRIST,          // Wrist-worn watch. Not supported in protocol versions less than 18. Only recommended for wrist worn applications. Receiver will filter out arm motion.
+  DYN_MODEL_BIKE,           // Motorbike. Supported in protocol versions 19.2. (not available in all products)
+  DYN_MODEL_MOWER,          // Robotic lawn mower. Added in HPS 1.21 (not available in all products)
+  DYN_MODEL_ESCOOTER,       // E-scooter. Added in HPS 1.21 (not available in all products)
+  DYN_MODEL_RAIL,           // Rail vehicles (trains, trams). Added in HPS 1.40 (not available in all products)
   DYN_MODEL_UNKNOWN = 255   // getDynamicModel will return 255 if sendCommand fails
 };
 

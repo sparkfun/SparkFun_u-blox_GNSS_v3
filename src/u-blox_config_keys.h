@@ -243,8 +243,9 @@ const uint32_t UBLOX_CFG_LOGFILTER_POSITION_THRS = UBX_CFG_U2 | 0x40de0008;     
 
 // CFG-MOT: Motion detector configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_MOT_GNSSSPEED_THRS = UBX_CFG_U1 | 0x20250038; // GNSS speed threshold below which platform is considered as stationary (a.k.a. static hold threshold)
-const uint32_t UBLOX_CFG_MOT_GNSSDIST_THRS = UBX_CFG_U2 | 0x3025003b;  // Distance above which GNSS-based stationary motion is exit (a.k.a. static hold distance threshold)
+const uint32_t UBLOX_CFG_MOT_GNSSSPEED_THRS = UBX_CFG_U1 | 0x20250038;  // GNSS speed threshold below which platform is considered as stationary (a.k.a. static hold threshold)
+const uint32_t UBLOX_CFG_MOT_GNSSDIST_THRS = UBX_CFG_U2 | 0x3025003b;   // Distance above which GNSS-based stationary motion is exit (a.k.a. static hold distance threshold)
+const uint32_t UBLOX_CFG_MOT_IMU_FILT_WINDOW = UBX_CFG_U2 | 0x30250016; // Averaging window for IMU measurements in noisy setups.
 
 // CFG-MSGOUT: Message output configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1152,7 +1153,10 @@ const uint32_t UBLOX_CFG_SEC_JAMDET_SENSITIVITY_HI = UBX_CFG_L | 0x10f60051; // 
 
 // CFG-SFCORE: Sensor fusion (SF) core configuration (ZED-F9R)
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_SFCORE_USE_SF = UBX_CFG_L | 0x10080001; // Use ADR/UDR sensor fusion
+const uint32_t UBLOX_CFG_SFCORE_USE_SF = UBX_CFG_L | 0x10080001;        // Use ADR/UDR sensor fusion
+const uint32_t UBLOX_CFG_SFCORE_IMU2CRP_LA_X = UBX_CFG_I2 | 0x30080002; // X coordinate of IMU-to-CRP lever-arm in the installation frame
+const uint32_t UBLOX_CFG_SFCORE_IMU2CRP_LA_Y = UBX_CFG_I2 | 0x30080003; // Y coordinate of IMU-to-CRP lever-arm in the installation frame
+const uint32_t UBLOX_CFG_SFCORE_IMU2CRP_LA_Z = UBX_CFG_I2 | 0x30080004; // Z coordinate of IMU-to-CRP lever-arm in the installation frame
 
 // CFG-SFIMU: Sensor fusion (SF) inertial measurement unit (IMU) configuration (ZED-F9R)
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1168,10 +1172,14 @@ const uint32_t UBLOX_CFG_SFIMU_ACCEL_ACCURACY = UBX_CFG_U2 | 0x30060018;        
 const uint32_t UBLOX_CFG_SFIMU_IMU_EN = UBX_CFG_L | 0x1006001d;                 // IMU enabled
 const uint32_t UBLOX_CFG_SFIMU_IMU_I2C_SCL_PIO = UBX_CFG_U1 | 0x2006001e;       // SCL PIO of the IMU I2C
 const uint32_t UBLOX_CFG_SFIMU_IMU_I2C_SDA_PIO = UBX_CFG_U1 | 0x2006001f;       // SDA PIO of the IMU I2C
+const uint32_t UBLOX_CFG_SFIMU_IMU_IMU2ANT_LA_X = UBX_CFG_I2 | 0x30060020;      // X coordinate of IMU-to-ANT lever-arm in the installation frame
+const uint32_t UBLOX_CFG_SFIMU_IMU_IMU2ANT_LA_Y = UBX_CFG_I2 | 0x30060021;      // Y coordinate of IMU-to-ANT lever-arm in the installation frame
+const uint32_t UBLOX_CFG_SFIMU_IMU_IMU2ANT_LA_Z = UBX_CFG_I2 | 0x30060022;      // Z coordinate of IMU-to-ANT lever-arm in the installation frame
 const uint32_t UBLOX_CFG_SFIMU_AUTO_MNTALG_ENA = UBX_CFG_L | 0x10060027;        // Enable automatic IMU-mount alignment
 const uint32_t UBLOX_CFG_SFIMU_IMU_MNTALG_YAW = UBX_CFG_U4 | 0x4006002d;        // User-defined IMU-mount yaw angle [0, 360]
 const uint32_t UBLOX_CFG_SFIMU_IMU_MNTALG_PITCH = UBX_CFG_I2 | 0x3006002e;      // User-defined IMU-mount pitch angle [-90, 90]
 const uint32_t UBLOX_CFG_SFIMU_IMU_MNTALG_ROLL = UBX_CFG_I2 | 0x3006002f;       // User-defined IMU-mount roll angle [-180, 180]
+const uint32_t UBLOX_CFG_SFIMU_IMU_MNTALG_TOLERANCE = UBX_CFG_E1 | 0x20060030;  // User-defined IMU mount alignment angles tolerance level
 
 // CFG-SFODO: Sensor fusion (SF) odometer configuration (ZED-F9R)
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1190,6 +1198,9 @@ const uint32_t UBLOX_CFG_SFODO_SPEED_BAND = UBX_CFG_U2 | 0x3007000e;       // Sp
 const uint32_t UBLOX_CFG_SFODO_USE_WT_PIN = UBX_CFG_L | 0x1007000f;        // Wheel tick signal enabled
 const uint32_t UBLOX_CFG_SFODO_DIR_PINPOL = UBX_CFG_L | 0x10070010;        // Wheel tick direction pin polarity
 const uint32_t UBLOX_CFG_SFODO_DIS_AUTOSW = UBX_CFG_L | 0x10070011;        // Disable automatic use of wheel tick or speed data received over the software interface
+const uint32_t UBLOX_CFG_SFODO_IMU2VRP_LA_X = UBX_CFG_I2 | 0x30070012;     // X coordinate of IMU-to-VRP lever-arm in the installation frame
+const uint32_t UBLOX_CFG_SFODO_IMU2VRP_LA_Y = UBX_CFG_I2 | 0x30070013;     // Y coordinate of IMU-to-VRP lever-arm in the installation frame
+const uint32_t UBLOX_CFG_SFODO_IMU2VRP_LA_Z = UBX_CFG_I2 | 0x30070014;     // Z coordinate of IMU-to-VRP lever-arm in the installation frame
 const uint32_t UBLOX_CFG_SFODO_DIS_DIR_INFO = UBX_CFG_L | 0x1007001c;      // Do not use directional information
 
 // CFG-SIGNAL: Satellite systems (GNSS) signal configuration
