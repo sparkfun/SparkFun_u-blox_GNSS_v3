@@ -290,6 +290,7 @@ const uint8_t UBX_RXM_SPARTNKEY = 0x36; // Poll/transfer dynamic SPARTN keys
 
 // Class: SEC
 // The following are used to configure the SEC UBX messages (security feature messages). Descriptions from UBX messages overview (ZED_F9P Interface Description Document page 36)
+const uint8_t UBX_SEC_SIG = 0x09;    // Signal security information
 const uint8_t UBX_SEC_UNIQID = 0x03; // Unique chip ID
 
 // Class: TIM

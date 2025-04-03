@@ -1096,7 +1096,19 @@ public:
   void logHNRPVT(bool enabled = true);                                                                                                                             // Log data to file buffer
 #endif
 
-  // Helper functions for CFG RATE
+// UBX_SEC_SIG Signal security information
+
+bool getSECSIG(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                     // Query module for latest data. If autoSECSIG is disabled, performs an explicit poll and waits, if enabled does not block. Returns true if new SEC SIG is available.
+bool getSECSIG(UBX_SEC_SIG_data_t * data = nullptr, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                          // Query module for latest data. If autoSECSIG is disabled, performs an explicit poll and waits, if enabled does not block. Returns true if new SEC SIG is available.
+bool setAutoSECSIG(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                // Enable/disable automatic (periodic) reports at the navigation frequency
+bool setAutoSECSIG(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                           // Enable/disable automatic (periodic) reports at the navigation frequency, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
+bool setAutoSECSIGrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                // Set the rate for automatic (periodic) reports
+bool setAutoSECSIGcallbackPtr(void (*callbackPointerPtr)(UBX_SEC_SIG_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic (periodic) reports at the navigation frequency. Data is accessed from the callback.
+bool assumeAutoSECSIG(bool enabled, bool implicitUpdate = true);                                                                                                 // In case no config access to the GPS is possible and SEC-SIG is send cyclically already
+void flushSECSIG();                                                                                                                                              // Mark all the SEC-SIG data as read/stale
+void logSECSIG(bool enabled = true);                                                                                                                             // Log data to file buffer
+
+// Helper functions for CFG RATE
 
   bool setNavigationFrequency(uint8_t navFreq, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Set the number of nav solutions sent per second
   bool getNavigationFrequency(uint8_t *navFreq, uint8_t layer = VAL_LAYER_RAM, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);    // Get the number of nav solutions sent per second currently being output by module
@@ -1418,6 +1430,8 @@ public:
   UBX_HNR_INS_t *packetUBXHNRINS = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
 #endif
 
+  UBX_SEC_SIG_t *packetUBXSECSIG = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
+
   UBX_MGA_ACK_DATA0_t *packetUBXMGAACK = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
   UBX_MGA_DBD_t *packetUBXMGADBD = nullptr;       // Pointer to struct. RAM will be allocated for this if/when necessary
 
@@ -1525,6 +1539,7 @@ protected:
   bool initPacketUBXHNRATT();           // Allocate RAM for packetUBXHNRATT and initialize it
   bool initPacketUBXHNRINS();           // Allocate RAM for packetUBXHNRINS and initialize it
   bool initPacketUBXHNRPVT();           // Allocate RAM for packetUBXHNRPVT and initialize it
+  bool initPacketUBXSECSIG();           // Allocate RAM for packetUBXSECSIG and initialize it
   bool initPacketUBXMGAACK();           // Allocate RAM for packetUBXMGAACK and initialize it
   bool initPacketUBXMGADBD();           // Allocate RAM for packetUBXMGADBD and initialize it
 

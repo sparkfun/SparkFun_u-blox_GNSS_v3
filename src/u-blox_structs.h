@@ -2227,6 +2227,89 @@ typedef struct
 
 // SEC-specific structs
 
+// UBX-SEC-SIG (0x27 0x09): Signal security information
+// Note: there are two versions of UBX-SEC-SIG.
+//   Version 1 is 12 bytes.
+//   Version 2 is variable.
+//   Check the version byte before attempting to read data from the struct
+const uint16_t UBX_SEC_SIG_LEN_VERSION1 = 12;
+const uint16_t UBX_SEC_SEG_MAX_CENT_FREQ_VERSION2 = 6; // ZED seems to default to 6 frequencies - without jamming
+const uint16_t UBX_SEC_SIG_MAX_LEN_VERSION2 = 4 + (4 * UBX_SEC_SEG_MAX_CENT_FREQ_VERSION2);
+
+typedef struct
+{
+  uint8_t version; // Message version (0x01 for this version)
+  union
+  {
+    struct
+    {
+      uint8_t reserved0[3];
+      union
+      {
+        uint8_t all;
+        struct
+        {
+          uint8_t jamDetEnabled : 1; // Flag indicates whether jamming/interference detection is enabled
+          uint8_t jammingState : 2;  // Jamming/interference state:
+                                     // 0: Unknown, 1: No jamming indicated
+                                     // 2: Warning; jamming indicated but fix OK
+                                     // 3: Critical; jamming indicated and no fix
+        } bits;
+      } jamFlags;
+      uint8_t reserved1[3];
+      union
+      {
+        uint8_t all;
+        struct
+        {
+          uint8_t spfDetEnabled : 1; // Flag indicates whether spoofing detection is enabled
+          uint8_t spoofingState : 3; // Spoofing state:
+                                     // 0: Unknown, 1: No spoofing indicated
+                                     // 2: Spoofing indicated, 3: Spoofing affirmed
+        } bits;
+      } spfFlags;
+      uint8_t reserved2[3];
+    } version1;
+    struct {
+      union
+      {
+        uint8_t all;
+        struct
+        {
+          uint8_t jamDetEnabled : 1; // Flag indicates whether jamming/interference detection is enabled
+          uint8_t jamState : 2;      // Jamming/interference state:
+                                     // 0: Unknown, 1: No jamming indicated
+                                     // 2: Warning; jamming indicated but fix OK
+          uint8_t spfDetEnabled : 1; // Flag indicates whether spoofing detection is enabled
+          uint8_t spfState : 3;      // Spoofing state:
+                                     // 0: Unknown, 1: No spoofing indicated
+                                     // 2: Spoofing indicated, 3: Spoofing affirmed
+        } bits;
+      } sigSecFlags;
+      uint8_t reserved0;
+      uint8_t jamNumCentFreqs; // The number of center frequencies provided
+      union
+      {
+        uint32_t all;
+        struct
+        {
+          uint32_t centFreq : 24; // Center frequency in [kHz], floored to the nearest kHz multiple
+          uint32_t jammed : 1; // Flag indicates whether signals on the given center frequency are considered jammed
+        } bits;
+      } jamStateCentFreq[UBX_SEC_SEG_MAX_CENT_FREQ_VERSION2];
+    } version2;
+  } versions;
+} UBX_SEC_SIG_data_t;
+
+typedef struct
+{
+  ubxAutomaticFlags automaticFlags;
+  UBX_SEC_SIG_data_t data;
+  bool moduleQueried;
+  void (*callbackPointerPtr)(UBX_SEC_SIG_data_t *);
+  UBX_SEC_SIG_data_t *callbackData;
+} UBX_SEC_SIG_t;
+
 // UBX-SEC-UNIQID (0x27 0x03): Unique chip ID
 // The ID is five bytes on the F9 and M9 (version 1) but six bytes on the M10 (version 2)
 const uint16_t UBX_SEC_UNIQID_LEN_VERSION1 = 9;
