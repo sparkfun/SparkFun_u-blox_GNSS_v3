@@ -343,7 +343,10 @@ try:
             ubx_expected_checksum_B = ubx_expected_checksum_B + ubx_expected_checksum_A
             longest_UBX_candidate = ubx_length + 8 # Update the longest UBX message length candidate. Include the header, class, ID, length and checksum bytes
             rewind_to = processed # If we lose sync due to dropped bytes then rewind to here
-            ubx_nmea_state = processing_UBX_payload # Now look for payload bytes (length: ubx_length)
+            if ubx_length > 0:
+                ubx_nmea_state = processing_UBX_payload # Now look for payload bytes (length: ubx_length)
+            else:
+                ubx_nmea_state = looking_for_checksum_A # Zero length message. Go straight to checksum A
         elif (ubx_nmea_state == processing_UBX_payload):
             ubx_length = ubx_length - 1 # Decrement length by one
             ubx_expected_checksum_A = ubx_expected_checksum_A + c # Update the expected checksum
