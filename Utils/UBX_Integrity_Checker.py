@@ -1,12 +1,100 @@
 # Checks the integrity of u-blox binary files
 
 # Written by: Paul Clark
-# Last update: May 10th, 2023
+# Last update: May 12th, 2025
 
 # Reads a UBX file and checks the integrity of UBX, NMEA and RTCM data
-# Will rewind and re-sync if an error is found
-# Will create a repaired file if desired
-# Will print any GNTXT messages if desired
+
+# How it works:
+#
+# Each byte from the UBX input file fi is processed according to the ubx_nmea_state state machine
+#
+# For UBX messages:
+# Sync Char 1: 0xB5
+# Sync Char 2: 0x62
+# Class byte
+# ID byte
+# Length: two bytes, little endian
+# Payload: length bytes
+# Checksum: two bytes
+# E.g.:
+# RXM_RAWX is class 0x02 ID 0x15
+# RXM_SFRBF is class 0x02 ID 0x13
+# TIM_TM2 is class 0x0d ID 0x03
+# NAV_POSLLH is class 0x01 ID 0x02
+# NAV_PVT is class 0x01 ID 0x07
+# NAV-STATUS is class 0x01 ID 0x03
+# Sync is lost when:
+#   0x62 does not follow 0xB5
+#   The checksum fails
+#
+# For NMEA messages:
+# Starts with a '$'
+# The next five characters indicate the message type (stored in nmea_char_1 to nmea_char_5)
+# Message fields are comma-separated
+# Followed by an '*'
+# Then a two character checksum (the logical exclusive-OR of all characters between the $ and the * as ASCII hex)
+# Ends with CR LF
+# Sync is lost when:
+#   The message length is excessive
+#   The checksum fails
+#   CR does not follow the checksum
+#   LF does not follow CR
+#
+# For RTCM messages:
+# Byte0 is 0xD3
+# Byte1 contains 6 unused bits plus the 2 MS bits of the message length
+# Byte2 contains the remainder of the message length
+# Byte3 contains the first 8 bits of the message type
+# Byte4 contains the last 4 bits of the message type and (optionally) the first 4 bits of the sub type
+# Byte5 contains (optionally) the last 8 bits of the sub type
+# Payload
+# Checksum: three bytes CRC-24Q (calculated from Byte0 to the end of the payload, with seed 0)
+# Sync is lost when:
+#   The checksum fails
+#
+# This code will:
+#   Rewind and re-sync if an error is found (sync is lost)
+#   Create a repaired file if desired
+#   Print any GNTXT messages if desired
+#
+# If sync is lost:
+#   The ubx_nmea_state is set initially to sync_lost
+#   sync_lost_at records the file byte at which sync was lost
+#   resync_in_progress is set to True
+#   The code attempts to resync - searching for the next valid message
+#   Sync is re-established the next time a valid message is found. resync_in_progress is set to False
+#
+# Rewind:
+#   If (e.g.) a UBX payload byte is dropped by the logging software,
+#   the checksum bytes become misaligned and the checksum fails.
+#   We do not know how many bytes were dropped...
+#   If we attempt to re-sync immediately after the checksum failure
+#   - without rewinding - the next valid message will also be discarded
+#   as the first byte(s) of that message will already have been processed
+#   when the checksum failure is detected.
+#   To avoid this, rewind_to stores the position of the last known valid data.
+#   E.g. rewind_to stores the position of the UBX length MSB byte - the byte
+#   before the start of the payload. If a UBX payload byte is dropped and the
+#   checksum fails, the code will rewind to that byte and attempt to re-sync
+#   from there. The valid message following the erroneous one is then processed
+#   correctly.
+#   rewind_in_progress is set to True during a rewind and cleared when the next
+#   valid message is processed. rewind_in_progress prevents the code from
+#   rewinding more than once. The code will not rewind again until
+#   rewind_in_progress is cleared.
+#
+# Repair:
+#   This code can repair the file, copying only valid CRC-checked messages to the
+#   repair file fo. When sync is lost and a rewind occurs, we need to rewind the
+#   repair file to the start of the erroneous message, and overwrite it with
+#   subsequent valid data.
+#   rewind_repair_file_to contains the position of the end of the last valid
+#   message written to the repair file. The repair file is rewound to here
+#   during a rewind and re-sync.
+#   The repair file is rewound and truncated before being closed, to discard any
+#   possible partial message already copied to the file.
+
 
 # SparkFun code, firmware, and software is released under the MIT License (http://opensource.org/licenses/MIT)
 #
@@ -32,16 +120,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+
 import sys
 import os
 
-class UBXIntegrityChecker():
+class UBX_Integrity_Checker():
 
-    def __init__(self, ubxFile, repairFile = None, printGNTXT = False, maxRewinds = 100):
+    def __init__(self, ubxFile:str = None, repairFile:str = None, printGNTXT:bool = False, maxRewinds:int = 100):
         self.filename = ubxFile
         self.repairFilename = repairFile
         self.printGNTXT = printGNTXT
         self.max_rewinds = maxRewinds # Abort after this many rewinds
+
+    def setFilename(self, ubxFile:str):
+        self.filename = ubxFile
+
+    def setRepairFilename(self, repairFile:str):
+        self.repairFilename = repairFile
+
+    def setPrintGNTXT(self, printGNTXT:bool):
+        self.printGNTXT = printGNTXT
+
+    def setMaxRewinds(self, maxRewinds:int):
+        self.max_rewinds = maxRewinds
 
     # Add byte to checksums sum1 and sum2
     def csum(self, byte, sum1, sum2):
@@ -72,6 +173,9 @@ class UBXIntegrityChecker():
 
         print('UBX Integrity Checker')
         print()
+
+        if self.filename is None:
+            raise Exception('Invalid file!')
 
         print('Processing',self.filename)
         print()
@@ -190,43 +294,7 @@ class UBXIntegrityChecker():
                     fo.write(fileBytes)
                     repaired_file_bytes = repaired_file_bytes + 1
 
-                # Process data bytes according to ubx_nmea_state
-                # For UBX messages:
-                # Sync Char 1: 0xB5
-                # Sync Char 2: 0x62
-                # Class byte
-                # ID byte
-                # Length: two bytes, little endian
-                # Payload: length bytes
-                # Checksum: two bytes
-                #
-                # For NMEA messages:
-                # Starts with a '$'
-                # The next five characters indicate the message type (stored in nmea_char_1 to nmea_char_5)
-                # Message fields are comma-separated
-                # Followed by an '*'
-                # Then a two character checksum (the logical exclusive-OR of all characters between the $ and the * as ASCII hex)
-                # Ends with CR LF
-                # Only allow a new file to be opened when a complete packet has been processed and ubx_nmea_state has returned to "looking_for_B5_dollar_D3"
-                # Or when a data error is detected (sync_lost)
-                #
-                # For RTCM messages:
-                # Byte0 is 0xD3
-                # Byte1 contains 6 unused bits plus the 2 MS bits of the message length
-                # Byte2 contains the remainder of the message length
-                # Byte3 contains the first 8 bits of the message type
-                # Byte4 contains the last 4 bits of the message type and (optionally) the first 4 bits of the sub type
-                # Byte5 contains (optionally) the last 8 bits of the sub type
-                # Payload
-                # Checksum: three bytes CRC-24Q (calculated from Byte0 to the end of the payload, with seed 0)
-
-                # RXM_RAWX is class 0x02 ID 0x15
-                # RXM_SFRBF is class 0x02 ID 0x13
-                # TIM_TM2 is class 0x0d ID 0x03
-                # NAV_POSLLH is class 0x01 ID 0x02
-                # NAV_PVT is class 0x01 ID 0x07
-                # NAV-STATUS is class 0x01 ID 0x03
-
+                # Process each byte through the state machine
                 if (ubx_nmea_state == looking_for_B5_dollar_D3) or (ubx_nmea_state == sync_lost):
                     if (c == 0xB5): # Have we found Sync Char 1 (0xB5) if we were expecting one?
                         if (ubx_nmea_state == sync_lost):
@@ -339,10 +407,11 @@ class UBXIntegrityChecker():
                                 fo.seek(rewind_repair_file_to) # Rewind the repaired file
                                 repaired_file_bytes = rewind_repair_file_to
                                 fi.seek(message_start_byte) # Copy the valid message into the repair file
-                                repaired_bytes_to_write = processed - message_start_byte
+                                repaired_bytes_to_write = 1 + processed - message_start_byte
                                 fileBytes = fi.read(repaired_bytes_to_write)
                                 fo.write(fileBytes)
                                 repaired_file_bytes = repaired_file_bytes + repaired_bytes_to_write
+                                rewind_repair_file_to = repaired_file_bytes
                         else:
                             if (fo):
                                 rewind_repair_file_to = repaired_file_bytes # Rewind repair file to here if sync is lost
@@ -374,9 +443,10 @@ class UBXIntegrityChecker():
                             nmea_char_4 = c
                         else: # ubx_length == 5
                             nmea_char_5 = c
-                            message_type = chr(nmea_char_1) + chr(nmea_char_2) + chr(nmea_char_3) + chr(nmea_char_4) + chr(nmea_char_5) # Record the message type
-                            if (message_type == "PUBX,"): # Remove the comma from PUBX
-                                message_type = "PUBX"
+                            if (nmea_char_5 == ','): # Check for a 4-character message type (e.g. PUBX)
+                                message_type = chr(nmea_char_1) + chr(nmea_char_2) + chr(nmea_char_3) + chr(nmea_char_4)
+                            else:
+                                message_type = chr(nmea_char_1) + chr(nmea_char_2) + chr(nmea_char_3) + chr(nmea_char_4) + chr(nmea_char_5) # Record the message type
                             if (message_type != "GNTXT"): # Reset nmea_string if this is not GNTXT
                                 nmea_string = None
                     # Now check if this is an '*'
@@ -470,10 +540,11 @@ class UBXIntegrityChecker():
                                 fo.seek(rewind_repair_file_to) # Rewind the repaired file
                                 repaired_file_bytes = rewind_repair_file_to
                                 fi.seek(message_start_byte) # Copy the valid message into the repair file
-                                repaired_bytes_to_write = processed - message_start_byte
+                                repaired_bytes_to_write = 1 + processed - message_start_byte
                                 fileBytes = fi.read(repaired_bytes_to_write)
                                 fo.write(fileBytes)
                                 repaired_file_bytes = repaired_file_bytes + repaired_bytes_to_write
+                                rewind_repair_file_to = repaired_file_bytes
                         else:
                             if (fo):
                                 rewind_repair_file_to = repaired_file_bytes # Rewind repair file to here if sync is lost
@@ -562,10 +633,11 @@ class UBXIntegrityChecker():
                                 fo.seek(rewind_repair_file_to) # Rewind the repaired file
                                 repaired_file_bytes = rewind_repair_file_to
                                 fi.seek(message_start_byte) # Copy the valid message into the repair file
-                                repaired_bytes_to_write = processed - message_start_byte
+                                repaired_bytes_to_write = 1 + processed - message_start_byte
                                 fileBytes = fi.read(repaired_bytes_to_write)
                                 fo.write(fileBytes)
                                 repaired_file_bytes = repaired_file_bytes + repaired_bytes_to_write
+                                rewind_repair_file_to = repaired_file_bytes
                         else:
                             if (fo):
                                 rewind_repair_file_to = repaired_file_bytes # Rewind repair file to here if sync is lost
@@ -596,6 +668,8 @@ class UBXIntegrityChecker():
             fi.close() # Close the file
 
             if (fo):
+                fo.seek(rewind_repair_file_to) # Discard any partial message at the very end of the repair file
+                fo.truncate()
                 fo.close()
                 
             # Print the file statistics
@@ -627,12 +701,12 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='SparkFun UBX Integrity Checker')
-    parser.add_argument('ubxFile', metavar='ubxFile', help='The path to the UBX file')
-    parser.add_argument('-r', '--repairFile', required=False, default=None, help='The path to the repair file')
+    parser.add_argument('ubxFile', metavar='ubxFile', type=str, help='The path to the UBX file')
+    parser.add_argument('-r', '--repairFile', required=False, type=str, default=None, help='The path to the repair file')
     parser.add_argument('--GNTXT', default=False, action='store_true', help='Display any GNTXT messages found')
-    parser.add_argument('-rw', '--rewinds', required=False, type=int, default=100, help='The maximum number of file rewinds when repairing')
+    parser.add_argument('-rw', '--rewinds', required=False, type=int, default=100, help='The maximum number of file rewinds')
     args = parser.parse_args()
 
-    checker = UBXIntegrityChecker(args.ubxFile, args.repairFile, args.GNTXT, args.rewinds)
+    checker = UBX_Integrity_Checker(args.ubxFile, args.repairFile, args.GNTXT, args.rewinds)
 
     checker.checkIntegrity()
