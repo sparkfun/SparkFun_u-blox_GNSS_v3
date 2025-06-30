@@ -640,6 +640,26 @@ void DevUBLOXGNSS::end(void)
     delete storageNMEAGNZDA;
     storageNMEAGNZDA = nullptr;
   }
+
+  if (storageNMEAGPGST != nullptr)
+  {
+    if (storageNMEAGPGST->callbackCopy != nullptr)
+    {
+      delete storageNMEAGPGST->callbackCopy;
+    }
+    delete storageNMEAGPGST;
+    storageNMEAGPGST = nullptr;
+  }
+
+  if (storageNMEAGNGST != nullptr)
+  {
+    if (storageNMEAGNGST->callbackCopy != nullptr)
+    {
+      delete storageNMEAGNGST->callbackCopy;
+    }
+    delete storageNMEAGNGST;
+    storageNMEAGNGST = nullptr;
+  }
 #endif
 
   if (_storageNMEA != nullptr)
@@ -2522,6 +2542,20 @@ bool DevUBLOXGNSS::isThisNMEAauto()
       return true;
   }
 
+  strcpy(thisNMEA, "GPGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    if (storageNMEAGPGST != nullptr)
+      return true;
+  }
+
+  strcpy(thisNMEA, "GNGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    if (storageNMEAGNGST != nullptr)
+      return true;
+  }
+
   return false;
 }
 
@@ -2600,6 +2634,24 @@ bool DevUBLOXGNSS::doesThisNMEAHaveCallback()
           return true;
   }
 
+  strcpy(thisNMEA, "GPGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    if (storageNMEAGPGST != nullptr)
+      if (storageNMEAGPGST->callbackCopy != nullptr)
+        if (storageNMEAGPGST->callbackPointerPtr != nullptr)
+          return true;
+  }
+
+  strcpy(thisNMEA, "GNGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    if (storageNMEAGNGST != nullptr)
+      if (storageNMEAGNGST->callbackCopy != nullptr)
+        if (storageNMEAGNGST->callbackPointerPtr != nullptr)
+          return true;
+  }
+
   return false;
 }
 
@@ -2652,6 +2704,18 @@ uint8_t *DevUBLOXGNSS::getNMEAWorkingLengthPtr()
   if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
   {
     return &storageNMEAGNZDA->workingCopy.length;
+  }
+
+  strcpy(thisNMEA, "GPGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return &storageNMEAGPGST->workingCopy.length;
+  }
+
+  strcpy(thisNMEA, "GNGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return &storageNMEAGNGST->workingCopy.length;
   }
 
   return nullptr;
@@ -2708,6 +2772,18 @@ uint8_t *DevUBLOXGNSS::getNMEAWorkingNMEAPtr()
     return &storageNMEAGNZDA->workingCopy.nmea[0];
   }
 
+  strcpy(thisNMEA, "GPGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return &storageNMEAGPGST->workingCopy.nmea[0];
+  }
+
+  strcpy(thisNMEA, "GNGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return &storageNMEAGNGST->workingCopy.nmea[0];
+  }
+
   return nullptr;
 }
 
@@ -2760,6 +2836,18 @@ uint8_t *DevUBLOXGNSS::getNMEACompleteLengthPtr()
   if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
   {
     return &storageNMEAGNZDA->completeCopy.length;
+  }
+
+  strcpy(thisNMEA, "GPGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return &storageNMEAGPGST->completeCopy.length;
+  }
+
+  strcpy(thisNMEA, "GNGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return &storageNMEAGNGST->completeCopy.length;
   }
 
   return nullptr;
@@ -2816,6 +2904,18 @@ uint8_t *DevUBLOXGNSS::getNMEACompleteNMEAPtr()
     return &storageNMEAGNZDA->completeCopy.nmea[0];
   }
 
+  strcpy(thisNMEA, "GPGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return &storageNMEAGPGST->completeCopy.nmea[0];
+  }
+
+  strcpy(thisNMEA, "GNGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return &storageNMEAGNGST->completeCopy.nmea[0];
+  }
+
   return nullptr;
 }
 
@@ -2868,6 +2968,18 @@ uint8_t *DevUBLOXGNSS::getNMEACallbackLengthPtr()
   if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
   {
     return &storageNMEAGNZDA->callbackCopy->length;
+  }
+
+  strcpy(thisNMEA, "GPGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return &storageNMEAGPGST->callbackCopy->length;
+  }
+
+  strcpy(thisNMEA, "GNGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return &storageNMEAGNGST->callbackCopy->length;
   }
 
   return nullptr;
@@ -2924,6 +3036,18 @@ uint8_t *DevUBLOXGNSS::getNMEACallbackNMEAPtr()
     return &storageNMEAGNZDA->callbackCopy->nmea[0];
   }
 
+  strcpy(thisNMEA, "GPGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return &storageNMEAGPGST->callbackCopy->nmea[0];
+  }
+
+  strcpy(thisNMEA, "GNGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return &storageNMEAGNGST->callbackCopy->nmea[0];
+  }
+
   return nullptr;
 }
 
@@ -2978,6 +3102,18 @@ uint8_t DevUBLOXGNSS::getNMEAMaxLength()
     return NMEA_ZDA_MAX_LENGTH;
   }
 
+  strcpy(thisNMEA, "GPGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return NMEA_GST_MAX_LENGTH;
+  }
+
+  strcpy(thisNMEA, "GNGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return NMEA_GST_MAX_LENGTH;
+  }
+
   return 0;
 }
 
@@ -3030,6 +3166,18 @@ nmeaAutomaticFlags *DevUBLOXGNSS::getNMEAFlagsPtr()
   if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
   {
     return &storageNMEAGNZDA->automaticFlags;
+  }
+
+  strcpy(thisNMEA, "GPGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return &storageNMEAGPGST->automaticFlags;
+  }
+
+  strcpy(thisNMEA, "GNGST");
+  if (memcmp(thisNMEA, &nmeaAddressField[1], 5) == 0)
+  {
+    return &storageNMEAGNGST->automaticFlags;
   }
 
   return nullptr;
@@ -6336,6 +6484,30 @@ void DevUBLOXGNSS::checkCallbacks(void)
           storageNMEAGNZDA->callbackPointerPtr(storageNMEAGNZDA->callbackCopy); // Call the callback
         }
         storageNMEAGNZDA->automaticFlags.flags.bits.callbackCopyValid = 0; // Mark the data as stale
+      }
+
+  if (storageNMEAGPGST != nullptr)                                            // If RAM has been allocated for message storage
+    if (storageNMEAGPGST->callbackCopy != nullptr)                            // If RAM has been allocated for the copy of the data
+      if (storageNMEAGPGST->automaticFlags.flags.bits.callbackCopyValid == 1) // If the copy of the data is valid
+      {
+        if (storageNMEAGPGST->callbackPointerPtr != nullptr) // If the pointer to the callback has been defined
+        {
+          storageNMEAGPGST->callbackPointerPtr(storageNMEAGPGST->callbackCopy); // Call the callback
+        }
+        storageNMEAGPGST->automaticFlags.flags.bits.callbackCopyValid = 0; // Mark the data as stale
+      }
+
+  if (storageNMEAGNGST != nullptr)                                            // If RAM has been allocated for message storage
+    if (storageNMEAGNGST->callbackCopy != nullptr)                            // If RAM has been allocated for the copy of the data
+      if (storageNMEAGNGST->automaticFlags.flags.bits.callbackCopyValid == 1) // If the copy of the data is valid
+      {
+        if (storageNMEAGNGST->callbackPointerPtr != nullptr) // If the pointer to the callback has been defined
+        {
+          // if (_printDebug == true)
+          //   _debugSerial.println(F("checkCallbacks: calling callbackPtr for GNGST"));
+          storageNMEAGNGST->callbackPointerPtr(storageNMEAGNGST->callbackCopy); // Call the callback
+        }
+        storageNMEAGNGST->automaticFlags.flags.bits.callbackCopyValid = 0; // Mark the data as stale
       }
 #endif
 
@@ -17237,6 +17409,165 @@ bool DevUBLOXGNSS::initStorageNMEAGNZDA()
   storageNMEAGNZDA->callbackCopy = nullptr;
 
   storageNMEAGNZDA->automaticFlags.flags.all = 0; // Mark the data as invalid/stale and unread
+
+  return (true);
+}
+
+// Initiate automatic storage of NMEA GPGST messages
+
+// Get the most recent GPGST message
+// Return 0 if the message has not been received from the module
+// Return 1 if the data is valid but has been read before
+// Return 2 if the data is valid and is fresh/unread
+uint8_t DevUBLOXGNSS::getLatestNMEAGPGST(NMEA_GST_data_t *data)
+{
+  if (storageNMEAGPGST == nullptr)
+    initStorageNMEAGPGST();        // Check that RAM has been allocated for the message
+  if (storageNMEAGPGST == nullptr) // Bail if the RAM allocation failed
+    return (false);
+
+  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
+
+  memcpy(data, &storageNMEAGPGST->completeCopy, sizeof(NMEA_GST_data_t)); // Copy the complete copy
+
+  uint8_t result = 0;
+  if (storageNMEAGPGST->automaticFlags.flags.bits.completeCopyValid == 1) // Is the complete copy valid?
+  {
+    result = 1;
+    if (storageNMEAGPGST->automaticFlags.flags.bits.completeCopyRead == 0) // Has the data already been read?
+    {
+      result = 2;
+      storageNMEAGPGST->automaticFlags.flags.bits.completeCopyRead = 1; // Mark the data as read
+    }
+  }
+
+  return (result);
+}
+
+// Enable a callback on the arrival of a GPGST message
+bool DevUBLOXGNSS::setNMEAGPGSTcallbackPtr(void (*callbackPointerPtr)(NMEA_GST_data_t *))
+{
+  if (storageNMEAGPGST == nullptr)
+    initStorageNMEAGPGST();        // Check that RAM has been allocated for the message
+  if (storageNMEAGPGST == nullptr) // Bail if the RAM allocation failed
+    return (false);
+
+  if (storageNMEAGPGST->callbackCopy == nullptr) // Check if RAM has been allocated for the callback copy
+  {
+    storageNMEAGPGST->callbackCopy = new NMEA_GST_data_t;
+  }
+
+  if (storageNMEAGPGST->callbackCopy == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("setNMEAGPGSTcallbackPtr: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+
+  storageNMEAGPGST->callbackPointerPtr = callbackPointerPtr;
+  return (true);
+}
+
+// Private: allocate RAM for incoming NMEA GPGST messages and initialize it
+bool DevUBLOXGNSS::initStorageNMEAGPGST()
+{
+  storageNMEAGPGST = new NMEA_GPGST_t; // Allocate RAM for the main struct
+  if (storageNMEAGPGST == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("initStorageNMEAGPGST: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+
+  storageNMEAGPGST->workingCopy.length = 0;                            // Clear the data length
+  memset(storageNMEAGPGST->workingCopy.nmea, 0, NMEA_GST_MAX_LENGTH);  // Clear the nmea storage
+  storageNMEAGPGST->completeCopy.length = 0;                           // Clear the data length
+  memset(storageNMEAGPGST->completeCopy.nmea, 0, NMEA_GST_MAX_LENGTH); // Clear the nmea storage
+
+  storageNMEAGPGST->callbackPointerPtr = nullptr; // Clear the callback pointers
+  storageNMEAGPGST->callbackCopy = nullptr;
+
+  storageNMEAGPGST->automaticFlags.flags.all = 0; // Mark the data as invalid/stale and unread
+
+  return (true);
+}
+
+uint8_t DevUBLOXGNSS::getLatestNMEAGNGST(NMEA_GST_data_t *data)
+{
+  if (storageNMEAGNGST == nullptr)
+    initStorageNMEAGNGST();        // Check that RAM has been allocated for the message
+  if (storageNMEAGNGST == nullptr) // Bail if the RAM allocation failed
+    return (false);
+
+  checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
+
+  memcpy(data, &storageNMEAGNGST->completeCopy, sizeof(NMEA_GST_data_t)); // Copy the complete copy
+
+  uint8_t result = 0;
+  if (storageNMEAGNGST->automaticFlags.flags.bits.completeCopyValid == 1) // Is the complete copy valid?
+  {
+    result = 1;
+    if (storageNMEAGNGST->automaticFlags.flags.bits.completeCopyRead == 0) // Has the data already been read?
+    {
+      result = 2;
+      storageNMEAGNGST->automaticFlags.flags.bits.completeCopyRead = 1; // Mark the data as read
+    }
+  }
+
+  return (result);
+}
+
+bool DevUBLOXGNSS::setNMEAGNGSTcallbackPtr(void (*callbackPointerPtr)(NMEA_GST_data_t *))
+{
+  if (storageNMEAGNGST == nullptr)
+    initStorageNMEAGNGST();        // Check that RAM has been allocated for the message
+  if (storageNMEAGNGST == nullptr) // Bail if the RAM allocation failed
+    return (false);
+
+  if (storageNMEAGNGST->callbackCopy == nullptr) // Check if RAM has been allocated for the callback copy
+  {
+    storageNMEAGNGST->callbackCopy = new NMEA_GST_data_t;
+  }
+
+  if (storageNMEAGNGST->callbackCopy == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("setNMEAGNGSTcallbackPtr: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+
+  storageNMEAGNGST->callbackPointerPtr = callbackPointerPtr;
+  return (true);
+}
+
+// Private: allocate RAM for incoming NMEA GNGST messages and initialize it
+bool DevUBLOXGNSS::initStorageNMEAGNGST()
+{
+  storageNMEAGNGST = new NMEA_GNGST_t; // Allocate RAM for the main struct
+  if (storageNMEAGNGST == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("initStorageNMEAGNGST: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+
+  storageNMEAGNGST->workingCopy.length = 0;                            // Clear the data length
+  memset(storageNMEAGNGST->workingCopy.nmea, 0, NMEA_GST_MAX_LENGTH);  // Clear the nmea storage
+  storageNMEAGNGST->completeCopy.length = 0;                           // Clear the data length
+  memset(storageNMEAGNGST->completeCopy.nmea, 0, NMEA_GST_MAX_LENGTH); // Clear the nmea storage
+
+  storageNMEAGNGST->callbackPointerPtr = nullptr; // Clear the callback pointers
+  storageNMEAGNGST->callbackCopy = nullptr;
+
+  storageNMEAGNGST->automaticFlags.flags.all = 0; // Mark the data as invalid/stale and unread
 
   return (true);
 }

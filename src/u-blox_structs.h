@@ -3056,6 +3056,32 @@ typedef struct
   NMEA_ZDA_data_t *callbackCopy; // The callback gets its own preserved copy of the complete copy
 } NMEA_GNZDA_t;
 
+const uint8_t NMEA_GST_MAX_LENGTH = 100;
+
+typedef struct
+{
+  uint8_t length; // The number of bytes in nmea
+  uint8_t nmea[NMEA_GST_MAX_LENGTH];
+} NMEA_GST_data_t;
+
+typedef struct
+{
+  nmeaAutomaticFlags automaticFlags;
+  NMEA_GST_data_t workingCopy;  // Incoming data is added to the working copy
+  NMEA_GST_data_t completeCopy; // The working copy is copied into the complete copy when all data has been received and the checksum is valid
+  void (*callbackPointerPtr)(NMEA_GST_data_t *);
+  NMEA_GST_data_t *callbackCopy; // The callback gets its own preserved copy of the complete copy
+} NMEA_GPGST_t;
+
+typedef struct
+{
+  nmeaAutomaticFlags automaticFlags;
+  NMEA_GST_data_t workingCopy;  // Incoming data is added to the working copy
+  NMEA_GST_data_t completeCopy; // The working copy is copied into the complete copy when all data has been received and the checksum is valid
+  void (*callbackPointerPtr)(NMEA_GST_data_t *);
+  NMEA_GST_data_t *callbackCopy; // The callback gets its own preserved copy of the complete copy
+} NMEA_GNGST_t;
+
 typedef struct
 {
   uint8_t length;
