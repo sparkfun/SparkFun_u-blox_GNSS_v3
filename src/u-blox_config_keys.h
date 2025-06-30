@@ -127,6 +127,7 @@ const uint32_t UBLOX_CFG_ANA_ORBMAXERR = UBX_CFG_U2 | 0x30230002; // Maximum acc
 // CFG-BDS: BeiDou system configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_BDS_USE_PRN_1_TO_5 = UBX_CFG_L | 0x10340014; // Use BeiDou geostationary satellites (PRN 1-5)
+const uint32_t UBLOX_CFG_BDS_D1D2_NAVDATA = UBX_CFG_E1 | 0x20340009;  // Enable only the given BDS D1/D2 navigation data streams
 
 // CFG-CLOCK: System clock configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -190,6 +191,9 @@ const uint32_t UBLOX_CFG_HW_ANT_SUP_OPEN_THR = UBX_CFG_U1 | 0x20a30056;       //
 const uint32_t UBLOX_CFG_HW_SENS_WOM_MODE = UBX_CFG_E1 | 0x20a30063;          // Select Wake-On-Motion mode
 const uint32_t UBLOX_CFG_HW_SENS_WOM_THLD = UBX_CFG_U1 | 0x20a30064;          // Wake-On-Motion threshold
 const uint32_t UBLOX_CFG_HW_RF_LNA_MODE = UBX_CFG_E1 | 0x20a30057;            // Mode for internal LNA (NEO-F10)
+const uint32_t UBLOX_CFG_HW_RF1_LNA_MODE_LOWGAIN = UBX_CFG_E1 | 0x10a3006a;   // Low Gain Mode for internal LNA RF1
+const uint32_t UBLOX_CFG_HW_RF2_LNA_MODE_LOWGAIN = UBX_CFG_E1 | 0x10a3006b;   // Low Gain Mode for internal LNA RF2
+const uint32_t UBLOX_CFG_HW_RF3_LNA_MODE_LOWGAIN = UBX_CFG_E1 | 0x10a3006c;   // Low Gain Mode for internal LNA RF3
 
 // CFG-I2C: Configuration of the I2C interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1021,6 +1025,7 @@ const uint32_t UBLOX_CFG_NAVSPG_OUTFIL_FACC = UBX_CFG_U2 | 0x301100b5;    // Out
 const uint32_t UBLOX_CFG_NAVSPG_CONSTR_ALT = UBX_CFG_I4 | 0x401100c1;     // Fixed altitude (mean sea level) for 2D fix mode
 const uint32_t UBLOX_CFG_NAVSPG_CONSTR_ALTVAR = UBX_CFG_U4 | 0x401100c2;  // Fixed altitude variance for 2D mode
 const uint32_t UBLOX_CFG_NAVSPG_CONSTR_DGNSSTO = UBX_CFG_U1 | 0x201100c4; // DGNSS timeout
+const uint32_t UBLOX_CFG_NAVSPG_CONSTR_DGNSSTO_SCALE = UBX_CFG_U1 | 0x201100c5; // DGNSS timeout value scale for CFG-NAVSPGCONSTR_DGNSSTO
 const uint32_t UBLOX_CFG_NAVSPG_SIGATTCOMP = UBX_CFG_E1 | 0x201100d6;     // Permanently attenuated signal compensation mode
 const uint32_t UBLOX_CFG_NAVSPG_PL_ENA = UBX_CFG_L | 0x101100d7;          // Enable Protection level. If enabled, protection level computing will be on.
 const uint32_t UBLOX_CFG_NAVSPG_ONLY_AUTHDATA = UBX_CFG_L | 0x101100dd;   // Enable using only signals with authenticated navigation data
@@ -1215,11 +1220,13 @@ const uint32_t UBLOX_CFG_SIGNAL_GAL_ENA = UBX_CFG_L | 0x10310021;       // Galil
 const uint32_t UBLOX_CFG_SIGNAL_GAL_E1_ENA = UBX_CFG_L | 0x10310007;    // Galileo E1
 const uint32_t UBLOX_CFG_SIGNAL_GAL_E5A_ENA = UBX_CFG_L | 0x10310009;   // Galileo E5a
 const uint32_t UBLOX_CFG_SIGNAL_GAL_E5B_ENA = UBX_CFG_L | 0x1031000a;   // Galileo E5b (only on u-blox F9 platform products)
+const uint32_t UBLOX_CFG_SIGNAL_GAL_E6_ENA = UBX_CFG_L | 0x1031000b;    // Galileo E6 (Default is true)
 const uint32_t UBLOX_CFG_SIGNAL_BDS_ENA = UBX_CFG_L | 0x10310022;       // BeiDou Enable
 const uint32_t UBLOX_CFG_SIGNAL_BDS_B1_ENA = UBX_CFG_L | 0x1031000d;    // BeiDou B1I
 const uint32_t UBLOX_CFG_SIGNAL_BDS_B1C_ENA = UBX_CFG_L | 0x1031000f;   // BeiDou B1C
 const uint32_t UBLOX_CFG_SIGNAL_BDS_B2A_ENA = UBX_CFG_L | 0x10310028;   // BeiDou B2a
 const uint32_t UBLOX_CFG_SIGNAL_BDS_B2_ENA = UBX_CFG_L | 0x1031000e;    // BeiDou B2I (only on u-blox F9 platform products)
+const uint32_t UBLOX_CFG_SIGNAL_BDS_B3_ENA = UBX_CFG_L | 0x10310010;    // BeiDou B3I (Default is true)
 const uint32_t UBLOX_CFG_SIGNAL_QZSS_ENA = UBX_CFG_L | 0x10310024;      // QZSS enable
 const uint32_t UBLOX_CFG_SIGNAL_QZSS_L1CA_ENA = UBX_CFG_L | 0x10310012; // QZSS L1C/A
 const uint32_t UBLOX_CFG_SIGNAL_QZSS_L5_ENA = UBX_CFG_L | 0x10310017;   // QZSS L5
@@ -1230,6 +1237,7 @@ const uint32_t UBLOX_CFG_SIGNAL_GLO_L1_ENA = UBX_CFG_L | 0x10310018;    // GLONA
 const uint32_t UBLOX_CFG_SIGNAL_GLO_L2_ENA = UBX_CFG_L | 0x1031001a;    // GLONASS L2 (only on u-blox F9 platform products)
 const uint32_t UBLOX_CFG_SIGNAL_NAVIC_ENA = UBX_CFG_L | 0x10310026;     // NavIC
 const uint32_t UBLOX_CFG_SIGNAL_NAVIC_L5_ENA = UBX_CFG_L | 0x1031001d;  // NavIC L5
+const uint32_t UBLOX_CFG_SIGNAL_PLAN = UBX_CFG_E1 | 0x2031003a;         // Active signal plan
 
 // CFG-SPARTN: Configuration of the SPARTN interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -1335,6 +1335,10 @@ void logSECSIG(bool enabled = true);                                            
   bool setNMEAGPZDAcallbackPtr(void (*callbackPointerPtr)(NMEA_ZDA_data_t *)); // Enable a callback on the arrival of a GPZDA message
   uint8_t getLatestNMEAGNZDA(NMEA_ZDA_data_t *data);                           // Return the most recent GNZDA: 0 = no data, 1 = stale data, 2 = fresh data
   bool setNMEAGNZDAcallbackPtr(void (*callbackPointerPtr)(NMEA_ZDA_data_t *)); // Enable a callback on the arrival of a GNZDA message
+  uint8_t getLatestNMEAGPGST(NMEA_GST_data_t *data);                           // Return the most recent GPGST: 0 = no data, 1 = stale data, 2 = fresh data
+  bool setNMEAGPGSTcallbackPtr(void (*callbackPointerPtr)(NMEA_GST_data_t *)); // Enable a callback on the arrival of a GPGST message
+  uint8_t getLatestNMEAGNGST(NMEA_GST_data_t *data);                           // Return the most recent GNGST: 0 = no data, 1 = stale data, 2 = fresh data
+  bool setNMEAGNGSTcallbackPtr(void (*callbackPointerPtr)(NMEA_GST_data_t *)); // Enable a callback on the arrival of a GNGST message
 #endif
 
   // RTCM
@@ -1444,6 +1448,8 @@ void logSECSIG(bool enabled = true);                                            
   NMEA_GNRMC_t *storageNMEAGNRMC = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
   NMEA_GPZDA_t *storageNMEAGPZDA = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
   NMEA_GNZDA_t *storageNMEAGNZDA = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
+  NMEA_GPGST_t *storageNMEAGPGST = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
+  NMEA_GNGST_t *storageNMEAGNGST = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
 #endif
 
   RTCM_1005_t *storageRTCM1005 = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
@@ -1551,6 +1557,8 @@ protected:
   bool initStorageNMEAGNRMC(); // Allocate RAM for incoming NMEA GNRMC messages and initialize it
   bool initStorageNMEAGPZDA(); // Allocate RAM for incoming NMEA GPZDA messages and initialize it
   bool initStorageNMEAGNZDA(); // Allocate RAM for incoming NMEA GNZDA messages and initialize it
+  bool initStorageNMEAGPGST(); // Allocate RAM for incoming NMEA GPGST messages and initialize it
+  bool initStorageNMEAGNGST(); // Allocate RAM for incoming NMEA GNGST messages and initialize it
 
   bool initStorageRTCM(); // Allocate RAM for incoming RTCM messages and initialize it
   bool initStorageNMEA(); // Allocate RAM for incoming non-Auto NMEA messages and initialize it
