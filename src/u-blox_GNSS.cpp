@@ -9080,7 +9080,7 @@ bool DevUBLOXGNSS::getESFAutoAlignment(bool *enabled, uint8_t layer, uint16_t ma
 }
 bool DevUBLOXGNSS::getESFAutoAlignment(uint8_t layer, uint16_t maxWait) // Unsafe overload
 {
-  uint8_t result;
+  uint8_t result = 0;
   getVal8(UBLOX_CFG_SFIMU_AUTO_MNTALG_ENA, &result, layer, maxWait);
   return (bool)result;
 }
@@ -17877,7 +17877,7 @@ bool DevUBLOXGNSS::getMeasurementRate(uint16_t *measRate, uint8_t layer, uint16_
 }
 uint16_t DevUBLOXGNSS::getMeasurementRate(uint8_t layer, uint16_t maxWait) // Unsafe overload...
 {
-  uint16_t measurementRate;
+  uint16_t measurementRate = 0;
 
   getMeasurementRate(&measurementRate, layer, maxWait);
 
@@ -17904,7 +17904,7 @@ bool DevUBLOXGNSS::getNavigationRate(uint16_t *navRate, uint8_t layer, uint16_t 
 }
 uint16_t DevUBLOXGNSS::getNavigationRate(uint8_t layer, uint16_t maxWait) // Unsafe overload...
 {
-  uint16_t navigationRate;
+  uint16_t navigationRate = 0;
 
   getNavigationRate(&navigationRate, layer, maxWait);
 
