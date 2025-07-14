@@ -239,6 +239,7 @@ public:
   void processRTCM(uint8_t incoming) __attribute__((weak));                                                        // Given rtcm byte, do something with it. User can overwrite if desired to pipe bytes to radio, internet, etc.
   void processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID);          // Given a character, file it away into the uxb packet structure
   void processUBXpacket(ubxPacket *msg);                                                                           // Once a packet has been received and validated, identify this packet's class/id and update internal flags
+  virtual void processLoggedUBX(ubxPacket *incomingUBX) {}                                                         // Process any UBX message with enableUBXlogging processMe set true
 
   // Send I2C/Serial/SPI commands to the module
 
@@ -1361,7 +1362,7 @@ void logSECSIG(bool enabled = true);                                            
 #endif
 
   // UBX Logging - log any UBX message using packetAuto and avoiding having to have and use "Auto" (setAutonnn and lognnn) methods
-  void enableUBXlogging(uint8_t UBX_CLASS, uint8_t UBX_ID, bool enable = true);
+  void enableUBXlogging(uint8_t UBX_CLASS, uint8_t UBX_ID, bool logMe = true, bool processMe = false);
 
   // Functions to extract signed and unsigned 8/16/32-bit data from a ubxPacket
   // From v2.0: These are public. The user can call these to extract data from custom packets
@@ -1663,7 +1664,9 @@ protected:
 
   // UBX logging
   sfe_ublox_ubx_logging_list_t *sfe_ublox_ubx_logging_list_head = nullptr; // Linked list of which messages to log
-  bool logThisUBX(uint8_t UBX_CLASS, uint8_t UBX_ID);                      // Returns true if this UBX should be added to the logging buffer
+  bool logThisUBX(uint8_t UBX_CLASS, uint8_t UBX_ID);                      // Returns true if this UBX should be added to the logging buffer - for logging
+  bool processThisUBX(uint8_t UBX_CLASS, uint8_t UBX_ID);                  // Returns true if this UBX should be added to the logging buffer - for processing
+  bool logOrProcessThisUBX(uint8_t UBX_CLASS, uint8_t UBX_ID, bool log);   // Called by logThisUBX and processThisUBX
 
   // Flag to prevent reentry into checkCallbacks
   // Prevent badness if the user accidentally calls checkCallbacks from inside a callback

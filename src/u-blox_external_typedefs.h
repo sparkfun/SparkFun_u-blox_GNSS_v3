@@ -245,7 +245,8 @@ struct sfe_ublox_ubx_logging_list_t
 {
   uint8_t UBX_CLASS;
   uint8_t UBX_ID;
-  bool enable;
+  bool logMe;
+  bool processMe;
   sfe_ublox_ubx_logging_list_t *next;
 };
 
