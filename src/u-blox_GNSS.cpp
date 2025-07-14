@@ -1702,7 +1702,7 @@ void DevUBLOXGNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t req
       if (packetBuf.cls != UBX_CLASS_ACK)
       {
         bool logBecauseAuto = autoLookup(packetBuf.cls, packetBuf.id, &maxPayload);
-        bool logBecauseEnabled = logThisUBX(packetBuf.cls, packetBuf.id);
+        bool logBecauseEnabled = logThisUBX(packetBuf.cls, packetBuf.id) || processThisUBX(packetBuf.cls, packetBuf.id);
 
         // This is not an ACK so check for a class and ID match
         if ((packetBuf.cls == storedClass) && (packetBuf.id == storedID))
@@ -3260,7 +3260,7 @@ void DevUBLOXGNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t 
     //{
 
     bool logBecauseAuto = autoLookup(incomingUBX->cls, incomingUBX->id, &maximum_payload_size);
-    bool logBecauseEnabled = logThisUBX(incomingUBX->cls, incomingUBX->id);
+    bool logBecauseEnabled = logThisUBX(incomingUBX->cls, incomingUBX->id) || processThisUBX(incomingUBX->cls, incomingUBX->id);
     if ((!logBecauseAuto) && (logBecauseEnabled))
       maximum_payload_size = SFE_UBX_MAX_LENGTH;
     if (maximum_payload_size == 0)
@@ -3351,7 +3351,7 @@ void DevUBLOXGNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t 
 
       // This is not an ACK and we do not have a complete class and ID match
       // So let's check for an "automatic" message arriving
-      else if ((autoLookup(incomingUBX->cls, incomingUBX->id)) || (logThisUBX(incomingUBX->cls, incomingUBX->id)))
+      else if ((autoLookup(incomingUBX->cls, incomingUBX->id)) || (logThisUBX(incomingUBX->cls, incomingUBX->id)) || (processThisUBX(incomingUBX->cls, incomingUBX->id)))
       {
         // This isn't the message we are looking for...
         // Let's say so and leave incomingUBX->classAndIDmatch _unchanged_
@@ -5117,10 +5117,14 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
   // Check if this UBX message should be added to the file buffer - if it has not been added already
   if ((!addedToFileBuffer) && (logThisUBX(msg->cls, msg->id)))
     storePacket(msg);
+
+  // Check if UBX message should be processed
+  if (processThisUBX(msg->cls, msg->id))
+    processLoggedUBX(msg);
 }
 
 // UBX Logging - without needing to have or use "Auto" methods
-void DevUBLOXGNSS::enableUBXlogging(uint8_t UBX_CLASS, uint8_t UBX_ID, bool enable)
+void DevUBLOXGNSS::enableUBXlogging(uint8_t UBX_CLASS, uint8_t UBX_ID, bool logMe, bool processMe)
 {
   // If the list is empty
   if (sfe_ublox_ubx_logging_list_head == nullptr)
@@ -5129,7 +5133,8 @@ void DevUBLOXGNSS::enableUBXlogging(uint8_t UBX_CLASS, uint8_t UBX_ID, bool enab
     sfe_ublox_ubx_logging_list_head = new sfe_ublox_ubx_logging_list_t;
     sfe_ublox_ubx_logging_list_head->UBX_CLASS = UBX_CLASS;
     sfe_ublox_ubx_logging_list_head->UBX_ID = UBX_ID;
-    sfe_ublox_ubx_logging_list_head->enable = enable;
+    sfe_ublox_ubx_logging_list_head->logMe = logMe;
+    sfe_ublox_ubx_logging_list_head->processMe = processMe;
     sfe_ublox_ubx_logging_list_head->next = nullptr;
     return;
   }
@@ -5144,7 +5149,8 @@ void DevUBLOXGNSS::enableUBXlogging(uint8_t UBX_CLASS, uint8_t UBX_ID, bool enab
     if ((sfe_ublox_ubx_logging_list_ptr->UBX_CLASS == UBX_CLASS) // Check for a match
         && (sfe_ublox_ubx_logging_list_ptr->UBX_ID == UBX_ID))
     {
-      sfe_ublox_ubx_logging_list_ptr->enable = enable; // Update enable
+      sfe_ublox_ubx_logging_list_ptr->logMe = logMe; // Update logMe
+      sfe_ublox_ubx_logging_list_ptr->logMe = processMe; // Update processMe
       return;
     }
 
@@ -5159,12 +5165,21 @@ void DevUBLOXGNSS::enableUBXlogging(uint8_t UBX_CLASS, uint8_t UBX_ID, bool enab
   sfe_ublox_ubx_logging_list_ptr = sfe_ublox_ubx_logging_list_ptr->next;
   sfe_ublox_ubx_logging_list_ptr->UBX_CLASS = UBX_CLASS;
   sfe_ublox_ubx_logging_list_ptr->UBX_ID = UBX_ID;
-  sfe_ublox_ubx_logging_list_ptr->enable = enable;
+  sfe_ublox_ubx_logging_list_ptr->logMe = logMe;
+  sfe_ublox_ubx_logging_list_ptr->processMe = processMe;
   sfe_ublox_ubx_logging_list_ptr->next = nullptr;
 }
 
 // PRIVATE: Returns true if this UBX should be added to the logging buffer
 bool DevUBLOXGNSS::logThisUBX(uint8_t UBX_CLASS, uint8_t UBX_ID)
+{
+  return logOrProcessThisUBX(UBX_CLASS, UBX_ID, true);
+}
+bool DevUBLOXGNSS::processThisUBX(uint8_t UBX_CLASS, uint8_t UBX_ID)
+{
+  return logOrProcessThisUBX(UBX_CLASS, UBX_ID, false);
+}
+bool DevUBLOXGNSS::logOrProcessThisUBX(uint8_t UBX_CLASS, uint8_t UBX_ID, bool log)
 {
   // If the list is empty
   if (sfe_ublox_ubx_logging_list_head == nullptr)
@@ -5178,7 +5193,10 @@ bool DevUBLOXGNSS::logThisUBX(uint8_t UBX_CLASS, uint8_t UBX_ID)
     if ((sfe_ublox_ubx_logging_list_ptr->UBX_CLASS == UBX_CLASS) // Check for a match
         && (sfe_ublox_ubx_logging_list_ptr->UBX_ID == UBX_ID))
     {
-      return sfe_ublox_ubx_logging_list_ptr->enable;
+      if (log)
+        return (sfe_ublox_ubx_logging_list_ptr->logMe);
+      else
+        return (sfe_ublox_ubx_logging_list_ptr->processMe);
     }
 
     if (sfe_ublox_ubx_logging_list_ptr->next == nullptr)
