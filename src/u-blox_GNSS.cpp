@@ -5616,7 +5616,7 @@ void DevUBLOXGNSS::printPacket(ubxPacket *packet, bool alwaysPrintPayload)
     {
       _debugSerial.print(F(" Payload:"));
 
-      for (uint16_t x = 0; x < packet->len; x++)
+      for (uint16_t x = 0; x < packet->len - packet->startingSpot; x++)
       {
         _debugSerial.print(F(" "));
         _debugSerial.print(packet->payload[x], HEX);
@@ -8558,7 +8558,7 @@ bool DevUBLOXGNSS::getModuleInfo(uint16_t maxWait)
   // We will step through the payload looking at each extension field of 30 bytes
   char *ptr;
   uint8_t fwProtMod = 0; // Flags to show if we extracted the FWVER, PROTVER and MOD data
-  for (uint8_t extensionNumber = 0; extensionNumber < ((packetCfg.len - 40) / 30); extensionNumber++)
+  for (uint16_t extensionNumber = 0; extensionNumber < ((packetCfg.len - 40) / 30); extensionNumber++)
   {
     // Check for FWVER (should be in extension 1)
     ptr = strstr((const char *)&payloadCfg[(30 * extensionNumber)], "FWVER=");
