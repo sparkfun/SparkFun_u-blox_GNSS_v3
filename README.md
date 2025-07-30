@@ -224,7 +224,7 @@ v3 of the library provides support for generation F9 and M10 u-blox GNSS modules
 
 For most generation 8 modules, please use [version 2 of this library](https://github.com/sparkfun/SparkFun_u-blox_GNSS_Arduino_Library).
 
-For generation 6 and 7, please see [this example (depricated)](https://github.com/sparkfun/SparkFun_Ublox_Arduino_Library/tree/master/examples/Series_6_7/Example1_GetPositionAndTime_Series_6_7).
+For generation 6 and 7, please see [this example (deprecated)](https://github.com/sparkfun/SparkFun_Ublox_Arduino_Library/tree/master/examples/Series_6_7/Example1_GetPositionAndTime_Series_6_7).
 
 ## Contributing
 
