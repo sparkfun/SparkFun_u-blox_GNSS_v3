@@ -254,7 +254,7 @@ struct sfe_ublox_ubx_logging_list_t
 
 #ifndef MAX_PAYLOAD_SIZE
 // v2.0: keep this for backwards-compatibility, but this is largely superseded by setPacketCfgPayloadSize
-#define MAX_PAYLOAD_SIZE 512 // We need >=288 bytes for getModuleInfo on the ZED-X20P
+#define MAX_PAYLOAD_SIZE 300 // We need >=280 bytes for getModuleInfo on the ZED-X20P
 // #define MAX_PAYLOAD_SIZE 768 //Worst case: UBX_CFG_VALSET packet with 64 keyIDs each with 64 bit values
 #endif
 
