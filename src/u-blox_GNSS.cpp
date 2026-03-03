@@ -10678,8 +10678,7 @@ bool DevUBLOXGNSS::getNAVPOSECEF(uint16_t maxWait)
 //   2. If setVal8 fails: read back the actual rate with getVal8 (ground truth)
 //   3. If both fail (e.g. I2C buffer congestion): flags reflect the intended state,
 //      preventing the silent-failure mode where getPVT() etc. return false forever
-template <typename FlagsT>
-bool DevUBLOXGNSS::setAutoMsgRateVal(uint32_t key, uint8_t rate, bool implicitUpdate, FlagsT &flags, uint8_t layer, uint16_t maxWait)
+bool DevUBLOXGNSS::setAutoMsgRateVal(uint32_t key, uint8_t rate, bool implicitUpdate, ubxAutomaticFlags &flags, uint8_t layer, uint16_t maxWait)
 {
   bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
@@ -10702,11 +10701,6 @@ bool DevUBLOXGNSS::setAutoMsgRateVal(uint32_t key, uint8_t rate, bool implicitUp
   }
   return ok;
 }
-
-// Explicit instantiations for the three automaticFlags types
-template bool DevUBLOXGNSS::setAutoMsgRateVal<ubxAutomaticFlags>(uint32_t, uint8_t, bool, ubxAutomaticFlags &, uint8_t, uint16_t);
-template bool DevUBLOXGNSS::setAutoMsgRateVal<ubxSFRBXAutomaticFlags>(uint32_t, uint8_t, bool, ubxSFRBXAutomaticFlags &, uint8_t, uint16_t);
-template bool DevUBLOXGNSS::setAutoMsgRateVal<ubxESFMEASAutomaticFlags>(uint32_t, uint8_t, bool, ubxESFMEASAutomaticFlags &, uint8_t, uint16_t);
 
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getPOSECEF
 // works.
@@ -14089,7 +14083,26 @@ bool DevUBLOXGNSS::setAutoRXMSFRBXrate(uint8_t rate, bool implicitUpdate, uint8_
       key = UBLOX_CFG_MSGOUT_UBX_RXM_SFRBX_UART2;
   }
 
-  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXRXMSFRBX->automaticFlags, layer, maxWait);
+  // RXM-SFRBX uses ubxSFRBXAutomaticFlags (wider bitfield), so inline the three-tier logic
+  bool ok = setVal8(key, rate, layer, maxWait);
+  if (ok)
+  {
+    packetUBXRXMSFRBX->automaticFlags.flags.bits.automatic = (rate > 0);
+    packetUBXRXMSFRBX->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
+  }
+  else
+  {
+    uint8_t actualRate;
+    if (getVal8(key, &actualRate, layer, maxWait))
+    {
+      packetUBXRXMSFRBX->automaticFlags.flags.bits.automatic = (actualRate > 0);
+    }
+    else
+    {
+      packetUBXRXMSFRBX->automaticFlags.flags.bits.automatic = (rate > 0);
+    }
+    packetUBXRXMSFRBX->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
+  }
   packetUBXRXMSFRBX->moduleQueried = false;
   return ok;
 }
@@ -15727,7 +15740,26 @@ bool DevUBLOXGNSS::setAutoESFMEASrate(uint8_t rate, bool implicitUpdate, uint8_t
       key = UBLOX_CFG_MSGOUT_UBX_ESF_MEAS_UART2;
   }
 
-  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXESFMEAS->automaticFlags, layer, maxWait);
+  // ESF-MEAS uses ubxESFMEASAutomaticFlags (wider bitfield), so inline the three-tier logic
+  bool ok = setVal8(key, rate, layer, maxWait);
+  if (ok)
+  {
+    packetUBXESFMEAS->automaticFlags.flags.bits.automatic = (rate > 0);
+    packetUBXESFMEAS->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
+  }
+  else
+  {
+    uint8_t actualRate;
+    if (getVal8(key, &actualRate, layer, maxWait))
+    {
+      packetUBXESFMEAS->automaticFlags.flags.bits.automatic = (actualRate > 0);
+    }
+    else
+    {
+      packetUBXESFMEAS->automaticFlags.flags.bits.automatic = (rate > 0);
+    }
+    packetUBXESFMEAS->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
+  }
   return ok;
 }
 
