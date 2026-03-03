@@ -10673,7 +10673,11 @@ bool DevUBLOXGNSS::getNAVPOSECEF(uint16_t maxWait)
 }
 
 // Helper for all setAuto*rate functions that use VALSET (setVal8).
-// Sets the message output rate and updates automaticFlags accordingly.
+// Sets the message output rate and updates automaticFlags with a three-tier strategy:
+//   1. If setVal8 succeeds: flags reflect the confirmed state
+//   2. If setVal8 fails: read back the actual rate with getVal8 (ground truth)
+//   3. If both fail (e.g. I2C buffer congestion): flags reflect the intended state,
+//      preventing the silent-failure mode where getPVT() etc. return false forever
 template <typename FlagsT>
 bool DevUBLOXGNSS::setAutoMsgRateVal(uint32_t key, uint8_t rate, bool implicitUpdate, FlagsT &flags, uint8_t layer, uint16_t maxWait)
 {
@@ -10681,6 +10685,19 @@ bool DevUBLOXGNSS::setAutoMsgRateVal(uint32_t key, uint8_t rate, bool implicitUp
   if (ok)
   {
     flags.flags.bits.automatic = (rate > 0);
+    flags.flags.bits.implicitUpdate = implicitUpdate;
+  }
+  else
+  {
+    uint8_t actualRate;
+    if (getVal8(key, &actualRate, layer, maxWait))
+    {
+      flags.flags.bits.automatic = (actualRate > 0);
+    }
+    else
+    {
+      flags.flags.bits.automatic = (rate > 0);
+    }
     flags.flags.bits.implicitUpdate = implicitUpdate;
   }
   return ok;
@@ -15993,11 +16010,10 @@ bool DevUBLOXGNSS::setAutoHNRATTrate(uint8_t rate, bool implicitUpdate, uint8_t 
   payloadCfg[2] = rate; // rate relative to navigation freq.
 
   bool ok = ((sendCommand(&packetCfg, maxWait)) == SFE_UBLOX_STATUS_DATA_SENT); // We are only expecting an ACK
-  if (ok)
-  {
-    packetUBXHNRATT->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXHNRATT->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  // HNR (NEO-M8U) does not support VALGET, so we cannot read back the actual rate.
+  // Update flags unconditionally — the caller receives ok==false and can retry.
+  packetUBXHNRATT->automaticFlags.flags.bits.automatic = (rate > 0);
+  packetUBXHNRATT->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
   packetUBXHNRATT->moduleQueried.moduleQueried.bits.all = false; // Mark data as stale
   return ok;
 }
@@ -16174,11 +16190,10 @@ bool DevUBLOXGNSS::setAutoHNRINSrate(uint8_t rate, bool implicitUpdate, uint8_t 
   payloadCfg[2] = rate; // rate relative to navigation freq.
 
   bool ok = ((sendCommand(&packetCfg, maxWait)) == SFE_UBLOX_STATUS_DATA_SENT); // We are only expecting an ACK
-  if (ok)
-  {
-    packetUBXHNRINS->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXHNRINS->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  // HNR (NEO-M8U) does not support VALGET, so we cannot read back the actual rate.
+  // Update flags unconditionally — the caller receives ok==false and can retry.
+  packetUBXHNRINS->automaticFlags.flags.bits.automatic = (rate > 0);
+  packetUBXHNRINS->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
   packetUBXHNRINS->moduleQueried.moduleQueried.bits.all = false; // Mark data as stale
   return ok;
 }
@@ -16348,11 +16363,10 @@ bool DevUBLOXGNSS::setAutoHNRPVTrate(uint8_t rate, bool implicitUpdate, uint8_t 
   payloadCfg[2] = rate; // rate relative to navigation freq.
 
   bool ok = ((sendCommand(&packetCfg, maxWait)) == SFE_UBLOX_STATUS_DATA_SENT); // We are only expecting an ACK
-  if (ok)
-  {
-    packetUBXHNRPVT->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXHNRPVT->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  // HNR (NEO-M8U) does not support VALGET, so we cannot read back the actual rate.
+  // Update flags unconditionally — the caller receives ok==false and can retry.
+  packetUBXHNRPVT->automaticFlags.flags.bits.automatic = (rate > 0);
+  packetUBXHNRPVT->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
   packetUBXHNRPVT->moduleQueried.moduleQueried.bits.all = false; // Mark data as stale
   return ok;
 }
