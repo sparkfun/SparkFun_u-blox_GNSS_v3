@@ -1494,6 +1494,12 @@ protected:
   } ubxFrameClass = CLASS_NONE;
 
   // Functions
+
+  // Helper for setAuto*rate functions using VALSET. Templated to support
+  // ubxAutomaticFlags, ubxSFRBXAutomaticFlags, and ubxESFMEASAutomaticFlags.
+  template <typename FlagsT>
+  bool setAutoMsgRateVal(uint32_t key, uint8_t rate, bool implicitUpdate, FlagsT &flags, uint8_t layer, uint16_t maxWait);
+
   bool checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requestedClass = 0, uint8_t requestedID = 0); // Checks module with user selected commType
   void addToChecksum(uint8_t incoming);                                                                 // Given an incoming byte, adjust rollingChecksumA/B
   size_t pushAssistNowDataInternal(size_t offset, bool skipTime, const uint8_t *dataBytes, size_t numDataBytes, sfe_ublox_mga_assist_ack_e mgaAck, uint16_t maxWait);
