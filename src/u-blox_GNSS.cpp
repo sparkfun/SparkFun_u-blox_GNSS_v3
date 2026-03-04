@@ -10689,7 +10689,8 @@ bool DevUBLOXGNSS::setAutoMsgRateVal(uint32_t key, uint8_t rate, bool implicitUp
   else
   {
     uint8_t actualRate;
-    if (getVal8(key, &actualRate, layer, maxWait))
+    ok = getVal8(key, &actualRate, layer, maxWait);
+    if (ok)
     {
       flags.flags.bits.automatic = (actualRate > 0);
     }
@@ -14093,7 +14094,8 @@ bool DevUBLOXGNSS::setAutoRXMSFRBXrate(uint8_t rate, bool implicitUpdate, uint8_
   else
   {
     uint8_t actualRate;
-    if (getVal8(key, &actualRate, layer, maxWait))
+    ok = getVal8(key, &actualRate, layer, maxWait);
+    if (ok)
     {
       packetUBXRXMSFRBX->automaticFlags.flags.bits.automatic = (actualRate > 0);
     }
@@ -15750,7 +15752,8 @@ bool DevUBLOXGNSS::setAutoESFMEASrate(uint8_t rate, bool implicitUpdate, uint8_t
   else
   {
     uint8_t actualRate;
-    if (getVal8(key, &actualRate, layer, maxWait))
+    ok = getVal8(key, &actualRate, layer, maxWait);
+    if (ok)
     {
       packetUBXESFMEAS->automaticFlags.flags.bits.automatic = (actualRate > 0);
     }
