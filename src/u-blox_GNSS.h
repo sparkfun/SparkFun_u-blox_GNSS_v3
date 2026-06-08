@@ -1191,6 +1191,11 @@ void logSECSIG(bool enabled = true);                                            
 
   int32_t getGeoidSeparation(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);
 
+  // Helper functions for POSECEF
+  // For safety, call these inside an if(getNAVPOSECEF())
+
+  uint32_t getPositionAccuracyPOSECEF(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returns the position accuracy estimate of the current POSECEF solution, in mm (not cm)
+
   // Helper functions for HPPOSECEF
   // For safety, call these inside an if(getNAVHPPOSECEF())
 

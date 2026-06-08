@@ -690,6 +690,8 @@ getMagDec	KEYWORD2
 getMagAcc	KEYWORD2
 getHeadVehValid	KEYWORD2
 
+getPositionAccuracyPOSECEF	KEYWORD2
+
 getPositionAccuracy	KEYWORD2
 getHighResECEFX	KEYWORD2
 getHighResECEFY	KEYWORD2

@@ -18609,6 +18609,24 @@ int32_t DevUBLOXGNSS::getGeoidSeparation(uint16_t maxWait)
   return (0);
 }
 
+// ***** POSECEF Helper Functions
+
+// Get the current 3D high precision positional accuracy - a fun thing to watch
+// Returns a long representing the 3D accuracy in millimeters
+uint32_t DevUBLOXGNSS::getPositionAccuracyPOSECEF(uint16_t maxWait)
+{
+  if (packetUBXNAVPOSECEF == nullptr)
+    initPacketUBXNAVPOSECEF(); // Check that RAM has been allocated for the POSECEF data
+  if (packetUBXNAVPOSECEF == nullptr) // Bail if the RAM allocation failed
+    return 0;
+
+  if (packetUBXNAVPOSECEF->moduleQueried.moduleQueried.bits.pAcc == false)
+    getNAVPOSECEF(maxWait);
+  packetUBXNAVPOSECEF->moduleQueried.moduleQueried.bits.pAcc = false; // Since we are about to give this to user, mark this data as stale
+  packetUBXNAVPOSECEF->moduleQueried.moduleQueried.bits.all = false;
+  return (packetUBXNAVPOSECEF->data.pAcc * 10); // Convert cm to mm
+}
+
 // ***** HPPOSECEF Helper Functions
 
 // Get the current 3D high precision positional accuracy - a fun thing to watch
