@@ -197,9 +197,10 @@ const uint32_t UBLOX_CFG_HW_RF3_LNA_MODE_LOWGAIN = UBX_CFG_E1 | 0x10a3006c;   //
 
 // CFG-I2C: Configuration of the I2C interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-const uint32_t UBLOX_CFG_I2C_ADDRESS = UBX_CFG_U1 | 0x20510001;        // I2C slave address of the receiver (7 bits)
-const uint32_t UBLOX_CFG_I2C_EXTENDEDTIMEOUT = UBX_CFG_L | 0x10510002; // Flag to disable timeouting the interface after 1.5 s
-const uint32_t UBLOX_CFG_I2C_ENABLED = UBX_CFG_L | 0x10510003;         // Flag to indicate if the I2C interface should be enabled
+const uint32_t UBLOX_CFG_I2C_ADDRESS = UBX_CFG_U1 | 0x20510001;          // I2C slave address of the receiver (7 bits)
+const uint32_t UBLOX_CFG_I2C_EXTENDEDTIMEOUT = UBX_CFG_L | 0x10510002;   // Flag to disable timeouting the interface after 1.5 s
+const uint32_t UBLOX_CFG_I2C_ENABLED = UBX_CFG_L | 0x10510003;           // Flag to indicate if the I2C interface should be enabled
+const uint32_t UBLOX_CFG_I2C_PULL_UPS_DISABLED = UBX_CFG_L | 0x1051000b; // Flag to indicate if the internal Pull-Ups (SDA andSCL lines) should be disabled
 
 // CFG-I2CINPROT: Input protocol configuration of the I2C interface
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -344,6 +345,11 @@ const uint32_t UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1005_SPI = UBX_CFG_U1 | 0x209102c1; 
 const uint32_t UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1005_UART1 = UBX_CFG_U1 | 0x209102be;   // Output rate of the RTCM-3X-TYPE1005 message on port UART1
 const uint32_t UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1005_UART2 = UBX_CFG_U1 | 0x209102bf;   // Output rate of the RTCM-3X-TYPE1005 message on port UART2
 const uint32_t UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1005_USB = UBX_CFG_U1 | 0x209102c0;     // Output rate of the RTCM-3X-TYPE1005 message on port USB
+const uint32_t UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1006_I2C = UBX_CFG_U1 | 0x209102c2;     // Output rate of the RTCM-3X-TYPE1006 message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1006_SPI = UBX_CFG_U1 | 0x209102c6;     // Output rate of the RTCM-3X-TYPE1006 message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1006_UART1 = UBX_CFG_U1 | 0x209102c3;   // Output rate of the RTCM-3X-TYPE1006 message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1006_UART2 = UBX_CFG_U1 | 0x209102c4;   // Output rate of the RTCM-3X-TYPE1006 message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1006_USB = UBX_CFG_U1 | 0x209102c5;     // Output rate of the RTCM-3X-TYPE1006 message on port USB
 const uint32_t UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1074_I2C = UBX_CFG_U1 | 0x2091035e;     // Output rate of the RTCM-3X-TYPE1074 message on port I2C
 const uint32_t UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1074_SPI = UBX_CFG_U1 | 0x20910362;     // Output rate of the RTCM-3X-TYPE1074 message on port SPI
 const uint32_t UBLOX_CFG_MSGOUT_RTCM_3X_TYPE1074_UART1 = UBX_CFG_U1 | 0x2091035f;   // Output rate of the RTCM-3X-TYPE1074 message on port UART1
@@ -964,6 +970,11 @@ const uint32_t UBLOX_CFG_NAV2_OUT_ENABLED = UBX_CFG_L | 0x10170001;          // 
 const uint32_t UBLOX_CFG_NAV2_SBAS_USE_INTEGRITY = UBX_CFG_L | 0x10170002;   // Use SBAS integrity information in the secondary output
 const uint32_t UBLOX_CFG_NAV2_NAVSPG_ONLY_AUTHDATA = UBX_CFG_L | 0x10170003; // Enable using only signals with authenticated navigation data
 
+// CFG-NAVCOR: Navigation corrections configuration
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+const uint32_t UBLOX_CFG_NAVCOR_ENABLE_HOST = UBX_CFG_L | 0x100d0001;    // Enable/disable HOST corrections
+const uint32_t UBLOX_CFG_NAVCOR_ENABLE_GAL_HAS = UBX_CFG_L | 0x100d0002; // Enable/disable Galileo HAS corrections
+
 // CFG-NAVHPG: High precision navigation configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_NAVHPG_DGNSSMODE = UBX_CFG_E1 | 0x20140011; // Diﬀerential corrections mode
@@ -1142,6 +1153,7 @@ const uint32_t UBLOX_CFG_RINV_CHUNK3 = UBX_CFG_X8 | 0x50c70007;    // Data bytes
 const uint32_t UBLOX_CFG_RTCM_DF003_OUT = UBX_CFG_U2 | 0x30090001;       // RTCM DF003 (Reference station ID) output value
 const uint32_t UBLOX_CFG_RTCM_DF003_IN = UBX_CFG_U2 | 0x30090008;        // RTCM DF003 (Reference station ID) input value
 const uint32_t UBLOX_CFG_RTCM_DF003_IN_FILTER = UBX_CFG_E1 | 0x20090009; // RTCM input filter configuration based on RTCM DF003 (Reference station ID) value
+const uint32_t UBLOX_CFG_RTCM_DF028_OUT = UBX_CFG_U2 | 0x30090010;       // RTCM DF028 (antenna height) output value
 
 // CFG-SBAS: SBAS configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1234,6 +1246,7 @@ const uint32_t UBLOX_CFG_SIGNAL_BDS_B2_ENA = UBX_CFG_L | 0x1031000e;    // BeiDo
 const uint32_t UBLOX_CFG_SIGNAL_BDS_B3_ENA = UBX_CFG_L | 0x10310010;    // BeiDou B3I (Default is true)
 const uint32_t UBLOX_CFG_SIGNAL_QZSS_ENA = UBX_CFG_L | 0x10310024;      // QZSS enable
 const uint32_t UBLOX_CFG_SIGNAL_QZSS_L1CA_ENA = UBX_CFG_L | 0x10310012; // QZSS L1C/A
+const uint32_t UBLOX_CFG_SIGNAL_QZSS_L1CB_ENA = UBX_CFG_L | 0x10310039; // QZSS L1C/B
 const uint32_t UBLOX_CFG_SIGNAL_QZSS_L5_ENA = UBX_CFG_L | 0x10310017;   // QZSS L5
 const uint32_t UBLOX_CFG_SIGNAL_QZSS_L1S_ENA = UBX_CFG_L | 0x10310014;  // QZSS L1S
 const uint32_t UBLOX_CFG_SIGNAL_QZSS_L2C_ENA = UBX_CFG_L | 0x10310015;  // QZSS L2C (only on u-blox F9 platform products)
