@@ -10672,6 +10672,37 @@ bool DevUBLOXGNSS::getNAVPOSECEF(uint16_t maxWait)
   }
 }
 
+// Helper for all setAuto*rate functions that use VALSET (setVal8).
+// Sets the message output rate and updates automaticFlags with a three-tier strategy:
+//   1. If setVal8 succeeds: flags reflect the confirmed state
+//   2. If setVal8 fails: read back the actual rate with getVal8 (ground truth)
+//   3. If both fail (e.g. I2C buffer congestion): flags reflect the intended state,
+//      preventing the silent-failure mode where getPVT() etc. return false forever
+bool DevUBLOXGNSS::setAutoMsgRateVal(uint32_t key, uint8_t rate, bool implicitUpdate, ubxAutomaticFlags &flags, uint8_t layer, uint16_t maxWait)
+{
+  bool ok = setVal8(key, rate, layer, maxWait);
+  if (ok)
+  {
+    flags.flags.bits.automatic = (rate > 0);
+    flags.flags.bits.implicitUpdate = implicitUpdate;
+  }
+  else
+  {
+    uint8_t actualRate;
+    ok = getVal8(key, &actualRate, layer, maxWait);
+    if (ok)
+    {
+      flags.flags.bits.automatic = (actualRate > 0);
+    }
+    else
+    {
+      flags.flags.bits.automatic = (rate > 0);
+    }
+    flags.flags.bits.implicitUpdate = implicitUpdate;
+  }
+  return ok;
+}
+
 // Enable or disable automatic navigation message generation by the GNSS. This changes the way getPOSECEF
 // works.
 bool DevUBLOXGNSS::setAutoNAVPOSECEF(bool enable, uint8_t layer, uint16_t maxWait)
@@ -10709,12 +10740,7 @@ bool DevUBLOXGNSS::setAutoNAVPOSECEFrate(uint8_t rate, bool implicitUpdate, uint
       key = UBLOX_CFG_MSGOUT_UBX_NAV_POSECEF_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVPOSECEF->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVPOSECEF->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVPOSECEF->automaticFlags, layer, maxWait);
   packetUBXNAVPOSECEF->moduleQueried.moduleQueried.bits.all = false;
   return ok;
 }
@@ -10879,12 +10905,7 @@ bool DevUBLOXGNSS::setAutoNAVSTATUSrate(uint8_t rate, bool implicitUpdate, uint8
       key = UBLOX_CFG_MSGOUT_UBX_NAV_STATUS_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVSTATUS->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVSTATUS->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVSTATUS->automaticFlags, layer, maxWait);
   packetUBXNAVSTATUS->moduleQueried.moduleQueried.bits.all = false;
   return ok;
 }
@@ -11046,12 +11067,7 @@ bool DevUBLOXGNSS::setAutoDOPrate(uint8_t rate, bool implicitUpdate, uint8_t lay
       key = UBLOX_CFG_MSGOUT_UBX_NAV_DOP_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVDOP->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVDOP->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVDOP->automaticFlags, layer, maxWait);
   packetUBXNAVDOP->moduleQueried.moduleQueried.bits.all = false;
   return ok;
 }
@@ -11214,12 +11230,7 @@ bool DevUBLOXGNSS::setAutoNAVEOErate(uint8_t rate, bool implicitUpdate, uint8_t 
       key = UBLOX_CFG_MSGOUT_UBX_NAV_EOE_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVEOE->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVEOE->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVEOE->automaticFlags, layer, maxWait);
   packetUBXNAVEOE->moduleQueried.moduleQueried.bits.all = false;
   return ok;
 }
@@ -11390,12 +11401,7 @@ bool DevUBLOXGNSS::setAutoNAVATTrate(uint8_t rate, bool implicitUpdate, uint8_t 
       key = UBLOX_CFG_MSGOUT_UBX_NAV_ATT_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVATT->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVATT->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVATT->automaticFlags, layer, maxWait);
   packetUBXNAVATT->moduleQueried.moduleQueried.bits.all = false; // Mark data as stale
   return ok;
 }
@@ -11559,12 +11565,7 @@ bool DevUBLOXGNSS::setAutoPVTrate(uint8_t rate, bool implicitUpdate, uint8_t lay
       key = UBLOX_CFG_MSGOUT_UBX_NAV_PVT_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVPVT->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVPVT->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVPVT->automaticFlags, layer, maxWait);
   packetUBXNAVPVT->moduleQueried.moduleQueried1.bits.all = false;
   return ok;
 }
@@ -11731,12 +11732,7 @@ bool DevUBLOXGNSS::setAutoNAVODOrate(uint8_t rate, bool implicitUpdate, uint8_t 
       key = UBLOX_CFG_MSGOUT_UBX_NAV_ODO_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVODO->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVODO->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVODO->automaticFlags, layer, maxWait);
   packetUBXNAVODO->moduleQueried.moduleQueried.bits.all = false;
   return ok;
 }
@@ -11900,12 +11896,7 @@ bool DevUBLOXGNSS::setAutoNAVVELECEFrate(uint8_t rate, bool implicitUpdate, uint
       key = UBLOX_CFG_MSGOUT_UBX_NAV_VELECEF_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVVELECEF->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVVELECEF->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVVELECEF->automaticFlags, layer, maxWait);
   packetUBXNAVVELECEF->moduleQueried.moduleQueried.bits.all = false;
   return ok;
 }
@@ -12066,12 +12057,7 @@ bool DevUBLOXGNSS::setAutoNAVVELNEDrate(uint8_t rate, bool implicitUpdate, uint8
       key = UBLOX_CFG_MSGOUT_UBX_NAV_VELNED_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVVELNED->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVVELNED->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVVELNED->automaticFlags, layer, maxWait);
   packetUBXNAVVELNED->moduleQueried.moduleQueried.bits.all = false;
   return ok;
 }
@@ -12235,12 +12221,7 @@ bool DevUBLOXGNSS::setAutoNAVHPPOSECEFrate(uint8_t rate, bool implicitUpdate, ui
       key = UBLOX_CFG_MSGOUT_UBX_NAV_HPPOSECEF_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVHPPOSECEF->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVHPPOSECEF->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVHPPOSECEF->automaticFlags, layer, maxWait);
   packetUBXNAVHPPOSECEF->moduleQueried.moduleQueried.bits.all = false;
   return ok;
 }
@@ -12404,12 +12385,7 @@ bool DevUBLOXGNSS::setAutoHPPOSLLHrate(uint8_t rate, bool implicitUpdate, uint8_
       key = UBLOX_CFG_MSGOUT_UBX_NAV_HPPOSLLH_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVHPPOSLLH->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVHPPOSLLH->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVHPPOSLLH->automaticFlags, layer, maxWait);
   packetUBXNAVHPPOSLLH->moduleQueried.moduleQueried.bits.all = false;
   return ok;
 }
@@ -12573,12 +12549,7 @@ bool DevUBLOXGNSS::setAutoNAVPVATrate(uint8_t rate, bool implicitUpdate, uint8_t
       key = UBLOX_CFG_MSGOUT_UBX_NAV_PVAT_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVPVAT->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVPVAT->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVPVAT->automaticFlags, layer, maxWait);
   packetUBXNAVPVAT->moduleQueried.moduleQueried1.bits.all = false;
   return ok;
 }
@@ -12742,12 +12713,7 @@ bool DevUBLOXGNSS::setAutoNAVTIMEUTCrate(uint8_t rate, bool implicitUpdate, uint
       key = UBLOX_CFG_MSGOUT_UBX_NAV_TIMEUTC_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVTIMEUTC->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVTIMEUTC->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVTIMEUTC->automaticFlags, layer, maxWait);
   packetUBXNAVTIMEUTC->moduleQueried.moduleQueried.bits.all = false;
   return ok;
 }
@@ -12911,12 +12877,7 @@ bool DevUBLOXGNSS::setAutoNAVCLOCKrate(uint8_t rate, bool implicitUpdate, uint8_
       key = UBLOX_CFG_MSGOUT_UBX_NAV_CLOCK_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVCLOCK->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVCLOCK->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVCLOCK->automaticFlags, layer, maxWait);
   packetUBXNAVCLOCK->moduleQueried.moduleQueried.bits.all = false; // Mark data as stale
   return ok;
 }
@@ -13133,12 +13094,7 @@ bool DevUBLOXGNSS::setAutoNAVSVINrate(uint8_t rate, bool implicitUpdate, uint8_t
       key = UBLOX_CFG_MSGOUT_UBX_NAV_SVIN_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVSVIN->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVSVIN->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVSVIN->automaticFlags, layer, maxWait);
   packetUBXNAVSVIN->moduleQueried.moduleQueried.bits.all = false; // Mark data as stale
   return ok;
 }
@@ -13305,12 +13261,7 @@ bool DevUBLOXGNSS::setAutoNAVSATrate(uint8_t rate, bool implicitUpdate, uint8_t 
       key = UBLOX_CFG_MSGOUT_UBX_NAV_SAT_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVSAT->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVSAT->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVSAT->automaticFlags, layer, maxWait);
   packetUBXNAVSAT->moduleQueried = false; // Mark data as stale
   return ok;
 }
@@ -13476,12 +13427,7 @@ bool DevUBLOXGNSS::setAutoNAVSIGrate(uint8_t rate, bool implicitUpdate, uint8_t 
       key = UBLOX_CFG_MSGOUT_UBX_NAV_SIG_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVSIG->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVSIG->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVSIG->automaticFlags, layer, maxWait);
   packetUBXNAVSIG->moduleQueried = false; // Mark data as stale
   return ok;
 }
@@ -13651,12 +13597,7 @@ bool DevUBLOXGNSS::setAutoRELPOSNEDrate(uint8_t rate, bool implicitUpdate, uint8
       key = UBLOX_CFG_MSGOUT_UBX_NAV_RELPOSNED_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVRELPOSNED->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVRELPOSNED->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVRELPOSNED->automaticFlags, layer, maxWait);
   packetUBXNAVRELPOSNED->moduleQueried.moduleQueried.bits.all = false; // Mark data as stale
   return ok;
 }
@@ -13812,12 +13753,7 @@ bool DevUBLOXGNSS::setAutoAOPSTATUSrate(uint8_t rate, bool implicitUpdate, uint8
   else if (_commType == COMM_TYPE_SERIAL)
     key = UBLOX_CFG_MSGOUT_UBX_NAV_AOPSTATUS_UART1; // Only supported on the M10 - no UART2
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXNAVAOPSTATUS->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXNAVAOPSTATUS->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVAOPSTATUS->automaticFlags, layer, maxWait);
   packetUBXNAVAOPSTATUS->moduleQueried.moduleQueried.bits.all = false;
   return ok;
 }
@@ -14148,10 +14084,25 @@ bool DevUBLOXGNSS::setAutoRXMSFRBXrate(uint8_t rate, bool implicitUpdate, uint8_
       key = UBLOX_CFG_MSGOUT_UBX_RXM_SFRBX_UART2;
   }
 
+  // RXM-SFRBX uses ubxSFRBXAutomaticFlags (wider bitfield), so inline the three-tier logic
   bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXRXMSFRBX->automaticFlags.flags.bits.automatic = (rate > 0);
+    packetUBXRXMSFRBX->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
+  }
+  else
+  {
+    uint8_t actualRate;
+    ok = getVal8(key, &actualRate, layer, maxWait);
+    if (ok)
+    {
+      packetUBXRXMSFRBX->automaticFlags.flags.bits.automatic = (actualRate > 0);
+    }
+    else
+    {
+      packetUBXRXMSFRBX->automaticFlags.flags.bits.automatic = (rate > 0);
+    }
     packetUBXRXMSFRBX->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
   }
   packetUBXRXMSFRBX->moduleQueried = false;
@@ -14344,12 +14295,7 @@ bool DevUBLOXGNSS::setAutoRXMRAWXrate(uint8_t rate, bool implicitUpdate, uint8_t
       key = UBLOX_CFG_MSGOUT_UBX_RXM_RAWX_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXRXMRAWX->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXRXMRAWX->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXRXMRAWX->automaticFlags, layer, maxWait);
   packetUBXRXMRAWX->moduleQueried = false;
   return ok;
 }
@@ -14513,12 +14459,7 @@ bool DevUBLOXGNSS::setAutoRXMMEASXrate(uint8_t rate, bool implicitUpdate, uint8_
       key = UBLOX_CFG_MSGOUT_UBX_RXM_MEASX_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXRXMMEASX->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXRXMMEASX->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXRXMMEASX->automaticFlags, layer, maxWait);
   packetUBXRXMMEASX->moduleQueried = false;
   return ok;
 }
@@ -14683,12 +14624,7 @@ bool DevUBLOXGNSS::setAutoTIMTM2rate(uint8_t rate, bool implicitUpdate, uint8_t 
       key = UBLOX_CFG_MSGOUT_UBX_TIM_TM2_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXTIMTM2->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXTIMTM2->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXTIMTM2->automaticFlags, layer, maxWait);
   packetUBXTIMTM2->moduleQueried.moduleQueried.bits.all = false;
   return ok;
 }
@@ -14849,12 +14785,7 @@ bool DevUBLOXGNSS::setAutoTIMTPrate(uint8_t rate, bool implicitUpdate, uint8_t l
       key = UBLOX_CFG_MSGOUT_UBX_TIM_TP_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXTIMTP->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXTIMTP->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXTIMTP->automaticFlags, layer, maxWait);
   packetUBXTIMTP->moduleQueried.moduleQueried.bits.all = false;
   return ok;
 }
@@ -15015,12 +14946,7 @@ bool DevUBLOXGNSS::setAutoMONCOMMSrate(uint8_t rate, bool implicitUpdate, uint8_
       key = UBLOX_CFG_MSGOUT_UBX_MON_COMMS_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXMONCOMMS->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXMONCOMMS->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXMONCOMMS->automaticFlags, layer, maxWait);
   packetUBXMONCOMMS->moduleQueried = false;
   return ok;
 }
@@ -15181,12 +15107,7 @@ bool DevUBLOXGNSS::setAutoMONHWrate(uint8_t rate, bool implicitUpdate, uint8_t l
       key = UBLOX_CFG_MSGOUT_UBX_MON_HW_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXMONHW->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXMONHW->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXMONHW->automaticFlags, layer, maxWait);
   packetUBXMONHW->moduleQueried.moduleQueried.bits.all = false;
   return ok;
 }
@@ -15358,12 +15279,7 @@ bool DevUBLOXGNSS::setAutoESFALGrate(uint8_t rate, bool implicitUpdate, uint8_t 
       key = UBLOX_CFG_MSGOUT_UBX_ESF_ALG_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXESFALG->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXESFALG->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXESFALG->automaticFlags, layer, maxWait);
   packetUBXESFALG->moduleQueried.moduleQueried.bits.all = false; // Mark data as stale
   return ok;
 }
@@ -15534,12 +15450,7 @@ bool DevUBLOXGNSS::setAutoESFSTATUSrate(uint8_t rate, bool implicitUpdate, uint8
       key = UBLOX_CFG_MSGOUT_UBX_ESF_STATUS_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXESFSTATUS->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXESFSTATUS->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXESFSTATUS->automaticFlags, layer, maxWait);
   packetUBXESFSTATUS->moduleQueried.moduleQueried.bits.all = false; // Mark data as stale
   return ok;
 }
@@ -15711,12 +15622,7 @@ bool DevUBLOXGNSS::setAutoESFINSrate(uint8_t rate, bool implicitUpdate, uint8_t 
       key = UBLOX_CFG_MSGOUT_UBX_ESF_INS_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXESFINS->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXESFINS->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXESFINS->automaticFlags, layer, maxWait);
   packetUBXESFINS->moduleQueried.moduleQueried.bits.all = false; // Mark data as stale
   return ok;
 }
@@ -15836,10 +15742,25 @@ bool DevUBLOXGNSS::setAutoESFMEASrate(uint8_t rate, bool implicitUpdate, uint8_t
       key = UBLOX_CFG_MSGOUT_UBX_ESF_MEAS_UART2;
   }
 
+  // ESF-MEAS uses ubxESFMEASAutomaticFlags (wider bitfield), so inline the three-tier logic
   bool ok = setVal8(key, rate, layer, maxWait);
   if (ok)
   {
     packetUBXESFMEAS->automaticFlags.flags.bits.automatic = (rate > 0);
+    packetUBXESFMEAS->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
+  }
+  else
+  {
+    uint8_t actualRate;
+    ok = getVal8(key, &actualRate, layer, maxWait);
+    if (ok)
+    {
+      packetUBXESFMEAS->automaticFlags.flags.bits.automatic = (actualRate > 0);
+    }
+    else
+    {
+      packetUBXESFMEAS->automaticFlags.flags.bits.automatic = (rate > 0);
+    }
     packetUBXESFMEAS->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
   }
   return ok;
@@ -15955,12 +15876,7 @@ bool DevUBLOXGNSS::setAutoESFRAWrate(uint8_t rate, bool implicitUpdate, uint8_t 
       key = UBLOX_CFG_MSGOUT_UBX_ESF_RAW_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXESFRAW->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXESFRAW->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXESFRAW->automaticFlags, layer, maxWait);
   return ok;
 }
 
@@ -16129,11 +16045,10 @@ bool DevUBLOXGNSS::setAutoHNRATTrate(uint8_t rate, bool implicitUpdate, uint8_t 
   payloadCfg[2] = rate; // rate relative to navigation freq.
 
   bool ok = ((sendCommand(&packetCfg, maxWait)) == SFE_UBLOX_STATUS_DATA_SENT); // We are only expecting an ACK
-  if (ok)
-  {
-    packetUBXHNRATT->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXHNRATT->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  // HNR (NEO-M8U) does not support VALGET, so we cannot read back the actual rate.
+  // Update flags unconditionally — the caller receives ok==false and can retry.
+  packetUBXHNRATT->automaticFlags.flags.bits.automatic = (rate > 0);
+  packetUBXHNRATT->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
   packetUBXHNRATT->moduleQueried.moduleQueried.bits.all = false; // Mark data as stale
   return ok;
 }
@@ -16310,11 +16225,10 @@ bool DevUBLOXGNSS::setAutoHNRINSrate(uint8_t rate, bool implicitUpdate, uint8_t 
   payloadCfg[2] = rate; // rate relative to navigation freq.
 
   bool ok = ((sendCommand(&packetCfg, maxWait)) == SFE_UBLOX_STATUS_DATA_SENT); // We are only expecting an ACK
-  if (ok)
-  {
-    packetUBXHNRINS->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXHNRINS->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  // HNR (NEO-M8U) does not support VALGET, so we cannot read back the actual rate.
+  // Update flags unconditionally — the caller receives ok==false and can retry.
+  packetUBXHNRINS->automaticFlags.flags.bits.automatic = (rate > 0);
+  packetUBXHNRINS->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
   packetUBXHNRINS->moduleQueried.moduleQueried.bits.all = false; // Mark data as stale
   return ok;
 }
@@ -16484,11 +16398,10 @@ bool DevUBLOXGNSS::setAutoHNRPVTrate(uint8_t rate, bool implicitUpdate, uint8_t 
   payloadCfg[2] = rate; // rate relative to navigation freq.
 
   bool ok = ((sendCommand(&packetCfg, maxWait)) == SFE_UBLOX_STATUS_DATA_SENT); // We are only expecting an ACK
-  if (ok)
-  {
-    packetUBXHNRPVT->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXHNRPVT->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  // HNR (NEO-M8U) does not support VALGET, so we cannot read back the actual rate.
+  // Update flags unconditionally — the caller receives ok==false and can retry.
+  packetUBXHNRPVT->automaticFlags.flags.bits.automatic = (rate > 0);
+  packetUBXHNRPVT->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
   packetUBXHNRPVT->moduleQueried.moduleQueried.bits.all = false; // Mark data as stale
   return ok;
 }
@@ -16669,12 +16582,7 @@ bool DevUBLOXGNSS::setAutoSECSIGrate(uint8_t rate, bool implicitUpdate, uint8_t 
       key = UBLOX_CFG_MSGOUT_UBX_SEC_SIG_UART2;
   }
 
-  bool ok = setVal8(key, rate, layer, maxWait);
-  if (ok)
-  {
-    packetUBXSECSIG->automaticFlags.flags.bits.automatic = (rate > 0);
-    packetUBXSECSIG->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
-  }
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXSECSIG->automaticFlags, layer, maxWait);
   packetUBXSECSIG->moduleQueried = false;
   return ok;
 }
