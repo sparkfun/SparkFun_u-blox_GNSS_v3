@@ -964,6 +964,14 @@ const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_UART1 = UBX_CFG_U1 | 0x2091033b; 
 const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_UART2 = UBX_CFG_U1 | 0x2091033c; // Output rate of the UBX_RXM_QZSSL6 message on port UART2
 const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_USB = UBX_CFG_U1 | 0x2091033d;   // Output rate of the UBX_RXM_QZSSL6 message on port USB
 
+// Additional CFG_MSGOUT keys for the ZED-X20D
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_DAHEADING_I2C = UBX_CFG_U1 | 0x209103df;   // Output rate of the UBX_NAV_DAHEADING message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_DAHEADING_SPI = UBX_CFG_U1 | 0x209103e3;   // Output rate of the UBX_NAV_DAHEADING message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_DAHEADING_UART1 = UBX_CFG_U1 | 0x209103e0; // Output rate of the UBX_NAV_DAHEADING message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_DAHEADING_UART2 = UBX_CFG_U1 | 0x209103e1; // Output rate of the UBX_NAV_DAHEADING message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_DAHEADING_USB = UBX_CFG_U1 | 0x209103e2;   // Output rate of the UBX_NAV_DAHEADING message on port USB
+
 // CFG-NAV2: Secondary output configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_NAV2_OUT_ENABLED = UBX_CFG_L | 0x10170001;          // Enable secondary (NAV2) output

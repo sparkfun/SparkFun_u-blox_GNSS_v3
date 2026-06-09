@@ -243,6 +243,7 @@ const uint8_t UBX_NAV_ATT = 0x05;       // Vehicle "Attitude" Solution
 const uint8_t UBX_NAV_CLOCK = 0x22;     // Clock Solution
 const uint8_t UBX_NAV_COV = 0x36;       // Covariance matrices
 const uint8_t UBX_NAV_DOP = 0x04;       // Dilution of precision
+const uint8_t UBX_NAV_DAHEADING = 0x45; // Relative positioning information in the NED frame between antenna 1 and antenna 2 of the module
 const uint8_t UBX_NAV_EELL = 0x3D;      // Position error ellipse parameters
 const uint8_t UBX_NAV_EOE = 0x61;       // End of Epoch
 const uint8_t UBX_NAV_GEOFENCE = 0x39;  // Geofencing status. Used to poll the geofence status

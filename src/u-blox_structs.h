@@ -1435,6 +1435,103 @@ typedef struct
   UBX_NAV_RELPOSNED_data_t *callbackData;
 } UBX_NAV_RELPOSNED_t;
 
+// UBX-NAV-DAHEADING (0x01 0x45) Relative positioning information in the NED frame between antenna 1 and antenna 2 of the module
+const uint16_t UBX_NAV_DAHEADING_LEN = 64;
+
+typedef struct
+{
+  uint8_t version; // Message version (0x01 for this version)
+  uint8_t reserved0;
+  uint16_t refStationId; // Reference station ID
+  uint32_t iTOW;         // GPS time of week of the navigation epoch: ms
+  int32_t relPosN;       // North component of relative position vector (cm)
+  int32_t relPosE;       // East component of relative position vector (cm)
+  int32_t relPosD;       // Down component of relative position vector (cm)
+  int32_t relPosLength;  // Length of the relative position vector (cm)
+  int32_t relPosHeading; // Heading of the relative position vector (1e-5 deg)
+  uint8_t reserved1[4];
+  int8_t relPosHPN;      // High-precision North component of relative position vector (0.1mm)
+  int8_t relPosHPE;      // High-precision East component of relative position vector (0.1mm)
+  int8_t relPosHPD;      // High-precision Down component of relative position vector (0.1mm)
+  int8_t relPosHPLength; // High-precision component of the length of the relative position vector (0.1mm)
+  uint32_t accN;         // Accuracy of relative position North component (0.1mm)
+  uint32_t accE;         // Accuracy of relative position East component (0.1mm)
+  uint32_t accD;         // Accuracy of relative position Down component (0.1mm)
+  uint32_t accLength;    // Accuracy of length of the relative position vector (0.1mm)
+  uint32_t accHeading;   // Accuracy of heading of the relative position vector (0.1mm)
+  uint8_t reserved2[4];
+  union
+  {
+    uint32_t all;
+    struct
+    {
+      uint32_t gnssFixOK : 1;          // 1 = valid fix (i.e within DOP & accuracy masks)
+      uint32_t diffSoln : 1;           // 1 = differential corrections were applied
+      uint32_t relPosValid : 1;        // 1 = relative position components and accuracies are valid
+      uint32_t carrSoln : 2;           // Carrier phase range solution status:
+                                       // 0: no carrier phase range solution
+                                       // 1: carrier phase range solution with floating ambiguities
+                                       // 2: carrier phase range solution with fixed ambiguities
+      uint32_t isMoving : 1;           // 1 if the receiver is operating in moving baseline mode
+      uint32_t refPosMiss : 1;         // 1 if extrapolated reference position was used to compute moving baseline solution this epoch
+      uint32_t refObsMiss : 1;         // 1 if extrapolated reference observations were used to compute moving baseline solution this epoch
+      uint32_t relPosHeadingValid : 1; // 1 if relPosHeading is valid
+      uint32_t relPosNormalized : 1;   // 1 if the components of the relative position vector (including the high-precision parts) are normalized
+    } bits;
+  } flags;
+} UBX_NAV_DAHEADING_data_t;
+
+typedef struct
+{
+  union
+  {
+    uint32_t all;
+    struct
+    {
+      uint32_t all : 1;
+
+      uint32_t version : 1;
+
+      uint32_t refStationId : 1;
+      uint32_t iTOW : 1;
+      uint32_t relPosN : 1;
+      uint32_t relPosE : 1;
+      uint32_t relPosD : 1;
+      uint32_t relPosLength : 1;
+      uint32_t relPosHeading : 1;
+
+      uint32_t relPosHPN : 1;
+      uint32_t relPosHPE : 1;
+      uint32_t relPosHPD : 1;
+      uint32_t relPosHPLength : 1;
+      uint32_t accN : 1;
+      uint32_t accE : 1;
+      uint32_t accD : 1;
+      uint32_t accLength : 1;
+      uint32_t accHeading : 1;
+
+      uint32_t gnssFixOK : 1;
+      uint32_t diffSoln : 1;
+      uint32_t relPosValid : 1;
+      uint32_t carrSoln : 1;
+      uint32_t isMoving : 1;
+      uint32_t refPosMiss : 1;
+      uint32_t refObsMiss : 1;
+      uint32_t relPosHeadingValid : 1;
+      uint32_t relPosNormalized : 1;
+    } bits;
+  } moduleQueried;
+} UBX_NAV_DAHEADING_moduleQueried_t;
+
+typedef struct
+{
+  ubxAutomaticFlags automaticFlags;
+  UBX_NAV_DAHEADING_data_t data;
+  UBX_NAV_DAHEADING_moduleQueried_t moduleQueried;
+  void (*callbackPointerPtr)(UBX_NAV_DAHEADING_data_t *);
+  UBX_NAV_DAHEADING_data_t *callbackData;
+} UBX_NAV_DAHEADING_t;
+
 // UBX-NAV-AOPSTATUS (0x01 0x60): AssistNow Autonomous status
 const uint16_t UBX_NAV_AOPSTATUS_LEN = 16;
 
