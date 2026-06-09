@@ -474,7 +474,8 @@ enum sfe_ublox_talker_ids_e
 enum sfe_ublox_dgnss_mode_e
 {
   SFE_UBLOX_DGNSS_MODE_FLOAT = 2, // No attempts are made to fix ambiguities
-  SFE_UBLOX_DGNSS_MODE_FIXED      // Ambiguities are fixed whenever possible
+  SFE_UBLOX_DGNSS_MODE_FIXED,     // Ambiguities are fixed whenever possible
+  SFE_UBLOX_DGNSS_MODE_CAR = 5    // Conservative ambiguity resolution (see ZED-X20D HDG 2.00)
 };
 
 // MON HW Antenna Status

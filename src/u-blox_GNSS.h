@@ -928,6 +928,15 @@ public:
   void flushAOPSTATUS();                                                                                                                                                    // Mark all the AOPSTATUS data as read/stale
   void logAOPSTATUS(bool enabled = true);                                                                                                                                   // Log data to file buffer
 
+  bool getDAHEADING(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                                                                           // Get Relative Positioning Information of the NED frame
+  bool setAutoDAHEADING(bool enabled, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                                      // Enable/disable automatic DAHEADING reports
+  bool setAutoDAHEADING(bool enabled, bool implicitUpdate, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                                 // Enable/disable automatic DAHEADING, with implicitUpdate == false accessing stale data will not issue parsing of data in the rxbuffer of your interface, instead you have to call checkUblox when you want to perform an update
+  bool setAutoDAHEADINGrate(uint8_t rate, bool implicitUpdate = true, uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);                      // Set the rate for automatic DAHEADINGreports
+  bool setAutoDAHEADINGcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_DAHEADING_data_t *), uint8_t layer = VAL_LAYER_RAM_BBR, uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Enable automatic DAHEADING reports at the navigation frequency. Data is accessed from the callback.
+  bool assumeAutoDAHEADING(bool enabled, bool implicitUpdate = true);                                                                                                       // In case no config access to the GPS is possible and DAHEADING is send cyclically already
+  void flushNAVDAHEADING();                                                                                                                                                 // Mark all the data as read/stale
+  void logNAVDAHEADING(bool enabled = true);                                                                                                                                // Log data to file buffer
+
 #ifndef SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
   // Receiver Manager Messages (RXM)
 
@@ -1255,6 +1264,16 @@ void logSECSIG(bool enabled = true);                                            
   float getRelPosAccE(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returned as m
   float getRelPosAccD(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returned as m
 
+  // Helper functions for DAHEADING
+  // For safety, call these inside an if(getDAHEADING())
+
+  float getDAHeadingRelPosN(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);    // Returned as m
+  float getDAHeadingRelPosE(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);    // Returned as m
+  float getDAHeadingRelPosD(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait);    // Returned as m
+  float getDAHeadingRelPosAccN(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returned as m
+  float getDAHeadingRelPosAccE(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returned as m
+  float getDAHeadingRelPosAccD(uint16_t maxWait = kUBLOXGNSSDefaultMaxWait); // Returned as m
+
   // Helper functions for AOPSTATUS
   // For safety, call these inside an if(getAOPSTATUS())
 
@@ -1407,6 +1426,7 @@ void logSECSIG(bool enabled = true);                                            
   UBX_NAV_SVIN_t *packetUBXNAVSVIN = nullptr;           // Pointer to struct. RAM will be allocated for this if/when necessary
   UBX_NAV_RELPOSNED_t *packetUBXNAVRELPOSNED = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
   UBX_NAV_AOPSTATUS_t *packetUBXNAVAOPSTATUS = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
+  UBX_NAV_DAHEADING_t *packetUBXNAVDAHEADING = nullptr; // Pointer to struct. RAM will be allocated for this if/when necessary
 
 #ifndef SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
   UBX_NAV_SAT_t *packetUBXNAVSAT = nullptr;                      // Pointer to struct. RAM will be allocated for this if/when necessary
@@ -1532,6 +1552,7 @@ protected:
   bool initPacketUBXNAVSVIN();          // Allocate RAM for packetUBXNAVSVIN and initialize it
   bool initPacketUBXNAVRELPOSNED();     // Allocate RAM for packetUBXNAVRELPOSNED and initialize it
   bool initPacketUBXNAVAOPSTATUS();     // Allocate RAM for packetUBXNAVAOPSTATUS and initialize it
+  bool initPacketUBXNAVDAHEADING();     // Allocate RAM for packetUBXNAVDAHEADING and initialize it
   bool initPacketUBXNAVEOE();           // Allocate RAM for packetUBXNAVEOE and initialize it
   bool initPacketUBXNAVSAT();           // Allocate RAM for packetUBXNAVSAT and initialize it
   bool initPacketUBXNAVSIG();           // Allocate RAM for packetUBXNAVSIG and initialize it
