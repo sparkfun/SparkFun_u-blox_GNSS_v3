@@ -4256,23 +4256,18 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
       if (packetUBXNAVDAHEADING != nullptr)
       {
         packetUBXNAVDAHEADING->data.version = extractByte(msg, 0);
-        packetUBXNAVDAHEADING->data.refStationId = extractInt(msg, 2);
         packetUBXNAVDAHEADING->data.iTOW = extractLong(msg, 4);
         packetUBXNAVDAHEADING->data.relPosN = extractSignedLong(msg, 8);
         packetUBXNAVDAHEADING->data.relPosE = extractSignedLong(msg, 12);
         packetUBXNAVDAHEADING->data.relPosD = extractSignedLong(msg, 16);
         packetUBXNAVDAHEADING->data.relPosLength = extractSignedLong(msg, 20);
         packetUBXNAVDAHEADING->data.relPosHeading = extractSignedLong(msg, 24);
-        packetUBXNAVDAHEADING->data.relPosHPN = extractSignedChar(msg, 32);
-        packetUBXNAVDAHEADING->data.relPosHPE = extractSignedChar(msg, 33);
-        packetUBXNAVDAHEADING->data.relPosHPD = extractSignedChar(msg, 34);
-        packetUBXNAVDAHEADING->data.relPosHPLength = extractSignedChar(msg, 35);
-        packetUBXNAVDAHEADING->data.accN = extractLong(msg, 36);
-        packetUBXNAVDAHEADING->data.accE = extractLong(msg, 40);
-        packetUBXNAVDAHEADING->data.accD = extractLong(msg, 44);
-        packetUBXNAVDAHEADING->data.accLength = extractLong(msg, 48);
-        packetUBXNAVDAHEADING->data.accHeading = extractLong(msg, 52);
-        packetUBXNAVDAHEADING->data.flags.all = extractLong(msg, 60);
+        packetUBXNAVDAHEADING->data.accN = extractLong(msg, 32);
+        packetUBXNAVDAHEADING->data.accE = extractLong(msg, 36);
+        packetUBXNAVDAHEADING->data.accD = extractLong(msg, 40);
+        packetUBXNAVDAHEADING->data.accLength = extractLong(msg, 44);
+        packetUBXNAVDAHEADING->data.accHeading = extractLong(msg, 48);
+        packetUBXNAVDAHEADING->data.flags.all = extractLong(msg, 56);
 
         // Mark all datums as fresh (not read before)
         packetUBXNAVDAHEADING->moduleQueried.moduleQueried.all = 0xFFFFFFFF;

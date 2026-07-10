@@ -41,23 +41,23 @@ void printDAHEADINGdata(UBX_NAV_DAHEADING_data_t *ubxDataStruct)
 
   // double won't work well on AVR platforms...
   Serial.print("relPosN (m): ");
-  Serial.println(((double)ubxDataStruct->relPosN / 100) + ((double)ubxDataStruct->relPosHPN / 10000), 4); // Convert cm and 0.1mm to m
+  Serial.println(((double)ubxDataStruct->relPosN / 1000), 4); // Convert mm to m
   Serial.print("relPosE (m): ");
-  Serial.println(((double)ubxDataStruct->relPosE / 100) + ((double)ubxDataStruct->relPosHPE / 10000), 4);
+  Serial.println(((double)ubxDataStruct->relPosE / 1000), 4);
   Serial.print("relPosD (m): ");
-  Serial.println(((double)ubxDataStruct->relPosD / 100) + ((double)ubxDataStruct->relPosHPD / 10000), 4);
+  Serial.println(((double)ubxDataStruct->relPosD / 1000), 4);
 
   Serial.print("relPosLength (m): ");
-  Serial.println(((double)ubxDataStruct->relPosLength / 100) + ((double)ubxDataStruct->relPosHPLength / 10000), 4); // Convert cm to m
+  Serial.println(((double)ubxDataStruct->relPosLength / 1000), 4); // Convert mm to m
   Serial.print("relPosHeading (Deg): ");
   Serial.println((double)ubxDataStruct->relPosHeading / 100000); // Convert deg * 1e-5 to degrees
 
   Serial.print("accN (m): ");
-  Serial.println((double)ubxDataStruct->accN / 10000, 4); // Convert 0.1mm to m
+  Serial.println((double)ubxDataStruct->accN / 1000, 4); // Convert mm to m
   Serial.print("accE (m): ");
-  Serial.println((double)ubxDataStruct->accE / 10000, 4);
+  Serial.println((double)ubxDataStruct->accE / 1000, 4);
   Serial.print("accD (m): ");
-  Serial.println((double)ubxDataStruct->accD / 10000, 4);
+  Serial.println((double)ubxDataStruct->accD / 1000, 4);
 
   Serial.print("gnssFixOk: ");
   if (ubxDataStruct->flags.bits.gnssFixOK == true)
@@ -85,8 +85,8 @@ void printDAHEADINGdata(UBX_NAV_DAHEADING_data_t *ubxDataStruct)
   else if (ubxDataStruct->flags.bits.carrSoln == 2)
     Serial.println("Fixed");
 
-  Serial.print("isMoving: ");
-  if (ubxDataStruct->flags.bits.isMoving == true)
+  Serial.print("relPosHeadingValid: ");
+  if (ubxDataStruct->flags.bits.relPosHeadingValid == true)
     Serial.println("x");
   else
     Serial.println("");
@@ -108,6 +108,28 @@ void setup()
 
   // Uncomment the next line if you want to reset your module back to the default settings with 1Hz navigation rate
   //myGNSS.factoryDefault(); delay(5000);
+
+  // Change the module configuration
+  bool setValueSuccess = true;
+  // Begin with newCfgValset
+  //setValueSuccess &= myGNSS.newCfgValset(); // This defaults to configuring the setting in RAM and BBR
+  setValueSuccess &= myGNSS.newCfgValset(VAL_LAYER_RAM); // Set this and the following settings in RAM only
+
+  // Enable Galileo HAS
+  //setValueSuccess &= myGNSS.addCfgValset(UBLOX_CFG_NAVCOR_ENABLE_HOST, 0);    // Disable HOST corrections
+  //setValueSuccess &= myGNSS.addCfgValset(UBLOX_CFG_NAVCOR_ENABLE_GAL_HAS, 1); // Enable Galileo HAS corrections
+
+  // Configure the user-defined offset between the dual-antenna baseline heading and the vehicle forward axis.
+  // User-defined offset between the dual-antenna baseline heading and the vehicle forward axis.
+  // Only applicable in moving baseline mode. Accepted range is -180.00 to 180.00 degrees.
+  setValueSuccess &= myGNSS.addCfgValset(UBLOX_CFG_NAVSPG_DAHEADING_OFFSET, -4500); // Offset of -45 / 1e-2 degrees
+
+  // Send the packet using sendCfgValset
+  setValueSuccess &= myGNSS.sendCfgValset();
+  if (setValueSuccess == true)
+    Serial.println("X20D configuration : success");
+  else
+    Serial.println("X20D configuration : failed");
 
   myGNSS.setAutoDAHEADINGcallbackPtr(&printDAHEADINGdata); // Enable automatic NAV DAHEADING messages with callback to printDAHEADINGdata
 }

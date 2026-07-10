@@ -1054,6 +1054,7 @@ const uint32_t UBLOX_CFG_NAVSPG_SIGATTCOMP = UBX_CFG_E1 | 0x201100d6;     // Per
 const uint32_t UBLOX_CFG_NAVSPG_PL_ENA = UBX_CFG_L | 0x101100d7;          // Enable Protection level. If enabled, protection level computing will be on.
 const uint32_t UBLOX_CFG_NAVSPG_ONLY_AUTHDATA = UBX_CFG_L | 0x101100dd;   // Enable using only signals with authenticated navigation data
 const uint32_t UBLOX_CFG_NAVSPG_MAX_TIMETRUSTED_ACC = UBX_CFG_U2 | 0x301100de; // Maximum trusted time accuracy
+const uint32_t UBLOX_CFG_NAVSPG_DAHEADING_OFFSET = UBX_CFG_I4 | 0x401100e4;    // User-defined offset between the dual-antenna baseline heading and the vehicle forward axis (degrees 1e-2)
 
 // CFG-NMEA: NMEA protocol configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1263,6 +1264,8 @@ const uint32_t UBLOX_CFG_SIGNAL_GLO_L1_ENA = UBX_CFG_L | 0x10310018;    // GLONA
 const uint32_t UBLOX_CFG_SIGNAL_GLO_L2_ENA = UBX_CFG_L | 0x1031001a;    // GLONASS L2 (only on u-blox F9 platform products)
 const uint32_t UBLOX_CFG_SIGNAL_NAVIC_ENA = UBX_CFG_L | 0x10310026;     // NavIC
 const uint32_t UBLOX_CFG_SIGNAL_NAVIC_L5_ENA = UBX_CFG_L | 0x1031001d;  // NavIC L5
+const uint32_t UBLOX_CFG_SIGNAL_LBAND_ENA = UBX_CFG_L | 0x1031002a;     // L-Band enable
+const uint32_t UBLOX_CFG_SIGNAL_LBAND_PMP_ENA = UBX_CFG_L | 0x1031002f; // L-Band PMP
 const uint32_t UBLOX_CFG_SIGNAL_PLAN = UBX_CFG_E1 | 0x2031003a;         // Active signal plan
 
 // CFG-SPARTN: Configuration of the SPARTN interface
