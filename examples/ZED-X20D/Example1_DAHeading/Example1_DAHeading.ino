@@ -39,6 +39,9 @@ void printDAHEADINGdata(UBX_NAV_DAHEADING_data_t *ubxDataStruct)
   Serial.println();
   Serial.println("New DAHEADING data received:");
 
+  Serial.print("version: ");
+  Serial.println(ubxDataStruct->version);
+
   // double won't work well on AVR platforms...
   Serial.print("relPosN (m): ");
   Serial.println(((double)ubxDataStruct->relPosN / 1000), 3); // Convert mm to m
@@ -116,13 +119,13 @@ void setup()
   setValueSuccess &= myGNSS.newCfgValset(VAL_LAYER_RAM); // Set this and the following settings in RAM only
 
   // Enable Galileo HAS
-  //setValueSuccess &= myGNSS.addCfgValset(UBLOX_CFG_NAVCOR_ENABLE_HOST, 0);    // Disable HOST corrections
-  //setValueSuccess &= myGNSS.addCfgValset(UBLOX_CFG_NAVCOR_ENABLE_GAL_HAS, 1); // Enable Galileo HAS corrections
+  setValueSuccess &= myGNSS.addCfgValset(UBLOX_CFG_NAVCOR_ENABLE_HOST, 0);    // Disable HOST corrections
+  setValueSuccess &= myGNSS.addCfgValset(UBLOX_CFG_NAVCOR_ENABLE_GAL_HAS, 1); // Enable Galileo HAS corrections
 
   // Configure the user-defined offset between the dual-antenna baseline heading and the vehicle forward axis.
   // User-defined offset between the dual-antenna baseline heading and the vehicle forward axis.
   // Only applicable in moving baseline mode. Accepted range is -180.00 to 180.00 degrees.
-  //setValueSuccess &= myGNSS.addCfgValset(UBLOX_CFG_NAVSPG_DAHEADING_OFFSET, -4500); // Offset of -45 / 1e-2 degrees
+  setValueSuccess &= myGNSS.addCfgValset(UBLOX_CFG_NAVSPG_DAHEADING_OFFSET, -4500); // Offset of -45 / 1e-2 degrees
 
   // Send the packet using sendCfgValset
   setValueSuccess &= myGNSS.sendCfgValset();
