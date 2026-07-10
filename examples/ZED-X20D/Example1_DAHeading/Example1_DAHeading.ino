@@ -41,23 +41,23 @@ void printDAHEADINGdata(UBX_NAV_DAHEADING_data_t *ubxDataStruct)
 
   // double won't work well on AVR platforms...
   Serial.print("relPosN (m): ");
-  Serial.println(((double)ubxDataStruct->relPosN / 1000), 4); // Convert mm to m
+  Serial.println(((double)ubxDataStruct->relPosN / 1000), 3); // Convert mm to m
   Serial.print("relPosE (m): ");
-  Serial.println(((double)ubxDataStruct->relPosE / 1000), 4);
+  Serial.println(((double)ubxDataStruct->relPosE / 1000), 3);
   Serial.print("relPosD (m): ");
-  Serial.println(((double)ubxDataStruct->relPosD / 1000), 4);
+  Serial.println(((double)ubxDataStruct->relPosD / 1000), 3);
 
   Serial.print("relPosLength (m): ");
-  Serial.println(((double)ubxDataStruct->relPosLength / 1000), 4); // Convert mm to m
+  Serial.println(((double)ubxDataStruct->relPosLength / 1000), 3); // Convert mm to m
   Serial.print("relPosHeading (Deg): ");
   Serial.println((double)ubxDataStruct->relPosHeading / 100000); // Convert deg * 1e-5 to degrees
 
   Serial.print("accN (m): ");
-  Serial.println((double)ubxDataStruct->accN / 1000, 4); // Convert mm to m
+  Serial.println((double)ubxDataStruct->accN / 1000, 3); // Convert mm to m
   Serial.print("accE (m): ");
-  Serial.println((double)ubxDataStruct->accE / 1000, 4);
+  Serial.println((double)ubxDataStruct->accE / 1000, 3);
   Serial.print("accD (m): ");
-  Serial.println((double)ubxDataStruct->accD / 1000, 4);
+  Serial.println((double)ubxDataStruct->accD / 1000, 3);
 
   Serial.print("gnssFixOk: ");
   if (ubxDataStruct->flags.bits.gnssFixOK == true)
@@ -122,7 +122,7 @@ void setup()
   // Configure the user-defined offset between the dual-antenna baseline heading and the vehicle forward axis.
   // User-defined offset between the dual-antenna baseline heading and the vehicle forward axis.
   // Only applicable in moving baseline mode. Accepted range is -180.00 to 180.00 degrees.
-  setValueSuccess &= myGNSS.addCfgValset(UBLOX_CFG_NAVSPG_DAHEADING_OFFSET, -4500); // Offset of -45 / 1e-2 degrees
+  //setValueSuccess &= myGNSS.addCfgValset(UBLOX_CFG_NAVSPG_DAHEADING_OFFSET, -4500); // Offset of -45 / 1e-2 degrees
 
   // Send the packet using sendCfgValset
   setValueSuccess &= myGNSS.sendCfgValset();

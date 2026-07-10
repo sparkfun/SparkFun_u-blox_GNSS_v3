@@ -1465,7 +1465,7 @@ bool DevUBLOXGNSS::autoLookup(uint8_t Class, uint8_t ID, uint16_t *maxSize)
     else if (ID == UBX_NAV_DAHEADING)
     {
       if (maxSize != nullptr)
-        *maxSize = UBX_NAV_DAHEADING_LEN;
+        *maxSize = UBX_NAV_DAHEADING_MAX_LEN;
       return (packetUBXNAVDAHEADING != nullptr);
     }
 #ifndef SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
@@ -4250,24 +4250,53 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         }
       }
     }
-    else if (msg->id == UBX_NAV_DAHEADING && msg->len == UBX_NAV_DAHEADING_LEN)
+    else if (msg->id == UBX_NAV_DAHEADING && msg->len <= UBX_NAV_DAHEADING_MAX_LEN)
     {
       // Parse various byte fields into storage - but only if we have memory allocated for it
+      // Version 0x01 is 64 bytes and uses cm + 0.1mm
+      // Version 0x02 is 60 bytes and uses mm
       if (packetUBXNAVDAHEADING != nullptr)
       {
         packetUBXNAVDAHEADING->data.version = extractByte(msg, 0);
-        packetUBXNAVDAHEADING->data.iTOW = extractLong(msg, 4);
-        packetUBXNAVDAHEADING->data.relPosN = extractSignedLong(msg, 8);
-        packetUBXNAVDAHEADING->data.relPosE = extractSignedLong(msg, 12);
-        packetUBXNAVDAHEADING->data.relPosD = extractSignedLong(msg, 16);
-        packetUBXNAVDAHEADING->data.relPosLength = extractSignedLong(msg, 20);
-        packetUBXNAVDAHEADING->data.relPosHeading = extractSignedLong(msg, 24);
-        packetUBXNAVDAHEADING->data.accN = extractLong(msg, 32);
-        packetUBXNAVDAHEADING->data.accE = extractLong(msg, 36);
-        packetUBXNAVDAHEADING->data.accD = extractLong(msg, 40);
-        packetUBXNAVDAHEADING->data.accLength = extractLong(msg, 44);
-        packetUBXNAVDAHEADING->data.accHeading = extractLong(msg, 48);
-        packetUBXNAVDAHEADING->data.flags.all = extractLong(msg, 56);
+        if (packetUBXNAVDAHEADING->data.version == 0x02)
+        {
+          packetUBXNAVDAHEADING->data.iTOW = extractLong(msg, 4);
+          packetUBXNAVDAHEADING->data.relPosN = extractSignedLong(msg, 8);
+          packetUBXNAVDAHEADING->data.relPosE = extractSignedLong(msg, 12);
+          packetUBXNAVDAHEADING->data.relPosD = extractSignedLong(msg, 16);
+          packetUBXNAVDAHEADING->data.relPosLength = extractSignedLong(msg, 20);
+          packetUBXNAVDAHEADING->data.relPosHeading = extractSignedLong(msg, 24);
+          packetUBXNAVDAHEADING->data.accN = extractLong(msg, 32);
+          packetUBXNAVDAHEADING->data.accE = extractLong(msg, 36);
+          packetUBXNAVDAHEADING->data.accD = extractLong(msg, 40);
+          packetUBXNAVDAHEADING->data.accLength = extractLong(msg, 44);
+          packetUBXNAVDAHEADING->data.accHeading = extractLong(msg, 48);
+          packetUBXNAVDAHEADING->data.flags.all = extractLong(msg, 56);
+        }
+        else
+        {
+          // Assume version 0x01
+          packetUBXNAVDAHEADING->data.iTOW = extractLong(msg, 4);
+          packetUBXNAVDAHEADING->data.relPosN = extractSignedLong(msg, 8) * 10; // Convert cm to mm
+          packetUBXNAVDAHEADING->data.relPosN += extractSignedChar(msg, 32) / 10; // Convert 0.1mm to mm
+          packetUBXNAVDAHEADING->data.relPosE = extractSignedLong(msg, 12) * 10;
+          packetUBXNAVDAHEADING->data.relPosE += extractSignedChar(msg, 33) / 10;
+          packetUBXNAVDAHEADING->data.relPosD = extractSignedLong(msg, 16) * 10;
+          packetUBXNAVDAHEADING->data.relPosD += extractSignedChar(msg, 34) / 10;
+          packetUBXNAVDAHEADING->data.relPosLength = extractSignedLong(msg, 20) * 10;
+          packetUBXNAVDAHEADING->data.relPosLength += extractSignedChar(msg, 35) / 10;
+          packetUBXNAVDAHEADING->data.relPosHeading = extractSignedLong(msg, 24);
+          packetUBXNAVDAHEADING->data.accN = extractLong(msg, 36) / 10; // Convert 0.1mm to mm
+          packetUBXNAVDAHEADING->data.accE = extractLong(msg, 40) / 10;
+          packetUBXNAVDAHEADING->data.accD = extractLong(msg, 44) / 10;
+          packetUBXNAVDAHEADING->data.accLength = extractLong(msg, 48) / 10;
+          packetUBXNAVDAHEADING->data.accHeading = extractLong(msg, 52);
+          packetUBXNAVDAHEADING->data.flags.all = extractLong(msg, 60);
+          bool relPosHeadingValid = packetUBXNAVDAHEADING->data.flags.all & 0x00000100;
+          packetUBXNAVDAHEADING->data.flags.all &= 0x0000001F;
+          if (relPosHeadingValid)
+            packetUBXNAVDAHEADING->data.flags.all |= 0x00000040;
+        }
 
         // Mark all datums as fresh (not read before)
         packetUBXNAVDAHEADING->moduleQueried.moduleQueried.all = 0xFFFFFFFF;

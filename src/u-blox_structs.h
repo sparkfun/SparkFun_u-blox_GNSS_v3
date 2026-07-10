@@ -1436,7 +1436,9 @@ typedef struct
 } UBX_NAV_RELPOSNED_t;
 
 // UBX-NAV-DAHEADING (0x01 0x45) Relative positioning information in the NED frame between antenna 1 and antenna 2 of the module
-const uint16_t UBX_NAV_DAHEADING_LEN = 60;
+// Version 0x01 is 64 bytes and uses cm + 0.1mm
+// Version 0x02 is 60 bytes and uses mm
+const uint16_t UBX_NAV_DAHEADING_MAX_LEN = 64;
 
 typedef struct
 {
