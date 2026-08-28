@@ -2493,7 +2493,7 @@ bool DevUBLOXGNSS::processThisNMEA()
 // This is the default or generic NMEA processor. We're only going to pipe the data to serial port so we can see it.
 // User could overwrite this function to pipe characters to nmea.process(c) of tinyGPS or MicroNMEA
 // Or user could pipe each character to a buffer, radio, etc.
-void DevUBLOXGNSS::processNMEA(char incoming)
+__attribute__((weak)) void DevUBLOXGNSS::processNMEA(char incoming)
 {
   (void)incoming;
 }
@@ -3213,7 +3213,7 @@ nmeaAutomaticFlags *DevUBLOXGNSS::getNMEAFlagsPtr()
 // Byte 2: 10-bits of length of this packet including the first two-ish header bytes, + 6.
 // byte 3 + 4 bits: Msg type 12 bits
 // Example: D3 00 7C 43 F0 ... / 0x7C = 124+6 = 130 bytes in this packet, 0x43F = Msg type 1087
-DevUBLOXGNSS::sfe_ublox_sentence_types_e DevUBLOXGNSS::processRTCMframe(uint8_t incoming, uint16_t *rtcmFrameCounter)
+__attribute__((weak)) DevUBLOXGNSS::sfe_ublox_sentence_types_e DevUBLOXGNSS::processRTCMframe(uint8_t incoming, uint16_t *rtcmFrameCounter)
 {
   static uint16_t rtcmLen = 0; // Static - length is retained between calls
 
@@ -3250,7 +3250,7 @@ DevUBLOXGNSS::sfe_ublox_sentence_types_e DevUBLOXGNSS::processRTCMframe(uint8_t 
 // This function is called for each byte of an RTCM frame
 // Ths user can overwrite this function and process the RTCM frame as they please
 // Bytes can be piped to Serial or other interface. The consumer could be a radio or the internet (Ntrip broadcaster)
-void DevUBLOXGNSS::processRTCM(uint8_t incoming)
+__attribute__((weak)) void DevUBLOXGNSS::processRTCM(uint8_t incoming)
 {
   (void)incoming;
 }
