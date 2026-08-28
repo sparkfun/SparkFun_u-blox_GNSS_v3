@@ -1722,7 +1722,10 @@ typedef struct
 
 // UBX-RXM-RAWX (0x02 0x15): Multi-GNSS raw measurement data
 // Note: length is variable
-const uint8_t UBX_RXM_RAWX_MAX_BLOCKS = 92; // See issue #70 and PR #74 for more info
+// Up to v3.1.14, UBX_RXM_RAWX_MAX_BLOCKS was 92. This was set in v2 of the library (Oct 20 2021)
+// As documented in issue #98, 92 is no longer adequate. X20P RAWX messages can contain 112+ blocks
+// Increasing this to 120 for v3.1.15. Increases the memory usage by 896 Bytes...
+const uint8_t UBX_RXM_RAWX_MAX_BLOCKS = 120;
 const uint16_t UBX_RXM_RAWX_MAX_LEN = 16 + (32 * UBX_RXM_RAWX_MAX_BLOCKS);
 
 typedef struct
