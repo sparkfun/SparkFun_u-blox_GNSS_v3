@@ -964,6 +964,14 @@ const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_UART1 = UBX_CFG_U1 | 0x2091033b; 
 const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_UART2 = UBX_CFG_U1 | 0x2091033c; // Output rate of the UBX_RXM_QZSSL6 message on port UART2
 const uint32_t UBLOX_CFG_MSGOUT_UBX_RXM_QZSSL6_USB = UBX_CFG_U1 | 0x2091033d;   // Output rate of the UBX_RXM_QZSSL6 message on port USB
 
+// Additional CFG_MSGOUT keys for the ZED-X20D
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_DAHEADING_I2C = UBX_CFG_U1 | 0x209103df;   // Output rate of the UBX_NAV_DAHEADING message on port I2C
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_DAHEADING_SPI = UBX_CFG_U1 | 0x209103e3;   // Output rate of the UBX_NAV_DAHEADING message on port SPI
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_DAHEADING_UART1 = UBX_CFG_U1 | 0x209103e0; // Output rate of the UBX_NAV_DAHEADING message on port UART1
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_DAHEADING_UART2 = UBX_CFG_U1 | 0x209103e1; // Output rate of the UBX_NAV_DAHEADING message on port UART2
+const uint32_t UBLOX_CFG_MSGOUT_UBX_NAV_DAHEADING_USB = UBX_CFG_U1 | 0x209103e2;   // Output rate of the UBX_NAV_DAHEADING message on port USB
+
 // CFG-NAV2: Secondary output configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const uint32_t UBLOX_CFG_NAV2_OUT_ENABLED = UBX_CFG_L | 0x10170001;          // Enable secondary (NAV2) output
@@ -1046,6 +1054,7 @@ const uint32_t UBLOX_CFG_NAVSPG_SIGATTCOMP = UBX_CFG_E1 | 0x201100d6;     // Per
 const uint32_t UBLOX_CFG_NAVSPG_PL_ENA = UBX_CFG_L | 0x101100d7;          // Enable Protection level. If enabled, protection level computing will be on.
 const uint32_t UBLOX_CFG_NAVSPG_ONLY_AUTHDATA = UBX_CFG_L | 0x101100dd;   // Enable using only signals with authenticated navigation data
 const uint32_t UBLOX_CFG_NAVSPG_MAX_TIMETRUSTED_ACC = UBX_CFG_U2 | 0x301100de; // Maximum trusted time accuracy
+const uint32_t UBLOX_CFG_NAVSPG_DAHEADING_OFFSET = UBX_CFG_I4 | 0x401100e4;    // User-defined offset between the dual-antenna baseline heading and the vehicle forward axis (degrees 1e-2)
 
 // CFG-NMEA: NMEA protocol configuration
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1255,6 +1264,8 @@ const uint32_t UBLOX_CFG_SIGNAL_GLO_L1_ENA = UBX_CFG_L | 0x10310018;    // GLONA
 const uint32_t UBLOX_CFG_SIGNAL_GLO_L2_ENA = UBX_CFG_L | 0x1031001a;    // GLONASS L2 (only on u-blox F9 platform products)
 const uint32_t UBLOX_CFG_SIGNAL_NAVIC_ENA = UBX_CFG_L | 0x10310026;     // NavIC
 const uint32_t UBLOX_CFG_SIGNAL_NAVIC_L5_ENA = UBX_CFG_L | 0x1031001d;  // NavIC L5
+const uint32_t UBLOX_CFG_SIGNAL_LBAND_ENA = UBX_CFG_L | 0x1031002a;     // L-Band enable
+const uint32_t UBLOX_CFG_SIGNAL_LBAND_PMP_ENA = UBX_CFG_L | 0x1031002f; // L-Band PMP
 const uint32_t UBLOX_CFG_SIGNAL_PLAN = UBX_CFG_E1 | 0x2031003a;         // Active signal plan
 
 // CFG-SPARTN: Configuration of the SPARTN interface

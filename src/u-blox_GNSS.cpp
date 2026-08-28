@@ -318,6 +318,16 @@ void DevUBLOXGNSS::end(void)
     packetUBXNAVEOE = nullptr;
   }
 
+  if (packetUBXNAVDAHEADING != nullptr)
+  {
+    if (packetUBXNAVDAHEADING->callbackData != nullptr)
+    {
+      delete packetUBXNAVDAHEADING->callbackData;
+    }
+    delete packetUBXNAVDAHEADING;
+    packetUBXNAVDAHEADING = nullptr;
+  }
+
 #ifndef SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
   if (packetUBXNAVSAT != nullptr)
   {
@@ -1451,6 +1461,12 @@ bool DevUBLOXGNSS::autoLookup(uint8_t Class, uint8_t ID, uint16_t *maxSize)
       if (maxSize != nullptr)
         *maxSize = UBX_NAV_EOE_LEN;
       return (packetUBXNAVEOE != nullptr);
+    }
+    else if (ID == UBX_NAV_DAHEADING)
+    {
+      if (maxSize != nullptr)
+        *maxSize = UBX_NAV_DAHEADING_MAX_LEN;
+      return (packetUBXNAVDAHEADING != nullptr);
     }
 #ifndef SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
     else if (ID == UBX_NAV_SAT)
@@ -4234,6 +4250,72 @@ void DevUBLOXGNSS::processUBXpacket(ubxPacket *msg)
         }
       }
     }
+    else if (msg->id == UBX_NAV_DAHEADING && msg->len <= UBX_NAV_DAHEADING_MAX_LEN)
+    {
+      // Parse various byte fields into storage - but only if we have memory allocated for it
+      // Version 0x01 is 64 bytes and uses cm + 0.1mm
+      // Version 0x02 is 60 bytes and uses mm
+      if (packetUBXNAVDAHEADING != nullptr)
+      {
+        packetUBXNAVDAHEADING->data.version = extractByte(msg, 0);
+        if (packetUBXNAVDAHEADING->data.version == 0x02)
+        {
+          packetUBXNAVDAHEADING->data.iTOW = extractLong(msg, 4);
+          packetUBXNAVDAHEADING->data.relPosN = extractSignedLong(msg, 8);
+          packetUBXNAVDAHEADING->data.relPosE = extractSignedLong(msg, 12);
+          packetUBXNAVDAHEADING->data.relPosD = extractSignedLong(msg, 16);
+          packetUBXNAVDAHEADING->data.relPosLength = extractSignedLong(msg, 20);
+          packetUBXNAVDAHEADING->data.relPosHeading = extractSignedLong(msg, 24);
+          packetUBXNAVDAHEADING->data.accN = extractLong(msg, 32);
+          packetUBXNAVDAHEADING->data.accE = extractLong(msg, 36);
+          packetUBXNAVDAHEADING->data.accD = extractLong(msg, 40);
+          packetUBXNAVDAHEADING->data.accLength = extractLong(msg, 44);
+          packetUBXNAVDAHEADING->data.accHeading = extractLong(msg, 48);
+          packetUBXNAVDAHEADING->data.flags.all = extractLong(msg, 56);
+        }
+        else
+        {
+          // Assume version 0x01
+          packetUBXNAVDAHEADING->data.iTOW = extractLong(msg, 4);
+          packetUBXNAVDAHEADING->data.relPosN = extractSignedLong(msg, 8) * 10; // Convert cm to mm
+          packetUBXNAVDAHEADING->data.relPosN += extractSignedChar(msg, 32) / 10; // Convert 0.1mm to mm
+          packetUBXNAVDAHEADING->data.relPosE = extractSignedLong(msg, 12) * 10;
+          packetUBXNAVDAHEADING->data.relPosE += extractSignedChar(msg, 33) / 10;
+          packetUBXNAVDAHEADING->data.relPosD = extractSignedLong(msg, 16) * 10;
+          packetUBXNAVDAHEADING->data.relPosD += extractSignedChar(msg, 34) / 10;
+          packetUBXNAVDAHEADING->data.relPosLength = extractSignedLong(msg, 20) * 10;
+          packetUBXNAVDAHEADING->data.relPosLength += extractSignedChar(msg, 35) / 10;
+          packetUBXNAVDAHEADING->data.relPosHeading = extractSignedLong(msg, 24);
+          packetUBXNAVDAHEADING->data.accN = extractLong(msg, 36) / 10; // Convert 0.1mm to mm
+          packetUBXNAVDAHEADING->data.accE = extractLong(msg, 40) / 10;
+          packetUBXNAVDAHEADING->data.accD = extractLong(msg, 44) / 10;
+          packetUBXNAVDAHEADING->data.accLength = extractLong(msg, 48) / 10;
+          packetUBXNAVDAHEADING->data.accHeading = extractLong(msg, 52);
+          packetUBXNAVDAHEADING->data.flags.all = extractLong(msg, 60);
+          bool relPosHeadingValid = packetUBXNAVDAHEADING->data.flags.all & 0x00000100;
+          packetUBXNAVDAHEADING->data.flags.all &= 0x0000001F;
+          if (relPosHeadingValid)
+            packetUBXNAVDAHEADING->data.flags.all |= 0x00000040;
+        }
+
+        // Mark all datums as fresh (not read before)
+        packetUBXNAVDAHEADING->moduleQueried.moduleQueried.all = 0xFFFFFFFF;
+
+        // Check if we need to copy the data for the callback
+        if ((packetUBXNAVDAHEADING->callbackData != nullptr)                                  // If RAM has been allocated for the copy of the data
+            && (packetUBXNAVDAHEADING->automaticFlags.flags.bits.callbackCopyValid == false)) // AND the data is stale
+        {
+          memcpy(&packetUBXNAVDAHEADING->callbackData->version, &packetUBXNAVDAHEADING->data.version, sizeof(UBX_NAV_DAHEADING_data_t));
+          packetUBXNAVDAHEADING->automaticFlags.flags.bits.callbackCopyValid = true;
+        }
+
+        // Check if we need to copy the data into the file buffer
+        if (packetUBXNAVDAHEADING->automaticFlags.flags.bits.addToFileBuffer)
+        {
+          addedToFileBuffer = storePacket(msg);
+        }
+      }
+    }
     break;
 #ifndef SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
   case UBX_CLASS_RXM:
@@ -6159,6 +6241,17 @@ void DevUBLOXGNSS::checkCallbacks(void)
           packetUBXNAVEOE->callbackPointerPtr(packetUBXNAVEOE->callbackData); // Call the callback
         }
         packetUBXNAVEOE->automaticFlags.flags.bits.callbackCopyValid = false; // Mark the data as stale
+      }
+
+  if (packetUBXNAVDAHEADING != nullptr)                                               // If RAM has been allocated for message storage
+    if (packetUBXNAVDAHEADING->callbackData != nullptr)                               // If RAM has been allocated for the copy of the data
+      if (packetUBXNAVDAHEADING->automaticFlags.flags.bits.callbackCopyValid == true) // If the copy of the data is valid
+      {
+        if (packetUBXNAVDAHEADING->callbackPointerPtr != nullptr) // If the pointer to the callback has been defined
+        {
+          packetUBXNAVDAHEADING->callbackPointerPtr(packetUBXNAVDAHEADING->callbackData); // Call the callback
+        }
+        packetUBXNAVDAHEADING->automaticFlags.flags.bits.callbackCopyValid = false; // Mark the data as stale
       }
 
 #ifndef SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
@@ -13837,6 +13930,172 @@ void DevUBLOXGNSS::logAOPSTATUS(bool enabled)
   packetUBXNAVAOPSTATUS->automaticFlags.flags.bits.addToFileBuffer = (uint8_t)enabled;
 }
 
+// ***** NAV DAHEADING automatic support
+
+// Relative Positioning Information in NED frame
+// Returns true if commands was successful
+bool DevUBLOXGNSS::getDAHEADING(uint16_t maxWait)
+{
+  if (packetUBXNAVDAHEADING == nullptr)
+    initPacketUBXNAVDAHEADING();        // Check that RAM has been allocated for the DAHEADING data
+  if (packetUBXNAVDAHEADING == nullptr) // Bail if the RAM allocation failed
+    return (false);
+
+  if (packetUBXNAVDAHEADING->automaticFlags.flags.bits.automatic && packetUBXNAVDAHEADING->automaticFlags.flags.bits.implicitUpdate)
+  {
+    // The GPS is automatically reporting, we just check whether we got unread data
+    checkUbloxInternal(&packetCfg, 0, 0); // Call checkUbloxInternal to parse any incoming data. Don't overwrite the requested Class and ID
+    return packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.all;
+  }
+  else if (packetUBXNAVDAHEADING->automaticFlags.flags.bits.automatic && !packetUBXNAVDAHEADING->automaticFlags.flags.bits.implicitUpdate)
+  {
+    // Someone else has to call checkUblox for us...
+    return (false);
+  }
+  else
+  {
+    // The GPS is not automatically reporting DAHEADING so we have to poll explicitly
+    packetCfg.cls = UBX_CLASS_NAV;
+    packetCfg.id = UBX_NAV_DAHEADING;
+    packetCfg.len = 0;
+    packetCfg.startingSpot = 0;
+
+    // The data is parsed as part of processing the response
+    sfe_ublox_status_e retVal = sendCommand(&packetCfg, maxWait);
+
+    if (retVal == SFE_UBLOX_STATUS_DATA_RECEIVED)
+      return (true);
+
+    if (retVal == SFE_UBLOX_STATUS_DATA_OVERWRITTEN)
+    {
+      return (true);
+    }
+
+    return (false);
+  }
+}
+
+// Enable or disable automatic DAHEADING message generation by the GNSS. This changes the way getDAHEADING
+// works.
+bool DevUBLOXGNSS::setAutoDAHEADING(bool enable, uint8_t layer, uint16_t maxWait)
+{
+  return setAutoDAHEADINGrate(enable ? 1 : 0, true, layer, maxWait);
+}
+
+// Enable or disable automatic DAHEADING message generation by the GNSS. This changes the way getDAHEADING
+// works.
+bool DevUBLOXGNSS::setAutoDAHEADING(bool enable, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
+{
+  return setAutoDAHEADINGrate(enable ? 1 : 0, implicitUpdate, layer, maxWait);
+}
+
+// Enable or disable automatic DAHEADING message generation by the GNSS. This changes the way getDAHEADING
+// works.
+bool DevUBLOXGNSS::setAutoDAHEADINGrate(uint8_t rate, bool implicitUpdate, uint8_t layer, uint16_t maxWait)
+{
+  if (packetUBXNAVDAHEADING == nullptr)
+    initPacketUBXNAVDAHEADING();        // Check that RAM has been allocated for the data
+  if (packetUBXNAVDAHEADING == nullptr) // Only attempt this if RAM allocation was successful
+    return false;
+
+  if (rate > 127)
+    rate = 127;
+
+  uint32_t key = UBLOX_CFG_MSGOUT_UBX_NAV_DAHEADING_I2C;
+  if (_commType == COMM_TYPE_SPI)
+    key = UBLOX_CFG_MSGOUT_UBX_NAV_DAHEADING_SPI;
+  else if (_commType == COMM_TYPE_SERIAL)
+  {
+    if (!_UART2)
+      key = UBLOX_CFG_MSGOUT_UBX_NAV_DAHEADING_UART1;
+    else
+      key = UBLOX_CFG_MSGOUT_UBX_NAV_DAHEADING_UART2;
+  }
+
+  bool ok = setAutoMsgRateVal(key, rate, implicitUpdate, packetUBXNAVDAHEADING->automaticFlags, layer, maxWait);
+  packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.all = false; // Mark data as stale
+  return ok;
+}
+
+// Enable automatic navigation message generation by the GNSS.
+bool DevUBLOXGNSS::setAutoDAHEADINGcallbackPtr(void (*callbackPointerPtr)(UBX_NAV_DAHEADING_data_t *), uint8_t layer, uint16_t maxWait)
+{
+  // Enable auto messages. Set implicitUpdate to false as we expect the user to call checkUblox manually.
+  bool result = setAutoDAHEADING(true, false, layer, maxWait);
+  if (!result)
+    return (result); // Bail if setAuto failed
+
+  if (packetUBXNAVDAHEADING->callbackData == nullptr) // Check if RAM has been allocated for the callback copy
+  {
+    packetUBXNAVDAHEADING->callbackData = new UBX_NAV_DAHEADING_data_t; // Allocate RAM for the main struct
+  }
+
+  if (packetUBXNAVDAHEADING->callbackData == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("setAutoDAHEADINGcallbackPtr: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+
+  packetUBXNAVDAHEADING->callbackPointerPtr = callbackPointerPtr;
+  return (true);
+}
+
+// In case no config access to the GNSS is possible and DAHEADING is send cyclically already
+// set config to suitable parameters
+bool DevUBLOXGNSS::assumeAutoDAHEADING(bool enabled, bool implicitUpdate)
+{
+  if (packetUBXNAVDAHEADING == nullptr)
+    initPacketUBXNAVDAHEADING();        // Check that RAM has been allocated for the DAHEADING data
+  if (packetUBXNAVDAHEADING == nullptr) // Bail if the RAM allocation failed
+    return (false);
+
+  bool changes = packetUBXNAVDAHEADING->automaticFlags.flags.bits.automatic != enabled || packetUBXNAVDAHEADING->automaticFlags.flags.bits.implicitUpdate != implicitUpdate;
+  if (changes)
+  {
+    packetUBXNAVDAHEADING->automaticFlags.flags.bits.automatic = enabled;
+    packetUBXNAVDAHEADING->automaticFlags.flags.bits.implicitUpdate = implicitUpdate;
+  }
+  return changes;
+}
+
+// PRIVATE: Allocate RAM for packetUBXNAVDAHEADING and initialize it
+bool DevUBLOXGNSS::initPacketUBXNAVDAHEADING()
+{
+  packetUBXNAVDAHEADING = new UBX_NAV_DAHEADING_t; // Allocate RAM for the main struct
+  if (packetUBXNAVDAHEADING == nullptr)
+  {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+    if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+      _debugSerial.println(F("initPacketUBXNAVDAHEADING: RAM alloc failed!"));
+#endif
+    return (false);
+  }
+  packetUBXNAVDAHEADING->automaticFlags.flags.all = 0;
+  packetUBXNAVDAHEADING->callbackPointerPtr = nullptr;
+  packetUBXNAVDAHEADING->callbackData = nullptr;
+  packetUBXNAVDAHEADING->moduleQueried.moduleQueried.all = 0;
+  return (true);
+}
+
+// Mark all the data as read/stale
+void DevUBLOXGNSS::flushNAVDAHEADING()
+{
+  if (packetUBXNAVDAHEADING == nullptr)
+    return;                                                   // Bail if RAM has not been allocated (otherwise we could be writing anywhere!)
+  packetUBXNAVDAHEADING->moduleQueried.moduleQueried.all = 0; // Mark all datums as stale (read before)
+}
+
+// Log this data in file buffer
+void DevUBLOXGNSS::logNAVDAHEADING(bool enabled)
+{
+  if (packetUBXNAVDAHEADING == nullptr)
+    return; // Bail if RAM has not been allocated (otherwise we could be writing anywhere!)
+  packetUBXNAVDAHEADING->automaticFlags.flags.bits.addToFileBuffer = (uint8_t)enabled;
+}
+
 #ifndef SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
 // ***** RXM PMP automatic support
 
@@ -19199,6 +19458,92 @@ uint8_t DevUBLOXGNSS::getAOPSTATUSstatus(uint16_t maxWait)
   packetUBXNAVAOPSTATUS->moduleQueried.moduleQueried.bits.status = false; // Since we are about to give this to user, mark this data as stale
   packetUBXNAVAOPSTATUS->moduleQueried.moduleQueried.bits.all = false;
   return (packetUBXNAVAOPSTATUS->data.status);
+}
+
+// ***** DAHEADING Helper Functions and automatic support
+
+float DevUBLOXGNSS::getDAHeadingRelPosN(uint16_t maxWait) // Returned as m
+{
+  if (packetUBXNAVDAHEADING == nullptr)
+    initPacketUBXNAVDAHEADING();        // Check that RAM has been allocated for the DAHEADING data
+  if (packetUBXNAVDAHEADING == nullptr) // Bail if the RAM allocation failed
+    return 0;
+
+  if (packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.relPosN == false)
+    getDAHEADING(maxWait);
+  packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.relPosN = false; // Since we are about to give this to user, mark this data as stale
+  packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.all = false;
+  return (((float)packetUBXNAVDAHEADING->data.relPosN) / 100.0); // Convert to m
+}
+
+float DevUBLOXGNSS::getDAHeadingRelPosE(uint16_t maxWait) // Returned as m
+{
+  if (packetUBXNAVDAHEADING == nullptr)
+    initPacketUBXNAVDAHEADING();        // Check that RAM has been allocated for the DAHEADING data
+  if (packetUBXNAVDAHEADING == nullptr) // Bail if the RAM allocation failed
+    return 0;
+
+  if (packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.relPosE == false)
+    getDAHEADING(maxWait);
+  packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.relPosE = false; // Since we are about to give this to user, mark this data as stale
+  packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.all = false;
+  return (((float)packetUBXNAVDAHEADING->data.relPosE) / 100.0); // Convert to m
+}
+
+float DevUBLOXGNSS::getDAHeadingRelPosD(uint16_t maxWait) // Returned as m
+{
+  if (packetUBXNAVDAHEADING == nullptr)
+    initPacketUBXNAVDAHEADING();        // Check that RAM has been allocated for the DAHEADING data
+  if (packetUBXNAVDAHEADING == nullptr) // Bail if the RAM allocation failed
+    return 0;
+
+  if (packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.relPosD == false)
+    getDAHEADING(maxWait);
+  packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.relPosD = false; // Since we are about to give this to user, mark this data as stale
+  packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.all = false;
+  return (((float)packetUBXNAVDAHEADING->data.relPosD) / 100.0); // Convert to m
+}
+
+float DevUBLOXGNSS::getDAHeadingRelPosAccN(uint16_t maxWait) // Returned as m
+{
+  if (packetUBXNAVDAHEADING == nullptr)
+    initPacketUBXNAVDAHEADING();        // Check that RAM has been allocated for the DAHEADING data
+  if (packetUBXNAVDAHEADING == nullptr) // Bail if the RAM allocation failed
+    return 0;
+
+  if (packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.accN == false)
+    getDAHEADING(maxWait);
+  packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.accN = false; // Since we are about to give this to user, mark this data as stale
+  packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.all = false;
+  return (((float)packetUBXNAVDAHEADING->data.accN) / 10000.0); // Convert to m
+}
+
+float DevUBLOXGNSS::getDAHeadingRelPosAccE(uint16_t maxWait) // Returned as m
+{
+  if (packetUBXNAVDAHEADING == nullptr)
+    initPacketUBXNAVDAHEADING();        // Check that RAM has been allocated for the DAHEADING data
+  if (packetUBXNAVDAHEADING == nullptr) // Bail if the RAM allocation failed
+    return 0;
+
+  if (packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.accE == false)
+    getDAHEADING(maxWait);
+  packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.accE = false; // Since we are about to give this to user, mark this data as stale
+  packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.all = false;
+  return (((float)packetUBXNAVDAHEADING->data.accE) / 10000.0); // Convert to m
+}
+
+float DevUBLOXGNSS::getDAHeadingRelPosAccD(uint16_t maxWait) // Returned as m
+{
+  if (packetUBXNAVDAHEADING == nullptr)
+    initPacketUBXNAVDAHEADING();        // Check that RAM has been allocated for the DAHEADING data
+  if (packetUBXNAVDAHEADING == nullptr) // Bail if the RAM allocation failed
+    return 0;
+
+  if (packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.accD == false)
+    getDAHEADING(maxWait);
+  packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.accD = false; // Since we are about to give this to user, mark this data as stale
+  packetUBXNAVDAHEADING->moduleQueried.moduleQueried.bits.all = false;
+  return (((float)packetUBXNAVDAHEADING->data.accD) / 10000.0); // Convert to m
 }
 
 // ***** TIM TP Helper Functions
