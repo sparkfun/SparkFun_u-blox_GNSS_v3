@@ -1249,7 +1249,7 @@ typedef struct
     uint16_t all;
     struct
     {
-      uint16_t health : 1;     // Signal health flag: 0 = unknown; 1 = healthy; 2 = unhealthy
+      uint16_t health : 2;     // Signal health flag: 0 = unknown; 1 = healthy; 2 = unhealthy
       uint16_t prSmoothed : 1; // 1 = Pseudorange has been smoothed
       uint16_t prUsed : 1;     // 1 = Pseudorange has been used for this signal
       uint16_t crUsed : 1;     // 1 = Carrier range has been used for this signal
