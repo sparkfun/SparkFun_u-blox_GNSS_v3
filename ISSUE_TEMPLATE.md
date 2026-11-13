@@ -3,7 +3,7 @@ Describe your issue here. If you reference a datasheet please specify which one 
 
 ### Your workbench
 * What development board or microcontroller are you using?
-* What version of hardware or breakout board are you using? 
+* What version of hardware or breakout board are you using?
 * How is the breakout board wired to your microcontroller?
 * How is everything being powered?
 * Are there any additional details that may help us help you?
